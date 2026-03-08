@@ -3,55 +3,184 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>J.A.D.I - Prueba</title>
-    
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-
+    <title>J.A.D.I - Panel Operativo</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { 
-            background: #000; 
-            color: #fbc02d; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            height: 100vh; 
-            margin: 0; 
-            font-family: sans-serif; 
-        }
-        h1 { font-size: 3rem; letter-spacing: 5px; }
+        :root { --gold: #fbc02d; --dark: #000; --card: #111; --text-dim: #666; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; margin: 0; overflow: hidden; height: 100vh; }
+
+        /* HEADER SIEMPRE VISIBLE */
+        .top-header { height: 100px; border-bottom: 1px solid #222; display: flex; flex-direction: column; justify-content: center; align-items: center; background: #000; position: relative; z-index: 500; }
+        .brand-mini { font-size: 0.6rem; color: #444; letter-spacing: 3px; margin-bottom: 5px; text-transform: uppercase; }
+        .local-title { font-size: 1.6rem; color: var(--gold); font-weight: 800; text-transform: uppercase; margin: 0; }
+
+        /* BOTÓN DE PERFIL */
+        .profile-corner { position: absolute; right: 20px; top: 25px; width: 50px; height: 50px; border-radius: 50%; border: 2px solid #333; cursor: pointer; display: flex; align-items: center; justify-content: center; background: #111; overflow: hidden; transition: 0.3s; }
+        .profile-corner i { font-size: 1.4rem; color: var(--gold); }
+
+        /* VISTA INICIAL */
+        #main-wrapper { height: calc(100vh - 100px); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; }
+        .btn-box { width: 280px; padding: 20px; background: #111; border: 1px solid #333; color: white; border-radius: 12px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 15px; transition: 0.3s; }
+        .btn-box:hover { border-color: var(--gold); }
+        .btn-sucursales { border-color: var(--gold); color: var(--gold); }
+
+        /* PANTALLAS OCULTAS */
+        #pantalla-perfil, #pantalla-matriz { position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background: #000; z-index: 2000; display: none; flex-direction: column; }
+
+        /* NAVEGACIÓN HORIZONTAL */
+        .nav-perfil-horizontal { display: flex; gap: 10px; padding: 15px; background: #0a0a0a; border-bottom: 1px solid #222; overflow-x: auto; margin-top: 100px; }
+        .nav-perfil-horizontal::-webkit-scrollbar { display: none; }
+        .btn-nav-perfil { padding: 10px 20px; background: #111; border: 1px solid #333; color: var(--text-dim); border-radius: 20px; cursor: pointer; font-size: 0.7rem; font-weight: bold; text-transform: uppercase; white-space: nowrap; }
+        .btn-nav-perfil.active { border-color: var(--gold); color: var(--gold); }
+
+        /* FORMULARIOS Y CONTENIDO */
+        .content-area { flex-grow: 1; padding: 30px; display: flex; flex-direction: column; align-items: center; overflow-y: auto; }
+        .card-form { background: #0d0d0d; border: 1px solid #222; border-radius: 15px; width: 100%; max-width: 450px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .input-group { margin-bottom: 15px; text-align: left; }
+        .input-group label { display: block; font-size: 0.7rem; color: #555; margin-bottom: 5px; text-transform: uppercase; }
+        .input-field { width: 100%; padding: 12px; background: #000; border: 1px solid #333; color: white; border-radius: 8px; box-sizing: border-box; outline: none; transition: 0.3s; }
+        .input-field:focus { border-color: var(--gold); }
+        .btn-action { width: 100%; padding: 15px; background: var(--gold); color: black; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; transition: 0.3s; }
+        .btn-action:hover { background: #eab120; transform: translateY(-2px); }
+
+        .btn-back { position: fixed; bottom: 30px; left: 30px; background: var(--gold); color: black; border: none; width: 55px; height: 55px; border-radius: 50%; cursor: pointer; z-index: 3000; font-size: 1.2rem; }
     </style>
 </head>
 <body>
 
-    <h1 id="mensaje">CONECTANDO...</h1>
+<div class="top-header">
+    <div class="brand-mini">J.A.D.I REPAIZ</div>
+    <h1 class="local-title">TU LOCAL</h1>
+    <div class="profile-corner" onclick="abrirPerfil()">
+        <i class="fas fa-user-cog"></i>
+    </div>
+</div>
 
-    <script>
-        // CONFIGURACIÓN DIRECTA
-        const firebaseConfig = {
-            apiKey: "AIzaSyAKPxGtonv8Ynwj-PsmwjrkX-JN_KMSSyt",
-            authDomain: "jadi-repaiz.firebaseapp.com",
-            databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com",
-            projectId: "jadi-repaiz",
-            storageBucket: "jadi-repaiz.firebasestorage.app",
-            messagingSenderId: "847134630000",
-            appId: "1:847134630000:web:0b780eaeda63b991d554b5"
-        };
+<div id="main-wrapper">
+    <button class="btn-box btn-sucursales" onclick="abrirMatriz()">
+        <i class="fas fa-city"></i> SUCURSALES
+    </button>
+    <button class="btn-box" style="color:#ff4444; border-color:#441111;" onclick="cerrarSesion()">
+        <i class="fas fa-sign-out-alt"></i> CERRAR SESIÓN
+    </button>
+</div>
 
-        // INICIALIZAR
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
+<div id="pantalla-perfil">
+    <div class="nav-perfil-horizontal">
+        <button class="btn-nav-perfil active" onclick="seccionPerfil(this, 'seguridad')">Seguridad</button>
+        <button class="btn-nav-perfil" onclick="seccionPerfil(this, 'ubicacion')">Ubicación</button>
+        <button class="btn-nav-perfil" onclick="seccionPerfil(this, 'personal')">Info Personal</button>
+        <button class="btn-nav-perfil" onclick="seccionPerfil(this, 'adicionales')">Adicionales</button>
+    </div>
+    <div class="content-area">
+        <div class="card-form">
+            <h2 id="titulo-perfil" style="color:var(--gold); margin-top:0;">SEGURIDAD</h2>
+            <hr border="0" style="border-top:1px solid #222; margin: 15px 0;">
+            <div id="body-perfil">
+                </div>
+        </div>
+    </div>
+    <button class="btn-back" onclick="regresar()"><i class="fas fa-arrow-left"></i></button>
+</div>
+
+<div id="pantalla-matriz">
+    <div class="nav-perfil-horizontal">
+        <button class="btn-nav-perfil active">INVENTARIO</button>
+        <button class="btn-nav-perfil">PERSONAL</button>
+        <button class="btn-nav-perfil">VENTA</button>
+    </div>
+    <div class="content-area">
+        <h1 style="color:var(--gold); font-size: 3rem; letter-spacing: 10px;">HOLA</h1>
+    </div>
+    <button class="btn-back" onclick="regresar()"><i class="fas fa-arrow-left"></i></button>
+</div>
+
+<script>
+    window.onload = function() {
+        document.getElementById('main-wrapper').style.display = 'flex';
+    };
+
+    function abrirPerfil() {
+        document.getElementById('pantalla-perfil').style.display = 'flex';
+        seccionPerfil(document.querySelector('.btn-nav-perfil'), 'seguridad');
+    }
+
+    function abrirMatriz() {
+        document.getElementById('pantalla-matriz').style.display = 'flex';
+    }
+
+    function regresar() {
+        document.getElementById('pantalla-perfil').style.display = 'none';
+        document.getElementById('pantalla-matriz').style.display = 'none';
+        document.getElementById('main-wrapper').style.display = 'flex';
+    }
+
+    function seccionPerfil(btn, tipo) {
+        document.querySelectorAll('.btn-nav-perfil').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const body = document.getElementById('body-perfil');
+        const titulo = document.getElementById('titulo-perfil');
+        titulo.innerText = tipo.toUpperCase();
+
+        if(tipo === 'seguridad') {
+            body.innerHTML = `
+                <div class="input-group"><label>Contraseña Actual</label><input type="password" id="p1" class="input-field" placeholder="••••••••"></div>
+                <div class="input-group"><label>Nueva Contraseña</label><input type="password" id="p2" class="input-field" placeholder="Mínimo 6 caracteres"></div>
+                <div class="input-group"><label>Confirmar Nueva</label><input type="password" id="p3" class="input-field" placeholder="Repite la clave"></div>
+                <button class="btn-action" onclick="actualizarPassword()"><i class="fas fa-shield-alt"></i> ACTUALIZAR EN BASE DE DATOS</button>`;
+        } else if(tipo === 'ubicacion') {
+            body.innerHTML = `<div class="input-group"><label>Dirección del Local</label><input type="text" class="input-field" placeholder="Ej: Av. Central 123"></div><button class="btn-action">GUARDAR UBICACIÓN</button>`;
+        } else if(tipo === 'personal') {
+            body.innerHTML = `<div class="input-group"><label>Nombre del Dueño</label><input type="text" class="input-field" placeholder="Tu nombre"></div><button class="btn-action">ACTUALIZAR DATOS</button>`;
+        } else {
+            body.innerHTML = `<p style="color:#444; text-align:center;">Próximamente...</p>`;
+        }
+    }
+
+    // LÓGICA DE FIREBASE PARA CONTRASEÑA
+    async function actualizarPassword() {
+        const actual = document.getElementById('p1').value;
+        const nueva = document.getElementById('p2').value;
+        const confirma = document.getElementById('p3').value;
+
+        if (!actual || !nueva || !confirma) {
+            alert("Pana, llena todos los campos.");
+            return;
+        }
+        if (nueva !== confirma) {
+            alert("La nueva contraseña no coincide.");
+            return;
         }
 
-        // PRUEBA DE ENTRADA
-        firebase.auth().onAuthStateChanged((user) => {
-            if (user) {
-                document.getElementById('mensaje').innerText = "HOLA, " + user.email.split('@')[0].toUpperCase();
-            } else {
-                document.getElementById('mensaje').innerText = "HOLA (SIN SESIÓN)";
-            }
-        });
-    </script>
+        const user = firebase.auth().currentUser;
+        if (!user) {
+            alert("No hay una sesión activa.");
+            return;
+        }
+
+        const credencial = firebase.auth.EmailAuthProvider.credential(user.email, actual);
+
+        try {
+            await user.reauthenticateWithCredential(credencial);
+            await user.updatePassword(nueva);
+            alert("¡Fino! Contraseña cambiada en Firebase.");
+            document.getElementById('p1').value = "";
+            document.getElementById('p2').value = "";
+            document.getElementById('p3').value = "";
+        } catch (error) {
+            if (error.code === 'auth/wrong-password') alert("La clave actual no es correcta.");
+            else alert("Error: " + error.message);
+        }
+    }
+
+    function cerrarSesion() {
+        if(confirm("¿Cerrar sesión en J.A.D.I?")) {
+            firebase.auth().signOut().then(() => {
+                window.location.href = "index.html";
+            });
+        }
+    }
+</script>
+
 </body>
 </html>
