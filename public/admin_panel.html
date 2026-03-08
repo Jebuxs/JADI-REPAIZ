@@ -3,40 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DB JADI - VISUALIZACIÓN TOTAL</title>
+    <title>J.A.D.I - Tabla Maestra</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { background: #000; color: #fff; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 15px; }
-        h2 { color: #fbc02d; text-align: center; text-transform: uppercase; letter-spacing: 2px; }
-        #estado { text-align: center; font-size: 0.8rem; color: #666; margin-bottom: 20px; }
+        :root { --gold: #fbc02d; --dark: #000; --card: #111; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; margin: 0; padding: 10px; }
+        .container { max-width: 1100px; margin: auto; }
+        h2 { color: var(--gold); text-align: center; text-transform: uppercase; letter-spacing: 2px; margin: 20px 0; }
         
-        .card { 
-            background: #111; border: 1px solid #333; border-radius: 15px; 
-            padding: 18px; margin-bottom: 15px; border-left: 5px solid #fbc02d;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        .table-container { 
+            background: var(--card); border-radius: 12px; border: 1px solid #333; 
+            overflow-x: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
         }
-        .nombre { color: #fbc02d; font-weight: bold; font-size: 1.2rem; display: block; border-bottom: 1px solid #222; padding-bottom: 5px; margin-bottom: 10px; }
         
-        .grid-datos { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.85rem; }
-        .dato-item { color: #888; }
-        .dato-item b { color: #ddd; display: block; font-size: 0.75rem; text-transform: uppercase; }
+        table { width: 100%; border-collapse: collapse; min-width: 900px; }
+        th { background: #1a1a1a; color: var(--gold); text-align: left; padding: 15px; font-size: 0.75rem; text-transform: uppercase; border-bottom: 2px solid #333; }
+        td { padding: 12px 15px; border-bottom: 1px solid #222; font-size: 0.85rem; color: #ccc; }
         
-        .btn-del { 
-            background: #441111; color: #ff6666; border: 1px solid #662222; 
-            padding: 10px; border-radius: 8px; width: 100%; margin-top: 15px; 
-            font-weight: bold; cursor: pointer; transition: 0.3s;
-        }
-        .btn-del:active { background: #ff4444; color: white; }
+        tr:hover { background: #161616; }
+        .pass-tag { font-family: monospace; background: #000; padding: 3px 6px; border-radius: 4px; color: #888; }
+        .rol-badge { background: #222; color: var(--gold); padding: 4px 8px; border-radius: 5px; font-weight: bold; font-size: 0.7rem; }
+        
+        .btn-del { color: #ff4444; background: none; border: 1px solid #442222; padding: 8px; border-radius: 6px; cursor: pointer; transition: 0.2s; }
+        .btn-del:hover { background: #ff4444; color: white; }
+        
+        #status { text-align: center; font-size: 0.8rem; color: #666; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
-    <h2>DATABASE J.A.D.I</h2>
-    <div id="estado">Sincronizando registros...</div>
+<div class="container">
+    <h2><i class="fas fa-database"></i> PANEL DE CONTROL J.A.D.I</h2>
+    <div id="status">Sincronizando con la nube...</div>
 
-    <div id="contenedor-usuarios">
-        </div>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Teléfono / ID</th>
+                    <th>Contraseña</th>
+                    <th>Rol</th>
+                    <th>Empresa / Taller</th>
+                    <th>Registro</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody id="lista-usuarios">
+                <tr><td colspan="7" style="text-align:center; padding:40px;">Buscando registros...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
 
 <script>
     const firebaseConfig = {
@@ -47,48 +67,48 @@
     const db = firebase.database();
 
     db.ref('usuarios').on('value', (snap) => {
-        const contenedor = document.getElementById('contenedor-usuarios');
-        const estado = document.getElementById('estado');
-        contenedor.innerHTML = "";
+        const tbody = document.getElementById('lista-usuarios');
+        const status = document.getElementById('status');
+        tbody.innerHTML = "";
         
         if (snap.exists()) {
-            estado.innerText = "Sincronizado: " + snap.numChildren() + " usuarios encontrados";
+            status.innerText = snap.numChildren() + " Usuarios detectados en us-central1";
             snap.forEach((child) => {
                 const u = child.val();
                 const id = child.key;
                 
-                // MAPEO INTELIGENTE: Busca el dato en cualquier nombre posible
-                const nombre = u.nombre || u.userName || "Sin Nombre";
-                const telefono = u.telefono || u.phone || id;
+                // BUSCADOR INTELIGENTE DE CAMPOS (Mapeo)
+                const nombre = u.nombre || u.userName || "---";
+                const tel = u.telefono || u.phone || id;
                 const clave = u.pass || u.password || u.clave || "---";
                 const rol = u.rolCodigo || u.rol || u.tipo || "USER";
-                const empresa = u.empresaNombre || u.empresa || u.taller || "JADI CENTRAL";
-                const fecha = u.fecha_ingreso || u.registro || "Antiguo";
-                const uid = u.uid || u.user_id || "N/A";
+                const empresa = u.empresaNombre || u.empresa || u.taller || "JADI CORP";
+                const fecha = u.fecha_ingreso || u.registro || "Manual";
 
-                contenedor.innerHTML += `
-                    <div class="card">
-                        <span class="nombre">${nombre.toUpperCase()}</span>
-                        <div class="grid-datos">
-                            <div class="dato-item"><b>Teléfono/ID</b>${telefono}</div>
-                            <div class="dato-item"><b>Contraseña</b>${clave}</div>
-                            <div class="dato-item"><b>Rol de Usuario</b>${rol}</div>
-                            <div class="dato-item"><b>UID Sistema</b>${uid}</div>
-                            <div class="dato-item"><b>Asignado a</b>${empresa}</div>
-                            <div class="dato-item"><b>Fecha Registro</b>${fecha}</div>
-                        </div>
-                        <button class="btn-del" onclick="eliminar('${id}')">ELIMINAR CUENTA</button>
-                    </div>
+                tbody.innerHTML += `
+                    <tr>
+                        <td style="color:white; font-weight:bold;">${nombre}</td>
+                        <td>${tel}</td>
+                        <td><span class="pass-tag">${clave}</span></td>
+                        <td><span class="rol-badge">${rol}</span></td>
+                        <td>${empresa}</td>
+                        <td style="font-size:0.7rem; color:#555;">${fecha}</td>
+                        <td>
+                            <button class="btn-del" onclick="eliminar('${id}')" title="Eliminar">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </td>
+                    </tr>
                 `;
             });
         } else {
-            estado.innerText = "Base de datos vacía";
-            contenedor.innerHTML = "<p style='text-align:center; color:#444;'>No hay registros en /usuarios</p>";
+            status.innerText = "No hay usuarios registrados.";
+            tbody.innerHTML = "<tr><td colspan='7' style='text-align:center;'>Sin datos.</td></tr>";
         }
     });
 
     function eliminar(id) {
-        if(confirm("¿Estás seguro de borrar permanentemente este usuario?")) {
+        if(confirm("¿Eliminar permanentemente al usuario " + id + "?")) {
             db.ref('usuarios/' + id).remove();
         }
     }
