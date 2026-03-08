@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ventas J.A.D.I - Proveedor</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --gold: #fbc02d; --dark: #000; --card: #111; }
+        body { font-family: sans-serif; background: var(--dark); color: white; margin: 0; padding: 15px; }
+        .header-venta { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        
+        .search-box { margin: 20px 0; position: relative; }
+        .input-search { width: 100%; padding: 15px; border-radius: 25px; border: 1px solid var(--gold); background: #000; color: white; box-sizing: border-box; font-size: 1rem; }
+
+        .lista-productos { margin-top: 10px; }
+        .item-venta { background: var(--card); padding: 15px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #222; }
+        
+        .btn-vender { background: var(--gold); color: black; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .badge-stock { font-size: 0.7rem; background: #333; padding: 3px 7px; border-radius: 5px; color: var(--gold); }
+        
+        #carrito-flotante { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 400px; background: var(--gold); color: black; padding: 15px; border-radius: 15px; display: none; justify-content: space-between; align-items: center; font-weight: bold; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+    </style>
+</head>
+<body>
+
+<div class="header-venta">
+    <span><i class="fas fa-user"></i> <span id="nombre-vendedor">---</span></span>
+    <button onclick="location.href='admin_panel.html'" style="background:none; border:none; color:var(--gold);"><i class="fas fa-cog"></i></button>
+</div>
+
+<div class="search-box">
+    <input type="text" id="busqueda" class="input-search" placeholder="🔍 Buscar suela o material..." onkeyup="filtrarProductos()">
+</div>
+
+<div class="lista-productos" id="contenedor-ventas">
+    </div>
+
+<div id="carrito-flotante" onclick="finalizarVenta()">
+    <span>🛒 <span id="items-count">0</span> Items Seleccionados</span>
+    <span id="total-venta">$0.00</span>
+</div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyAKPxG1osuR9hsj-PsmwJrzK-3W_XM1UyU",
+        databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com",
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const session = JSON.parse(localStorage.getItem('session_jadi'));
+    const empresaID = session.empresaID;
+    document.getElementById('nombre-vendedor').innerText = session.nombre;
+
+    let productosData = [];
+    let carrito = [];
+
+    // 1. CARGAR PRODUCTOS DESDE EL INVENTARIO QUE CREAMOS
+    function cargarProductosVenta() {
+        db.ref('Ecosistema_JADI/Inventarios/' + empresaID).on('value', snap => {
+            const container = document.getElementById('contenedor-ventas');
+            container.innerHTML = "";
+            productosData = [];
+
+            snap.forEach(child => {
+                const p = child.val();
+                p.id = child.key; // Guardamos el ID de Firebase para el descuento
+                productosData.push(p);
+
+                container.innerHTML += `
+                    <div class="item-venta">
+                        <div>
+                            <div style="font-weight:bold">${p.nombre}</div>
+                            <div class="badge-stock">${p.total_unidades} pares disp.</div>
+                        </div>
+                        <div style="text-align:right">
+                            <div style="margin-bottom:5px">$${parseFloat(p.precio_venta).toFixed(2)}</div>
+                            <button class="btn-vender" onclick="agregarAlCarrito('${p.id}', '${p.nombre}', ${p.precio_venta}, ${p.total_unidades})">
+                                <i class="fas fa-plus"></i> Agregar
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+        });
+    }
+
+    // 2. LÓGICA DEL CARRITO
+    function agregarAlCarrito(id, nombre, precio, stock) {
+        if(stock <= 0) return alert("¡Sin stock disponible!");
+        
+        carrito.push({ id, nombre, precio });
+        actualizarUI();
+    }
+
+    function actualizarUI() {
+        const float = document.getElementById('carrito-flotante');
+        const count = document.getElementById('items-count');
+        const totalTxt = document.getElementById('total-venta');
+
+        if(carrito.length > 0) {
+            float.style.display = 'flex';
+            count.innerText = carrito.length;
+            const total = carrito.reduce((sum, item) => sum + parseFloat(item.precio), 0);
+            totalTxt.innerText = "$" + total.toFixed(2);
+        } else {
+            float.style.display = 'none';
+        }
+    }
+
+    // 3. DESCONTAR DEL INVENTARIO Y GUARDAR VENTA
+    async function finalizarVenta() {
+        if(!confirm("¿Confirmar venta y descontar stock?")) return;
+
+        for(let item of carrito) {
+            const refProd = db.ref(`Ecosistema_JADI/Inventarios/${empresaID}/${item.id}`);
+            
+            // Leemos el stock actual para restar 1 unidad
+            const snap = await refProd.once('value');
+            const data = snap.val();
+            
+            let nuevoTotal = data.total_unidades - 1;
+            
+            // Lógica simple: si restamos unidades, también ajustamos bultos si es necesario
+            // (Esta es una versión base, luego podemos hacerla más compleja)
+            await refProd.update({
+                total_unidades: nuevoTotal
+            });
+        }
+
+        // Guardar el registro de la venta para los reportes
+        const ventaRef = db.ref(`Ecosistema_JADI/Ventas/${empresaID}`).push();
+        await ventaRef.set({
+            fecha: new Date().toLocaleString(),
+            vendedor: session.nombre,
+            items: carrito,
+            total: carrito.reduce((sum, i) => sum + parseFloat(i.precio), 0)
+        });
+
+        alert("¡Venta realizada con éxito!");
+        carrito = [];
+        actualizarUI();
+    }
+
+    cargarProductosVenta();
+</script>
+</body>
+</html>

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Empleados - J.A.D.I</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --gold: #fbc02d; --dark: #000; --card: #111; }
+        body { font-family: sans-serif; background: var(--dark); color: white; margin: 0; padding: 15px; }
+        .back-btn { color: var(--gold); text-decoration: none; display: inline-block; margin-bottom: 20px; }
+        .empleado-card { background: var(--card); border-radius: 12px; padding: 15px; margin-bottom: 15px; border: 1px solid #222; }
+        .nombre-emp { font-size: 1.1rem; font-weight: bold; color: var(--gold); margin: 0; }
+        .rol-emp { font-size: 0.8rem; color: #888; text-transform: uppercase; letter-spacing: 1px; }
+        .permisos-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; border-top: 1px solid #222; padding-top: 10px; }
+        .permiso-item { display: flex; align-items: center; justify-content: space-between; font-size: 0.85rem; }
+        
+        /* Switch Estilo JADI */
+        .switch { position: relative; display: inline-block; width: 40px; height: 20px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .4s; border-radius: 20px; }
+        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--gold); }
+        input:checked + .slider:before { transform: translateX(20px); background-color: black; }
+    </style>
+</head>
+<body>
+
+<a href="admin_panel.html" class="back-btn"><i class="fas fa-arrow-left"></i> Volver al Panel</a>
+<h2>Gestión de Personal</h2>
+<p style="color: #666; font-size: 0.9rem;">Activa los módulos a los que cada empleado puede acceder.</p>
+
+<div id="lista-empleados">
+    </div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyAKPxG1osuR9hsj-PsmwJrzK-3W_XM1UyU",
+        databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com",
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const session = JSON.parse(localStorage.getItem('session_jadi'));
+    const empresaID = session.empresaID;
+
+    // ESCUCHAR EMPLEADOS DE ESTA EMPRESA
+    function cargarEmpleados() {
+        // Buscamos en el nodo usuarios a todos los que pertenezcan a esta empresa
+        db.ref('usuarios').orderByChild('empresaID').equalTo(empresaID).on('value', snap => {
+            const container = document.getElementById('lista-empleados');
+            container.innerHTML = "";
+            
+            snap.forEach(child => {
+                const emp = child.val();
+                if (emp.rolCodigo === 'DUEÑO') return; // No mostrar al dueño en la lista
+
+                const card = `
+                    <div class="empleado-card">
+                        <p class="rol-emp">${emp.sucursalID || 'Sin sucursal'}</p>
+                        <p class="nombre-emp">${emp.nombre}</p>
+                        <p style="margin:0; font-size:0.8rem">${emp.telefono}</p>
+                        
+                        <div class="permisos-grid">
+                            <div class="permiso-item">
+                                <span>Ventas</span>
+                                <label class="switch">
+                                    <input type="checkbox" ${emp.permisos?.ventas ? 'checked' : ''} 
+                                    onchange="actualizarPermiso('${child.key}', 'ventas', this.checked)">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="permiso-item">
+                                <span>Inventario</span>
+                                <label class="switch">
+                                    <input type="checkbox" ${emp.permisos?.bodega ? 'checked' : ''} 
+                                    onchange="actualizarPermiso('${child.key}', 'bodega', this.checked)">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="permiso-item">
+                                <span>Créditos</span>
+                                <label class="switch">
+                                    <input type="checkbox" ${emp.permisos?.creditos ? 'checked' : ''} 
+                                    onchange="actualizarPermiso('${child.key}', 'creditos', this.checked)">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += card;
+            });
+        });
+    }
+
+    async function actualizarPermiso(userKey, campo, valor) {
+        try {
+            await db.ref('usuarios/' + userKey + '/permisos/' + campo).set(valor);
+            console.log("Permiso actualizado");
+        } catch (e) {
+            alert("Error al actualizar permiso");
+        }
+    }
+
+    cargarEmpleados();
+</script>
+</body>
+</html>

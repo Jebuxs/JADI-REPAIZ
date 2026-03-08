@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nuevo Pedido - J.A.D.I</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --gold: #fbc02d; --dark: #000; --card: #111; }
+        body { font-family: sans-serif; background: var(--dark); color: white; margin: 0; padding: 15px; }
+        .back-btn { color: var(--gold); text-decoration: none; display: block; margin-bottom: 20px; }
+        
+        .form-pedido { background: var(--card); padding: 20px; border-radius: 15px; border: 1px solid #333; }
+        .input-j { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #444; background: #000; color: white; box-sizing: border-box; }
+        
+        /* Foto Previa */
+        #preview-foto { width: 100%; height: 200px; background: #222; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; border: 1px dashed var(--gold); overflow: hidden; }
+        #preview-foto img { width: 100%; height: 100%; object-fit: cover; }
+
+        .btn-save { width: 100%; padding: 15px; background: var(--gold); border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 1rem; }
+    </style>
+</head>
+<body>
+
+<a href="zapateros.html" class="back-btn"><i class="fas fa-arrow-left"></i> Volver al Taller</a>
+
+<h3>📥 Registrar Ingreso</h3>
+
+<div class="form-pedido">
+    <div id="preview-foto" onclick="document.getElementById('file-input').click()">
+        <span id="txt-preview"><i class="fas fa-camera"></i> Toca para añadir foto</span>
+        <img id="img-ready" style="display:none">
+    </div>
+    <input type="file" id="file-input" style="display:none" accept="image/*" onchange="procesarFoto(event)">
+
+    <input type="text" id="p-cliente" class="input-j" placeholder="Nombre del Cliente">
+    <input type="tel" id="p-tel" class="input-j" placeholder="WhatsApp (ej: 099xxxxxxx)">
+    <textarea id="p-desc" class="input-j" rows="3" placeholder="Descripción del trabajo (ej: Cambio de suelas, costura...)"></textarea>
+    <input type="number" id="p-abono" class="input-j" placeholder="Abono ($)">
+    <input type="number" id="p-total" class="input-j" placeholder="Precio Total ($)">
+
+    <button class="btn-save" onclick="guardarPedido()">
+        <i class="fas fa-save"></i> REGISTRAR TRABAJO
+    </button>
+</div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyAKPxG1osuR9hsj-PsmwJrzK-3W_XM1UyU",
+        databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com",
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const session = JSON.parse(localStorage.getItem('session_jadi'));
+    const empresaID = session.empresaID;
+    let fotoBase64 = "";
+
+    // Convertir foto a texto para guardarla rápido (Base64)
+    function procesarFoto(event) {
+        const reader = new FileReader();
+        reader.onload = function() {
+            const img = document.getElementById('img-ready');
+            img.src = reader.result;
+            img.style.display = "block";
+            document.getElementById('txt-preview').style.display = "none";
+            fotoBase64 = reader.result;
+        }
+        reader.readAsDataURL(event.target.files[0]);
+    }
+
+    async function guardarPedido() {
+        const cliente = document.getElementById('p-cliente').value;
+        const tel = document.getElementById('p-tel').value.replace(/\D/g,'');
+        const desc = document.getElementById('p-desc').value;
+        const total = document.getElementById('p-total').value;
+        const abono = document.getElementById('p-abono').value || 0;
+
+        if(!cliente || !tel || !desc || !total) return alert("Faltan datos importantes");
+
+        const idPedido = "ORD-" + Math.floor(1000 + Math.random() * 9000); // Genera ID corto
+
+        const pedidoObj = {
+            cliente: cliente,
+            telefono: tel,
+            descripcion: desc,
+            total: total,
+            abono: abono,
+            saldo: total - abono,
+            estado: "Recibido",
+            foto: fotoBase64,
+            fecha_ingreso: new Date().toLocaleString(),
+            maestro: session.nombre
+        };
+
+        try {
+            // Guardamos en la ruta del ecosistema
+            await db.ref(`Ecosistema_JADI/Pedidos/${empresaID}/${idPedido}`).set(pedidoObj);
+            
+            alert("Pedido guardado exitosamente");
+
+            // Enviar mensaje de confirmación al cliente
+            if(confirm("¿Enviar ticket digital por WhatsApp?")) {
+                const msg = `*J.A.D.I - TICKET DIGITAL*%0A---%0A*Orden:* ${idPedido}%0A*Cliente:* ${cliente}%0A*Trabajo:* ${desc}%0A*Total:* $${total}%0A*Abono:* $${abono}%0A*Saldo:* $${total-abono}%0A---%0A_Te avisaremos cuando esté listo._`;
+                window.open(`https://wa.me/${tel}?text=${msg}`, '_blank');
+            }
+
+            window.location.href = 'zapateros.html';
+        } catch (e) {
+            alert("Error: " + e.message);
+        }
+    }
+</script>
+</body>
+</html>

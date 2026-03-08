@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>J.A.D.I - Repartidores</title>
+    <style>
+        body { font-family: sans-serif; background: #e3f2fd; padding: 15px; }
+        .order-card { background: white; padding: 15px; border-radius: 10px; margin-bottom: 10px; border-left: 5px solid #1976d2; }
+        .btn-gps { background: #1976d2; color: white; border: none; padding: 10px; border-radius: 5px; width: 100%; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <h2>🚚 Ruta de Entregas</h2>
+    <div id="listaEntregas">
+        <div class="order-card">
+            <h4>Pedido #001 (Simulado)</h4>
+            <p>Retirar en: Bodega "El Rey"</p>
+            <p>Entregar en: Taller "Don Juan"</p>
+            <button class="btn-gps" onclick="alert('Abriendo Google Maps...')">📍 Ver Ruta GPS</button>
+            <button class="btn-gps" style="background:green; margin-top:5px;">✅ Confirmar Entrega</button>
+        </div>
+    </div>
+    <a href="index.html">Volver al Menú</a>
+</body>
+</html>

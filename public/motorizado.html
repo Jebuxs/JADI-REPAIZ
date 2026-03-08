@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>J.A.D.I - Logística y Rutas</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <style>
+        :root { --primary: #fbc02d; --bg: #121212; --card: #1e1e1e; }
+        body { font-family: sans-serif; background: var(--bg); color: white; padding: 15px; }
+        .route-card { background: var(--card); padding: 15px; border-radius: 12px; margin-bottom: 15px; border-left: 5px solid #ff5722; }
+        .step { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px; position: relative; }
+        .step-icon { width: 25px; height: 25px; background: var(--primary); color: black; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.8rem; }
+        .step-info { flex: 1; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        .status-badge { font-size: 0.7rem; padding: 3px 8px; border-radius: 10px; background: #444; color: var(--primary); }
+        button { width: 100%; padding: 12px; background: var(--primary); border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .map-sim { width: 100%; height: 150px; background: #2a2a2a; border-radius: 10px; margin: 10px 0; display: flex; align-items: center; justify-content: center; color: #666; font-style: italic; }
+    </style>
+</head>
+<body>
+
+    <h2>🚚 Hoja de Ruta Inteligente</h2>
+    <p style="font-size: 0.9rem; color: #aaa;">Optimizado para múltiples recolecciones</p>
+
+    <div id="ruta-optimizada">
+        <div class="route-card">
+            <div class="status-badge">EN CURSO</div>
+            <h3>Ruta #102 - Sector Norte</h3>
+            
+            <div class="step">
+                <div class="step-icon">1</div>
+                <div class="step-info">
+                    <strong>Recoger Calzado</strong><br>
+                    <small>📍 Casa Cliente: Calle A y Av. B</small>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-icon">2</div>
+                <div class="step-info">
+                    <strong>Retirar Insumo (Planta)</strong><br>
+                    <small>🏪 Proveedor: Bodega X22 (Piso 2)</small>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-icon">3</div>
+                <div class="step-info">
+                    <strong>Entrega Final</strong><br>
+                    <small>🛠️ Zapatería: Taller Don Juan</small>
+                </div>
+            </div>
+
+            <div class="map-sim">🗺️ [Mapa con ruta trazada cargando...]</div>
+            <button onclick="completarRuta()">FINALIZAR RECORRIDO</button>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAKPxG1osuR9hsj-PsmwJrzK-3W_XM1UyU",
+            authDomain: "jadi-repaiz.firebaseapp.com",
+            databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com",
+            projectId: "jadi-repaiz",
+            storageBucket: "jadi-repaiz.appspot.com",
+            appId: "1:847134630000:web:0b7806aeda52b991d554b5"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        function completarRuta() {
+            alert("Ruta completada. Se ha notificado al cliente y al zapatero.");
+            // Aquí se actualizaría el estado en Firebase para que el cliente vea que su zapato llegó al taller
+        }
+    </script>
+</body>
+</html>
