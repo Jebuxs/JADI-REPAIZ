@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MASTER CONTROL - J.A.D.I</title>
+    <title>CONTROL TOTAL J.A.D.I</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -12,56 +12,60 @@
         body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; margin: 0; padding: 10px; }
         .container { max-width: 1000px; margin: auto; }
         .admin-box { background: var(--card); padding: 15px; border-radius: 15px; border: 1px solid #333; margin-bottom: 20px; overflow-x: auto; }
-        h2 { color: var(--gold); text-align: center; letter-spacing: 2px; }
+        h2 { color: var(--gold); text-align: center; letter-spacing: 2px; text-transform: uppercase; }
         table { width: 100%; border-collapse: collapse; min-width: 800px; }
-        th { text-align: left; color: var(--gold); border-bottom: 2px solid #333; padding: 10px; font-size: 0.8rem; }
-        td { padding: 10px; border-bottom: 1px solid #222; font-size: 0.85rem; }
-        .btn-del { background: var(--red); color: white; border: none; padding: 8px; border-radius: 5px; cursor: pointer; }
+        th { text-align: left; color: var(--gold); border-bottom: 2px solid #333; padding: 12px; font-size: 0.8rem; }
+        td { padding: 12px; border-bottom: 1px solid #222; font-size: 0.85rem; }
+        .btn-del { background: var(--red); color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; }
         #login-admin { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark); z-index: 1000; display: none; justify-content: center; align-items: center; }
-        .login-card { background: var(--card); padding: 30px; border-radius: 20px; border: 1px solid var(--gold); text-align: center; width: 300px; }
-        input[type="password"] { width: 100%; padding: 12px; margin: 15px 0; border-radius: 8px; border: 1px solid #333; background: #000; color: white; text-align: center; }
+        .login-card { background: var(--card); padding: 30px; border-radius: 20px; border: 1px solid var(--gold); text-align: center; width: 320px; }
+        input[type="password"] { width: 100%; padding: 12px; margin: 15px 0; border-radius: 8px; border: 1px solid #333; background: #000; color: white; text-align: center; font-size: 1.2rem; }
     </style>
 </head>
 <body>
 
 <div id="login-admin">
     <div class="login-card">
-        <h3 style="color:var(--gold);">LLAVE MAESTRA</h3>
+        <i class="fas fa-shield-alt" style="font-size: 3rem; color: var(--gold);"></i>
+        <h3 style="color:var(--gold); margin-top:10px;">LLAVE MAESTRA</h3>
         <input type="password" id="master-key" placeholder="••••••••">
-        <button onclick="verificarMaestro()" style="background:var(--gold); border:none; padding:12px; width:100%; border-radius:8px; font-weight:bold; cursor:pointer;">ACCEDER</button>
+        <button onclick="verificarMaestro()" style="background:var(--gold); border:none; padding:12px; width:100%; border-radius:8px; font-weight:bold; cursor:pointer;">ACCEDER AL SISTEMA</button>
     </div>
 </div>
 
 <div class="container">
-    <button onclick="localStorage.removeItem('master_auth'); location.reload();" style="float:right; background:none; color:#444; border:1px solid #444; cursor:pointer; padding:5px; font-size: 0.7rem;">Cerrar Master</button>
+    <button onclick="localStorage.removeItem('master_auth'); location.reload();" style="float:right; background:none; color:#444; border:1px solid #444; cursor:pointer; padding:5px; font-size: 0.7rem; border-radius:5px;">Cerrar Master</button>
     <h2>BASE DE DATOS J.A.D.I</h2>
 
     <div class="admin-box">
         <table>
             <thead>
                 <tr>
-                    <th>Nombre</th>
-                    <th>ID / Celular</th>
-                    <th>Clave</th>
+                    <th>Nombre de Usuario</th>
+                    <th>Teléfono / ID</th>
+                    <th>Contraseña</th>
                     <th>Rol</th>
                     <th>Empresa / Ingreso</th>
                     <th>Acción</th>
                 </tr>
             </thead>
             <tbody id="lista-usuarios">
-                <tr><td colspan="6" style="text-align:center;">Conectando con us-central1...</td></tr>
+                <tr><td colspan="6" style="text-align:center; padding:50px;">Conectando con el servidor de J.A.D.I...</td></tr>
             </tbody>
         </table>
     </div>
 </div>
 
 <script>
-    // ESTA ES LA CONFIGURACIÓN QUE MANDA
+    // ESTA CONFIGURACIÓN TIENE TODO LO QUE FALTA PARA QUE FUNCIONE EN US-CENTRAL1
     const firebaseConfig = {
         apiKey: "AIzaSyAKPxG1osuR9hsj-PsmwJrzK-3W_XM1UyU",
-        databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com", // URL de tu imagen
-        projectId: "jadi-repaiz"
+        authDomain: "jadi-repaiz.firebaseapp.com",
+        databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com",
+        projectId: "jadi-repaiz",
+        storageBucket: "jadi-repaiz.appspot.com"
     };
+    
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
@@ -85,13 +89,13 @@
     }
 
     function cargarUsuarios() {
-        // Leemos la carpeta 'usuarios' que vimos en tu captura
+        // Apuntamos directo a la carpeta 'usuarios' de tu imagen
         db.ref('usuarios').on('value', snap => {
             const tbody = document.getElementById('lista-usuarios');
             tbody.innerHTML = "";
 
             if(!snap.exists()) {
-                tbody.innerHTML = "<tr><td colspan='6' style='text-align:center;'>No hay datos en la ruta /usuarios</td></tr>";
+                tbody.innerHTML = "<tr><td colspan='6' style='text-align:center; padding:30px;'>No se encontraron registros en la ruta /usuarios</td></tr>";
                 return;
             }
 
@@ -101,20 +105,19 @@
 
                 tbody.innerHTML += `
                     <tr>
-                        <td style="color:var(--gold); font-weight:bold;">${u.nombre || 'N/A'}</td>
+                        <td style="color:var(--gold); font-weight:bold; font-size:1rem;">${u.nombre || 'N/A'}</td>
                         <td>
-                            <small style="color:#666;">UID: ${u.uid || '---'}</small><br>
+                            <span style="color:#888; font-size:0.7rem;">TEL / UID:</span><br>
                             ${u.telefono || id}
                         </td>
-                        <td style="font-family:monospace; font-size:0.8rem;">${u.pass || '---'}</td>
+                        <td><code style="background:#000; padding:2px 5px; color:#aaa;">${u.pass || '---'}</code></td>
                         <td style="font-weight:bold; color:var(--gold);">${u.rolCodigo || '??'}</td>
                         <td style="font-size:0.75rem; color:#888;">
-                            Empresa: ${u.empresaNombre || 'N/A'}<br>
-                            ID Emp: ${u.empresaID || '---'}<br>
-                            Ingreso: ${u.fecha_ingreso || '---'}
+                            ${u.empresaNombre || 'J.A.D.I'}<br>
+                            <span style="color:#555;">Desde: ${u.fecha_ingreso || 'No reg.'}</span>
                         </td>
                         <td>
-                            <button class="btn-del" onclick="eliminarUsuario('${id}')">
+                            <button class="btn-del" onclick="eliminarUsuario('${id}')" title="Borrar Cuenta">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </td>
@@ -125,7 +128,7 @@
     }
 
     function eliminarUsuario(id) {
-        if(confirm("¿Seguro que quieres borrar al usuario con ID " + id + "?")) {
+        if(confirm("¿Seguro que quieres borrar permanentemente este usuario?")) {
             db.ref('usuarios/' + id).remove();
         }
     }
