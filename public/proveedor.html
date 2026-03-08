@@ -17,15 +17,15 @@
         .top-header { height: 100px; border-bottom: 1px solid #222; display: flex; flex-direction: column; justify-content: center; align-items: center; background: #000; }
         .local-title { font-size: 1.6rem; color: var(--gold); font-weight: 800; text-transform: uppercase; margin: 0; }
         #main-wrapper { height: calc(100vh - 100px); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; }
-        .btn-box { width: 280px; padding: 20px; background: #111; border: 1px solid #333; color: white; border-radius: 12px; cursor: pointer; font-weight: bold; }
+        .btn-box { width: 280px; padding: 20px; background: #111; border: 1px solid #333; color: white; border-radius: 12px; cursor: pointer; font-weight: bold; text-align: center; }
         #pantalla-perfil { position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background: #000; z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; }
         .card-form { background: #0d0d0d; border: 1px solid #222; border-radius: 15px; width: 90%; max-width: 400px; padding: 25px; }
         .input-group { margin-bottom: 15px; text-align: left; position: relative; }
         .input-group label { display: block; font-size: 0.7rem; color: #555; margin-bottom: 5px; text-transform: uppercase; }
         .input-field { width: 100%; padding: 12px; background: #000; border: 1px solid #333; color: white; border-radius: 8px; box-sizing: border-box; outline: none; }
-        .toggle-eye { position: absolute; right: 12px; top: 32px; color: #444; cursor: pointer; }
-        .btn-action { width: 100%; padding: 15px; background: var(--gold); color: black; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; text-transform: uppercase; }
-        .btn-back { position: fixed; bottom: 30px; left: 30px; background: var(--gold); color: black; border: none; width: 55px; height: 55px; border-radius: 50%; cursor: pointer; z-index: 3000; }
+        .toggle-eye { position: absolute; right: 12px; top: 35px; color: #444; cursor: pointer; font-size: 1.1rem; }
+        .btn-action { width: 100%; padding: 15px; background: var(--gold); color: black; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .btn-back { position: fixed; bottom: 30px; left: 30px; background: var(--gold); color: black; border: none; width: 55px; height: 55px; border-radius: 50%; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -36,7 +36,7 @@
 </div>
 
 <div id="main-wrapper">
-    <button class="btn-box" onclick="abrirPerfil()">MI PERFIL</button>
+    <button class="btn-box" onclick="abrirPerfil()"><i class="fas fa-user-shield"></i> MI PERFIL</button>
     <button class="btn-box" style="color:#ff4444; border-color:#441111;" onclick="cerrarSesion()">CERRAR SESIÓN</button>
 </div>
 
@@ -45,12 +45,12 @@
         <h2 style="color:var(--gold); margin-top:0;">SEGURIDAD</h2>
         <div class="input-group">
             <label>Contraseña Actual</label>
-            <input type="password" id="p1" class="input-field">
+            <input type="password" id="p1" class="input-field" placeholder="••••••••">
             <i class="fas fa-eye toggle-eye" onclick="togglePass('p1', this)"></i>
         </div>
         <div class="input-group">
             <label>Nueva Contraseña</label>
-            <input type="password" id="p2" class="input-field">
+            <input type="password" id="p2" class="input-field" placeholder="Nueva clave">
             <i class="fas fa-eye toggle-eye" onclick="togglePass('p2', this)"></i>
         </div>
         <button class="btn-action" onclick="actualizarPassword()">ACTUALIZAR</button>
@@ -59,7 +59,7 @@
 </div>
 
 <script>
-    // CONFIGURACIÓN INTEGRADA PARA EVITAR ERRORES DE RED
+    // 2. CONFIGURACIÓN CENTRALIZADA (DATOS REALES)
     const firebaseConfig = {
         apiKey: "AIzaSyAKPxGtonv8Ynwj-PsmwjrkX-JN_KMSSyt",
         authDomain: "jadi-repaiz.firebaseapp.com",
@@ -70,6 +70,7 @@
         appId: "1:847134630000:web:0b780eaeda63b991d554b5"
     };
 
+    // Inicializar Firebase solo si no está iniciado
     if (!firebase.apps.length) {
         firebase.initializeApp(firebaseConfig);
     }
@@ -77,18 +78,35 @@
     const auth = firebase.auth();
     const db = firebase.database();
 
+    // 3. LÓGICA DE CONEXIÓN Y DATOS
     window.onload = () => {
-        // Escuchar cambios en el nombre del local
+        // Verificar si hay sesión
+        auth.onAuthStateChanged((user) => {
+            if (!user) {
+                console.log("No hay usuario autenticado.");
+                // Si quieres que te saque si no hay sesión, descomenta la siguiente línea:
+                // window.location.href = "index.html"; 
+            } else {
+                console.log("Sesión activa de:", user.email);
+            }
+        });
+
+        // Sincronizar el nombre del local desde la DB
         db.ref('Ecosistema_JADI/Configuracion/nombreLocal').on('value', (snapshot) => {
-            document.getElementById('display-nombre-local').innerText = snapshot.exists() ? snapshot.val().toUpperCase() : "JADI REPAIZ";
+            if(snapshot.exists()) {
+                document.getElementById('display-nombre-local').innerText = snapshot.val().toUpperCase();
+            } else {
+                document.getElementById('display-nombre-local').innerText = "JADI REPAIZ";
+            }
         }, (error) => {
-            console.error("Error de Database:", error);
-            if(error.code === "PERMISSION_DENIED") {
-                alert("Aviso: Ajusta las reglas en la consola de Firebase a 'auth != null'.");
+            console.error("Error de Red/Permisos:", error.message);
+            if(error.message.includes("network error")) {
+                alert("Error de red: Firebase no permite la conexión desde este dominio.");
             }
         });
     };
 
+    // 4. FUNCIONES DE INTERFAZ
     function abrirPerfil() { document.getElementById('pantalla-perfil').style.display = 'flex'; }
     function regresar() { document.getElementById('pantalla-perfil').style.display = 'none'; }
 
@@ -109,17 +127,17 @@
         const p1 = document.getElementById('p1').value;
         const p2 = document.getElementById('p2').value;
 
-        if (!p1 || !p2) return alert("Completa los campos.");
+        if (!p1 || !p2) return alert("Pana, llena ambos campos.");
 
         const user = auth.currentUser;
-        if (!user) return alert("Sesión expirada. Ingresa de nuevo.");
+        if (!user) return alert("Sesión no detectada. Por favor reingresa.");
 
         const cred = firebase.auth.EmailAuthProvider.credential(user.email, p1);
 
         try {
             await user.reauthenticateWithCredential(cred);
             await user.updatePassword(p2);
-            alert("✅ Se cambió la contraseña correctamente. La sesión sigue activa.");
+            alert("✅ ¡Éxito! La contraseña ha sido actualizada. Se mantiene la sesión abierta.");
             document.getElementById('p1').value = "";
             document.getElementById('p2').value = "";
         } catch (error) {
@@ -128,7 +146,9 @@
     }
 
     function cerrarSesion() {
-        auth.signOut().then(() => { window.location.href = "index.html"; });
+        if(confirm("¿Cerrar sesión?")) {
+            auth.signOut().then(() => { window.location.href = "index.html"; });
+        }
     }
 </script>
 </body>
