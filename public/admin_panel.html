@@ -3,99 +3,153 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel Admin - J.A.D.I</title>
+    <title>J.A.D.I - Panel Maestro</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --gold: #fbc02d; --dark: #000; --card: #111; }
+        :root { --gold: #fbc02d; --dark: #000; --card: #111; --red: #ff4444; }
         body { font-family: sans-serif; background: var(--dark); color: white; margin: 0; padding: 20px; }
-        .header { text-align: center; border-bottom: 2px solid var(--gold); padding-bottom: 15px; margin-bottom: 20px; }
-        .info-card { background: var(--card); padding: 15px; border-radius: 15px; border-left: 5px solid var(--gold); margin-bottom: 20px; }
-        .id-badge { background: var(--gold); color: black; padding: 5px 10px; border-radius: 5px; font-weight: bold; font-family: monospace; }
-        .grid-menu { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .menu-item { background: var(--card); padding: 20px; border-radius: 15px; text-align: center; border: 1px solid #222; cursor: pointer; transition: 0.3s; }
-        .menu-item i { font-size: 2rem; color: var(--gold); margin-bottom: 10px; }
-        .menu-item:active { transform: scale(0.95); }
-        .btn-logout { margin-top: 30px; color: #ff5252; cursor: pointer; text-align: center; width: 100%; display: block; text-decoration: none; }
+        .header { text-align: center; border-bottom: 2px solid var(--gold); padding-bottom: 20px; margin-bottom: 30px; }
+        .container { max-width: 600px; margin: auto; }
+        
+        /* Sección de Control */
+        .admin-box { background: var(--card); padding: 20px; border-radius: 15px; border: 1px solid #333; margin-bottom: 20px; }
+        h3 { color: var(--gold); margin-top: 0; }
+        input, select { 
+            width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #222; 
+            background: #000; color: white; box-sizing: border-box; 
+        }
+        
+        .btn { width: 100%; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .btn-add { background: var(--gold); color: black; }
+        .btn-del { background: var(--red); color: white; padding: 5px 10px; width: auto; font-size: 0.8rem; }
+
+        /* Tabla de Usuarios */
+        .user-list { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        .user-list th { text-align: left; color: var(--gold); border-bottom: 1px solid #333; padding: 10px; }
+        .user-list td { padding: 10px; border-bottom: 1px solid #111; font-size: 0.9rem; }
+        
+        /* Acceso Secreto */
+        #login-admin { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: var(--dark); z-index: 1000; display: flex; justify-content: center; align-items: center; 
+        }
     </style>
 </head>
 <body>
 
-<div class="header">
-    <h2 id="txt-nombre-empresa">Cargando...</h2>
-    <p>ID Empresa: <span class="id-badge" id="txt-id-empresa">---</span></p>
-</div>
-
-<div class="info-card">
-    <p style="margin:0; font-size: 0.8rem; color: #888;">Bienvenido, Dueño:</p>
-    <h3 id="txt-nombre-dueño" style="margin:5px 0 0 0">---</h3>
-</div>
-
-<div class="grid-menu">
-    <div class="menu-item" onclick="location.href='gestion_sucursales.html'">
-        <i class="fas fa-store"></i>
-        <div>Sucursales</div>
-    </div>
-    <div class="menu-item" onclick="location.href='inventario_bultos.html'">
-        <i class="fas fa-boxes"></i>
-        <div>Inventario Flexible</div>
-    </div>
-    <div class="menu-item" onclick="abrirConfiguracion()">
-        <i class="fas fa-percentage"></i>
-        <div>Comisiones Marketplace</div>
-    </div>
-    <div class="menu-item" onclick="location.href='reportes.html'">
-        <i class="fas fa-chart-line"></i>
-        <div>Reportes</div>
+<div id="login-admin">
+    <div style="text-align:center; width: 80%; max-width: 300px;">
+        <h2 style="color:var(--gold);">ACCESO MAESTRO</h2>
+        <input type="password" id="master-key" placeholder="Introduce la Clave Maestra">
+        <button class="btn btn-add" onclick="verificarMaestro()">ENTRAR AL SISTEMA</button>
     </div>
 </div>
 
-<a class="btn-logout" onclick="cerrarSesion()">Cerrar Sesión</a>
+<div class="container">
+    <div class="header">
+        <h1>MASTER CONTROL J.A.D.I</h1>
+        <p>Gestión Global de Usuarios y Empresas</p>
+    </div>
+
+    <div class="admin-box">
+        <h3>Crear Cuenta Nueva</h3>
+        <input type="text" id="new-nombre" placeholder="Nombre completo">
+        <input type="tel" id="new-tel" placeholder="Teléfono (servirá como ID)">
+        <input type="text" id="new-pass" placeholder="Contraseña">
+        <select id="new-rol">
+            <option value="TND">Tienda (Ventas)</option>
+            <option value="ZPT">Taller (Reparación)</option>
+            <option value="EMP">Empleado</option>
+            <option value="ADM">Administrador</option>
+        </select>
+        <button class="btn btn-add" onclick="crearCuenta()">CREAR USUARIO AHORA</button>
+    </div>
+
+    <div class="admin-box">
+        <h3>Usuarios en el Sistema</h3>
+        <table class="user-list">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Rol</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody id="lista-usuarios">
+                </tbody>
+        </table>
+    </div>
+</div>
 
 <script>
     const firebaseConfig = {
         apiKey: "AIzaSyAKPxG1osuR9hsj-PsmwJrzK-3W_XM1UyU",
+        authDomain: "jadi-repaiz.firebaseapp.com",
         databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com",
+        projectId: "jadi-repaiz",
+        storageBucket: "jadi-repaiz.appspot.com",
+        appId: "1:847134630000:web:0b7806aeda52b991d554b5"
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    const session = JSON.parse(localStorage.getItem('session_jadi'));
+    // CLAVE MAESTRA (Cámbiala aquí si quieres)
+    const CLAVE_SECRETA = "JADI2026"; 
 
-    if (!session || session.rolCodigo === 'CLN') {
-        window.location.href = 'index.html';
-    } else {
-        cargarDatosPanel();
-    }
-
-    async function cargarDatosPanel() {
-        const snap = await db.ref('Ecosistema_JADI/Config_Empresas/' + session.empresaID + '/datos').once('value');
-        const datosEmpresa = snap.val();
-        if (datosEmpresa) {
-            document.getElementById('txt-nombre-empresa').innerText = datosEmpresa.nombre;
-            document.getElementById('txt-id-empresa').innerText = session.empresaID;
-            document.getElementById('txt-nombre-dueño').innerText = session.nombre;
+    function verificarMaestro() {
+        const pass = document.getElementById('master-key').value;
+        if(pass === CLAVE_SECRETA) {
+            document.getElementById('login-admin').style.display = 'none';
+            cargarUsuarios();
+        } else {
+            alert("Clave Maestra Incorrecta");
         }
     }
 
-    async function abrirConfiguracion() {
-        const extraCli = prompt("Porcentaje EXTRA que paga el CLIENTE (Ej: 10 para cobrar $16.50 sobre $15):", "10");
-        const descZap = prompt("Porcentaje que se descuenta al ZAPATERO (Ej: 10 para pagar $13.50 sobre $15):", "10");
+    function crearCuenta() {
+        const nom = document.getElementById('new-nombre').value;
+        const tel = document.getElementById('new-tel').value;
+        const pas = document.getElementById('new-pass').value;
+        const rol = document.getElementById('new-rol').value;
 
-        if (extraCli && descZap) {
-            await db.ref('Ecosistema_JADI/Config_Global/Comisiones').set({
-                cliente_plus: parseFloat(extraCli),
-                zapatero_fee: parseFloat(descZap),
-                actualizado_por: session.nombre
+        if(!nom || !tel || !pas) return alert("Faltan datos");
+
+        db.ref('usuarios/' + tel).set({
+            nombre: nom,
+            telefono: tel,
+            pass: pas,
+            rolCodigo: rol,
+            empresaID: "JADI-CORP",
+            uid: rol + tel.slice(-4)
+        }).then(() => {
+            alert("Cuenta creada exitosamente");
+            document.querySelectorAll('input').forEach(i => i.value = "");
+        });
+    }
+
+    function cargarUsuarios() {
+        db.ref('usuarios').on('value', snap => {
+            const tabla = document.getElementById('lista-usuarios');
+            tabla.innerHTML = "";
+            snap.forEach(user => {
+                const u = user.val();
+                tabla.innerHTML += `
+                    <tr>
+                        <td>${u.nombre}<br><small style="color:#666">${u.telefono}</small></td>
+                        <td>${u.rolCodigo}</td>
+                        <td><button class="btn-del" onclick="eliminarUsuario('${user.key}')">Eliminar</button></td>
+                    </tr>
+                `;
             });
-            alert("Configuración de Marketplace guardada correctamente.");
-        }
+        });
     }
 
-    function cerrarSesion() {
-        localStorage.removeItem('session_jadi');
-        window.location.href = 'index.html';
+    function eliminarUsuario(id) {
+        if(confirm("¿Estás seguro de eliminar esta cuenta?")) {
+            db.ref('usuarios/' + id).remove();
+        }
     }
 </script>
 </body>
