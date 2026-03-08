@@ -3,94 +3,125 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>J.A.D.I REPAIZ - Inicio de Sesión</title>
+    <title>J.A.D.I REPAIZ - Ecosistema</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --gold: #fbc02d; --dark: #000; --input-bg: #111; }
+        :root { --gold: #fbc02d; --dark: #000; --card: #0a0a0a; --gray: #888; }
         body { 
-            font-family: -apple-system, sans-serif; 
-            background: var(--dark); color: white; 
+            font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; 
             margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh;
+            overflow-x: hidden;
         }
-        .container { width: 90%; max-width: 380px; text-align: center; padding: 20px; }
-        .logo { font-size: 3.5rem; font-weight: bold; color: var(--gold); margin-bottom: 5px; }
-        .tagline { color: #888; font-size: 0.8rem; margin-bottom: 30px; letter-spacing: 2px; }
+        .container { width: 90%; max-width: 400px; padding: 30px; position: relative; transition: all 0.4s ease; }
+        
+        /* Estética Premium */
+        .logo { font-size: 4rem; font-weight: 900; color: var(--gold); letter-spacing: -2px; margin-bottom: 0; }
+        .tagline { font-size: 0.75rem; color: var(--gray); letter-spacing: 4px; text-transform: uppercase; margin-bottom: 40px; }
+        
+        .box { background: var(--card); padding: 25px; border-radius: 20px; border: 1px solid #1a1a1a; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         
         input { 
-            width: 100%; padding: 15px; border-radius: 12px; border: 1px solid #333; 
-            background: var(--input-bg); color: white; font-size: 1rem; box-sizing: border-box; margin-bottom: 12px;
+            width: 100%; padding: 16px; margin-bottom: 12px; border-radius: 12px; border: 1px solid #222; 
+            background: #111; color: white; font-size: 1rem; box-sizing: border-box; transition: 0.3s;
         }
-        input:focus { border-color: var(--gold); outline: none; }
+        input:focus { border-color: var(--gold); outline: none; background: #151515; }
 
-        .btn-main { 
-            width: 100%; padding: 15px; border-radius: 12px; border: none; 
-            background: var(--gold); color: black; font-weight: bold; font-size: 1.1rem; cursor: pointer;
+        .btn-gold { 
+            width: 100%; padding: 16px; border-radius: 12px; border: none; 
+            background: var(--gold); color: black; font-weight: bold; font-size: 1rem; cursor: pointer;
+            text-transform: uppercase; letter-spacing: 1px;
         }
         
         .btn-google {
-            width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #444; 
-            background: white; color: black; font-weight: bold; margin-bottom: 15px;
+            width: 100%; padding: 14px; border-radius: 12px; border: 1px solid #333; 
+            background: white; color: black; font-weight: bold; margin-top: 15px;
             display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer;
         }
 
-        .forgot-pass { display: block; margin-top: 15px; color: #888; text-decoration: none; font-size: 0.9rem; }
-        .forgot-pass:hover { color: var(--gold); }
+        .text-link { color: var(--gray); font-size: 0.9rem; text-decoration: none; cursor: pointer; display: inline-block; margin-top: 15px; }
+        .text-link:hover { color: var(--gold); }
 
-        .divider { margin: 20px 0; display: flex; align-items: center; color: #444; font-size: 0.8rem; }
-        .divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: #222; margin: 0 10px; }
+        /* Animaciones de cambio de vista */
+        .hidden { display: none; }
+        .fade-in { animation: fadeIn 0.5s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        .footer-links { margin-top: 30px; border-top: 1px solid #222; padding-top: 20px; }
-        .footer-links a { color: var(--gold); text-decoration: none; font-weight: bold; cursor: pointer; }
-        
-        #reg-section { display: none; } /* Oculto al inicio */
-        #loader { display: none; margin-top: 10px; color: var(--gold); }
+        .role-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .role-item { 
+            background: #111; border: 1px solid #222; padding: 15px; border-radius: 12px; cursor: pointer;
+            transition: 0.3s; text-align: center;
+        }
+        .role-item:hover { border-color: var(--gold); background: #1a1a1a; }
+        .role-item i { font-size: 1.5rem; color: var(--gold); display: block; margin-bottom: 5px; }
+        .role-item span { font-size: 0.8rem; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="logo">J.A.D.I</div>
-    <div class="tagline">ECOSISTEMA DE CALZADO</div>
+<div class="container fade-in">
+    <div style="text-align: center;">
+        <div class="logo">JADI</div>
+        <div class="tagline">Repaiz & Store</div>
+    </div>
 
-    <div id="login-section">
-        <input type="text" id="user-input" placeholder="Usuario, Teléfono o Email">
-        <input type="password" id="pass-input" placeholder="Contraseña">
-        <button class="btn-main" onclick="iniciarSesion()">INICIAR SESIÓN</button>
-        <a href="#" class="forgot-pass" onclick="recuperarClave()">¿Has olvidado tu contraseña?</a>
+    <div id="view-login" class="box fade-in">
+        <input type="text" id="login-user" placeholder="Teléfono, Email o ID">
+        <input type="password" id="login-pass" placeholder="Contraseña">
+        <button class="btn-gold" onclick="iniciarSesion()">Entrar</button>
         
-        <div class="footer-links">
-            <p style="color:#666; font-size: 0.9rem;">¿Eres nuevo?</p>
-            <a onclick="mostrarRegistro()">REGISTRARSE AHORA</a>
+        <div style="text-align: center;">
+            <a class="text-link" onclick="recuperarClave()">¿Olvidaste tu clave?</a>
+            <hr style="border: 0; border-top: 1px solid #222; margin: 20px 0;">
+            <p style="font-size: 0.85rem; color: #555;">¿No tienes cuenta?</p>
+            <button class="btn-gold" style="background: transparent; border: 1px solid var(--gold); color: var(--gold);" onclick="cambiarVista('view-register')">Crear Nueva Cuenta</button>
         </div>
     </div>
 
-    <div id="reg-section">
-        <h3 style="color: var(--gold);">Crear Cuenta</h3>
-        <p style="color: #888; font-size: 0.9rem; margin-bottom: 20px;">Elige cómo quieres registrarte:</p>
+    <div id="view-register" class="box hidden fade-in">
+        <h3 style="margin-top:0; text-align:center;">Registrarse</h3>
         
         <button class="btn-google" onclick="loginConGoogle()">
             <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" width="18">
-            Registrarse con Gmail
+            Únete con Gmail
         </button>
 
-        <div class="divider">O MANUALMENTE</div>
+        <div style="margin: 20px 0; display: flex; align-items: center; color: #333; font-size: 0.8rem;">
+            <div style="flex:1; height:1px; background:#222;"></div>
+            <div style="margin:0 10px;">O MANUALMENTE</div>
+            <div style="flex:1; height:1px; background:#222;"></div>
+        </div>
 
-        <button class="btn-main" style="background: transparent; border: 1px solid var(--gold); color: var(--gold);" onclick="location.href='registro_empleado.html'">
-            Registro con Teléfono
-        </button>
+        <p style="font-size: 0.8rem; color: var(--gold); margin-bottom: 10px;">¿Qué tipo de negocio eres?</p>
+        <div class="role-grid">
+            <div class="role-item" onclick="irARegistro('TND')">
+                <i class="fas fa-store"></i>
+                <span>TIENDA<br><small>(Venta Nueva)</small></span>
+            </div>
+            <div class="role-item" onclick="irARegistro('ZPT')">
+                <i class="fas fa-hammer"></i>
+                <span>TALLER<br><small>(Reparación)</small></span>
+            </div>
+            <div class="role-item" onclick="irARegistro('EMP')">
+                <i class="fas fa-user-tie"></i>
+                <span>EMPLEADO<br><small>(Colaborador)</small></span>
+            </div>
+            <div class="role-item" onclick="location.href='cliente.html'">
+                <i class="fas fa-search"></i>
+                <span>CLIENTE<br><small>(Rastreo)</small></span>
+            </div>
+        </div>
 
-        <div class="footer-links">
-            <a onclick="mostrarLogin()"><i class="fas fa-arrow-left"></i> Volver al Inicio</a>
+        <div style="text-align: center; margin-top: 20px;">
+            <a class="text-link" onclick="cambiarVista('view-login')">Ya tengo cuenta</a>
         </div>
     </div>
-
-    <div id="loader"><i class="fas fa-spinner fa-spin"></i> Procesando...</div>
 </div>
 
 <script>
+    // Tu Configuración Firebase
     const firebaseConfig = {
         apiKey: "AIzaSyAKPxG1osuR9hsj-PsmwJrzK-3W_XM1UyU",
         authDomain: "jadi-repaiz.firebaseapp.com",
@@ -103,41 +134,39 @@
     const db = firebase.database();
     const auth = firebase.auth();
 
-    const paginas = { 'ADM': 'admin_panel.html', 'ZPT': 'zapatero.html', 'EMP': 'proveedor.html', 'DEL': 'motorizado.html', 'TND': 'tienda_ventas.html' };
+    // Rutas
+    const paginas = { 'ADM': 'admin_panel.html', 'ZPT': 'zapatero.html', 'EMP': 'proveedor.html', 'TND': 'tienda_ventas.html' };
 
-    // CAMBIAR VISTAS
-    function mostrarRegistro() {
-        document.getElementById('login-section').style.display = 'none';
-        document.getElementById('reg-section').style.display = 'block';
+    function cambiarVista(id) {
+        document.getElementById('view-login').classList.add('hidden');
+        document.getElementById('view-register').classList.add('hidden');
+        document.getElementById(id).classList.remove('hidden');
     }
 
-    function mostrarLogin() {
-        document.getElementById('reg-section').style.display = 'none';
-        document.getElementById('login-section').style.display = 'block';
+    function irARegistro(rol) {
+        window.location.href = `registro_empleado.html?rol=${rol}`;
     }
 
-    // LOGIN MANUAL
     async function iniciarSesion() {
-        const input = document.getElementById('user-input').value.trim();
-        const pass = document.getElementById('pass-input').value.trim();
-        if(!input || !pass) return alert("Llena todos los campos.");
-        document.getElementById('loader').style.display = "block";
-        try {
-            const snap = await db.ref('usuarios').once('value');
-            let encontrado = null;
-            snap.forEach(child => {
-                const u = child.val();
-                if((u.telefono === input || u.correo === input || u.uid === input.toUpperCase()) && u.pass === pass) { encontrado = u; }
-            });
-            if(encontrado) {
-                localStorage.setItem('session_jadi', JSON.stringify(encontrado));
-                window.location.href = paginas[encontrado.rolCodigo] || 'index.html';
-            } else { alert("Datos incorrectos."); }
-        } catch (e) { alert("Error de red."); }
-        finally { document.getElementById('loader').style.display = "none"; }
+        const input = document.getElementById('login-user').value.trim();
+        const pass = document.getElementById('login-pass').value.trim();
+        if(!input || !pass) return alert("Completa los datos");
+
+        const snap = await db.ref('usuarios').once('value');
+        let user = null;
+        snap.forEach(c => {
+            const u = c.val();
+            if((u.telefono === input || u.correo === input || u.uid === input.toUpperCase()) && u.pass === pass) user = u;
+        });
+
+        if(user) {
+            localStorage.setItem('session_jadi', JSON.stringify(user));
+            window.location.href = paginas[user.rolCodigo] || 'index.html';
+        } else {
+            alert("Usuario o clave incorrecta");
+        }
     }
 
-    // GMAIL REGISTRO/LOGIN
     function loginConGoogle() {
         const provider = new firebase.auth.GoogleAuthProvider();
         auth.signInWithPopup(provider).then(async (result) => {
@@ -149,19 +178,15 @@
                 localStorage.setItem('session_jadi', JSON.stringify(user));
                 window.location.href = paginas[user.rolCodigo];
             } else {
-                alert("Cuenta vinculada. Ahora completa tu perfil.");
-                window.location.href = 'registro_empleado.html?email=' + email;
+                alert("Cuenta Google vinculada. Elige tu rol para terminar.");
+                cambiarVista('view-register');
             }
-        }).catch(() => alert("Error con Google."));
+        });
     }
 
     function recuperarClave() {
-        const email = prompt("Introduce tu correo:");
-        if (email) {
-            auth.sendPasswordResetEmail(email)
-                .then(() => alert("Email enviado."))
-                .catch(() => alert("Correo no válido."));
-        }
+        const mail = prompt("Ingresa tu correo:");
+        if(mail) auth.sendPasswordResetEmail(mail).then(() => alert("Email enviado."));
     }
 </script>
 
