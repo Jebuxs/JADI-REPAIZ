@@ -49,17 +49,17 @@
                 </tr>
             </thead>
             <tbody id="lista-usuarios">
-                <tr><td colspan="6" style="text-align:center;">Cargando usuarios desde us-central1...</td></tr>
+                <tr><td colspan="6" style="text-align:center;">Conectando con us-central1...</td></tr>
             </tbody>
         </table>
     </div>
 </div>
 
 <script>
-    // CONFIGURACIÓN CORREGIDA CON TU URL REAL DE LA IMAGEN
+    // ESTA ES LA CONFIGURACIÓN QUE MANDA
     const firebaseConfig = {
         apiKey: "AIzaSyAKPxG1osuR9hsj-PsmwJrzK-3W_XM1UyU",
-        databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com", // Ruta confirmada
+        databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com", // URL de tu imagen
         projectId: "jadi-repaiz"
     };
     firebase.initializeApp(firebaseConfig);
@@ -85,19 +85,19 @@
     }
 
     function cargarUsuarios() {
-        // En tu imagen se ve que la ruta es directamente 'usuarios'
+        // Leemos la carpeta 'usuarios' que vimos en tu captura
         db.ref('usuarios').on('value', snap => {
             const tbody = document.getElementById('lista-usuarios');
             tbody.innerHTML = "";
 
             if(!snap.exists()) {
-                tbody.innerHTML = "<tr><td colspan='6' style='text-align:center;'>No se encontraron usuarios en 'usuarios/'</td></tr>";
+                tbody.innerHTML = "<tr><td colspan='6' style='text-align:center;'>No hay datos en la ruta /usuarios</td></tr>";
                 return;
             }
 
             snap.forEach(child => {
                 const u = child.val();
-                const id = child.key; // Es el número de teléfono
+                const id = child.key; 
 
                 tbody.innerHTML += `
                     <tr>
@@ -111,7 +111,7 @@
                         <td style="font-size:0.75rem; color:#888;">
                             Empresa: ${u.empresaNombre || 'N/A'}<br>
                             ID Emp: ${u.empresaID || '---'}<br>
-                            F. Ingreso: ${u.fecha_ingreso || '---'}
+                            Ingreso: ${u.fecha_ingreso || '---'}
                         </td>
                         <td>
                             <button class="btn-del" onclick="eliminarUsuario('${id}')">
@@ -125,7 +125,7 @@
     }
 
     function eliminarUsuario(id) {
-        if(confirm("¿Seguro que quieres borrar al usuario con teléfono " + id + "?")) {
+        if(confirm("¿Seguro que quieres borrar al usuario con ID " + id + "?")) {
             db.ref('usuarios/' + id).remove();
         }
     }
