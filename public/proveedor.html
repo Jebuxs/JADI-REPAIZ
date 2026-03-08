@@ -7,80 +7,47 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        :root { --gold: #fbc02d; --dark: #000; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; margin: 0; overflow: hidden; height: 100vh; }
-
-        /* EL ENCABEZADO QUE DEBÍAMOS MANTENER */
-        .top-header { position: fixed; top: 0; left: 0; width: 100%; height: 75px; display: flex; justify-content: center; align-items: center; background: var(--dark); border-bottom: 1px solid #222; z-index: 500; }
-        .header-info { text-align: center; }
-        .header-info h1 { margin: 0; font-size: 1.3rem; color: var(--gold); letter-spacing: 2px; text-transform: uppercase; }
-        .header-info span { font-size: 0.75rem; color: #555; font-family: monospace; display: block; margin-top: 2px; }
-
-        .profile-zone { position: fixed; top: 18px; right: 20px; z-index: 501; cursor: pointer; }
-        .profile-img { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--gold); object-fit: cover; }
-
-        /* VISTA DE INICIO (SOLO 2 BOTONES) */
-        #vista-inicio { 
-            height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; padding-top: 75px; box-sizing: border-box;
-        }
-        .btn-menu { 
-            width: 280px; padding: 20px; background: #111; border: 1px solid #333; color: white; border-radius: 15px; cursor: pointer; font-size: 1rem; font-weight: bold; display: flex; align-items: center; gap: 15px; transition: 0.3s;
-        }
-        .btn-sucursales { border-color: var(--gold); color: var(--gold); }
-        .btn-eliminar { color: #ff4444; border-color: #441111; margin-top: 10px; }
-        .btn-menu:hover { transform: translateY(-3px); background: #1a1a1a; }
-
-        /* PANTALLA MATRIZ (EL "HOLA") */
-        #pantalla-matriz { 
-            position: fixed; top: 75px; left: 0; width: 100%; height: calc(100vh - 75px); background: var(--dark); z-index: 1000; display: none; flex-direction: column; align-items: center; justify-content: center;
-        }
-        .txt-hola { font-size: 4.5rem; font-weight: 900; color: var(--gold); letter-spacing: 15px; text-shadow: 0 0 30px rgba(251, 192, 45, 0.4); }
-
-        .btn-back { position: fixed; bottom: 35px; left: 35px; background: var(--gold); color: black; border: none; width: 55px; height: 55px; border-radius: 50%; cursor: pointer; font-size: 1.3rem; box-shadow: 0 5px 15px rgba(0,0,0,0.5); z-index: 1100; }
-    </style>
 </head>
-<body>
+<body style="background-color: #000; color: white; margin: 0; font-family: 'Segoe UI', sans-serif; height: 100vh; overflow: hidden;">
 
-<div class="top-header">
-    <div class="header-info">
-        <h1 id="db-nombre-local">CARGANDO...</h1>
-        <span id="db-id-local">ID: 0000000000</span>
+    <div id="header-fixed" style="position: fixed; top: 0; width: 100%; height: 75px; background: #000; border-bottom: 1px solid #222; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000;">
+        <h1 id="db-nombre-local" style="margin: 0; font-size: 1.2rem; color: #fbc02d; text-transform: uppercase; letter-spacing: 2px;">CARGANDO...</h1>
+        <span id="db-id-local" style="font-size: 0.7rem; color: #555; font-family: monospace;">ID: 0000000000</span>
     </div>
-</div>
 
-<div class="profile-zone" onclick="alert('Editar Perfil')">
-    <img src="https://via.placeholder.com/40" class="profile-img" id="db-foto-perfil">
-</div>
+    <div style="position: fixed; top: 15px; right: 20px; z-index: 1001;">
+        <img id="db-foto-perfil" src="https://via.placeholder.com/40" style="width: 40px; height: 40px; border-radius: 50%; border: 1px solid #fbc02d;">
+    </div>
 
-<div id="vista-inicio">
-    <button class="btn-menu btn-sucursales" onclick="abrirMatriz()">
-        <i class="fas fa-city"></i> SUCURSALES
-    </button>
-    
-    <button class="btn-menu btn-eliminar" onclick="eliminarCuenta()">
-        <i class="fas fa-user-times"></i> ELIMINAR CUENTA
-    </button>
-</div>
+    <div id="vista-inicio" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; gap: 20px;">
+        <button onclick="abrirMatriz()" style="width: 280px; padding: 20px; background: #111; border: 1px solid #fbc02d; color: #fbc02d; border-radius: 15px; cursor: pointer; font-size: 1rem; font-weight: bold; display: flex; align-items: center; gap: 15px;">
+            <i class="fas fa-city"></i> SUCURSALES
+        </button>
+        
+        <button onclick="eliminarCuenta()" style="width: 280px; padding: 20px; background: #111; border: 1px solid #441111; color: #ff4444; border-radius: 15px; cursor: pointer; font-size: 1rem; font-weight: bold; display: flex; align-items: center; gap: 15px;">
+            <i class="fas fa-user-times"></i> ELIMINAR CUENTA
+        </button>
+    </div>
 
-<div id="pantalla-matriz">
-    <div class="txt-hola">HOLA</div>
-    <button class="btn-back" onclick="cerrarMatriz()">
-        <i class="fas fa-arrow-left"></i>
-    </button>
-</div>
+    <div id="pantalla-matriz" style="position: fixed; top: 75px; left: 0; width: 100%; height: calc(100vh - 75px); background: #000; z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center;">
+        <div style="font-size: 5rem; font-weight: 900; color: #fbc02d; letter-spacing: 10px;">HOLA</div>
+        
+        <button onclick="cerrarMatriz()" style="position: fixed; bottom: 30px; left: 30px; background: #fbc02d; color: black; border: none; width: 55px; height: 55px; border-radius: 50%; cursor: pointer; font-size: 1.2rem;">
+            <i class="fas fa-arrow-left"></i>
+        </button>
+    </div>
 
 <script>
-    // CONFIGURACIÓN FIREBASE
+    // FIREBASE
     const firebaseConfig = { databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // PERSISTENCIA: Obtenemos el ID guardado del login anterior
-    const USUARIO_ID = localStorage.getItem('user_id') || "3001234567"; // ID de prueba si no hay uno
+    // PERSISTENCIA DE ID (Asegúrate que el login guarde el ID en localStorage)
+    const USUARIO_ID = localStorage.getItem('user_id') || "3001234567"; 
 
     window.onload = function() {
-        // 1. Cargar datos del encabezado desde Firebase
+        // Cargar datos reales
         db.ref('usuarios/' + USUARIO_ID).on('value', snap => {
             if(snap.exists()) {
                 const data = snap.val();
@@ -89,31 +56,33 @@
             }
         });
 
-        // 2. Verificar si ya estaba en la matriz para no pedir clave
-        if(localStorage.getItem('sesion_matriz') === 'abierta') {
-            abrirMatriz();
+        // REVISAR SI YA ESTABA DENTRO PARA NO PEDIR CLAVE
+        if(localStorage.getItem('sesion_activa') === 'true') {
+            console.log("Sesión mantenida");
+            // Si quieres que entre directo al HOLA al recargar, activa la siguiente línea:
+            // abrirMatriz();
         }
     }
 
     function abrirMatriz() {
-        localStorage.setItem('sesion_matriz', 'abierta');
+        localStorage.setItem('sesion_activa', 'true');
         document.getElementById('vista-inicio').style.display = 'none';
         document.getElementById('pantalla-matriz').style.display = 'flex';
     }
 
     function cerrarMatriz() {
-        localStorage.removeItem('sesion_matriz');
+        // Mantenemos la sesion_activa en true para que no pida login, 
+        // pero volvemos visualmente a los dos botones
         document.getElementById('pantalla-matriz').style.display = 'none';
         document.getElementById('vista-inicio').style.display = 'flex';
     }
 
     function eliminarCuenta() {
-        if(confirm("¿Eliminar este registro permanentemente?")) {
+        if(confirm("¿Seguro que quieres eliminar el registro?")) {
             localStorage.clear();
             window.location.href = "index.html";
         }
     }
 </script>
-
 </body>
 </html>
