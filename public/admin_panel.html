@@ -3,78 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>J.A.D.I - Panel Maestro</title>
+    <title>J.A.D.I - Panel Maestro Total</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root { --gold: #fbc02d; --dark: #000; --card: #111; --red: #ff4444; }
-        body { font-family: sans-serif; background: var(--dark); color: white; margin: 0; padding: 20px; }
-        .header { text-align: center; border-bottom: 2px solid var(--gold); padding-bottom: 20px; margin-bottom: 30px; }
-        .container { max-width: 600px; margin: auto; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; margin: 0; padding: 10px; }
+        .header { text-align: center; border-bottom: 2px solid var(--gold); padding: 20px 0; margin-bottom: 20px; }
+        .container { max-width: 1000px; margin: auto; }
         
-        /* Sección de Control */
-        .admin-box { background: var(--card); padding: 20px; border-radius: 15px; border: 1px solid #333; margin-bottom: 20px; }
-        h3 { color: var(--gold); margin-top: 0; }
-        input, select { 
-            width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #222; 
-            background: #000; color: white; box-sizing: border-box; 
-        }
+        .admin-box { background: var(--card); padding: 20px; border-radius: 15px; border: 1px solid #333; margin-bottom: 20px; overflow-x: auto; }
+        h3 { color: var(--gold); margin-top: 0; display: flex; align-items: center; gap: 10px; }
         
-        .btn { width: 100%; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        .btn-add { background: var(--gold); color: black; }
-        .btn-del { background: var(--red); color: white; padding: 5px 10px; width: auto; font-size: 0.8rem; }
+        /* Tabla Detallada */
+        table { width: 100%; border-collapse: collapse; min-width: 800px; }
+        th { text-align: left; color: var(--gold); border-bottom: 2px solid #333; padding: 12px; font-size: 0.85rem; text-transform: uppercase; }
+        td { padding: 12px; border-bottom: 1px solid #222; font-size: 0.9rem; vertical-align: middle; }
+        
+        .badge { padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: bold; background: #222; color: var(--gold); }
+        .pass-text { font-family: monospace; color: #888; background: #000; padding: 2px 5px; border-radius: 4px; }
+        
+        .btn-del { background: var(--red); color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; transition: 0.3s; }
+        .btn-del:hover { background: #cc0000; transform: scale(1.05); }
 
-        /* Tabla de Usuarios */
-        .user-list { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        .user-list th { text-align: left; color: var(--gold); border-bottom: 1px solid #333; padding: 10px; }
-        .user-list td { padding: 10px; border-bottom: 1px solid #111; font-size: 0.9rem; }
-        
-        /* Acceso Secreto */
-        #login-admin { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: var(--dark); z-index: 1000; display: flex; justify-content: center; align-items: center; 
-        }
+        /* Login Maestro */
+        #login-admin { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark); z-index: 1000; display: flex; justify-content: center; align-items: center; }
+        .login-card { background: var(--card); padding: 40px; border-radius: 20px; border: 1px solid var(--gold); text-align: center; }
+        input[type="password"] { width: 100%; padding: 15px; margin: 20px 0; border-radius: 10px; border: 1px solid #333; background: #000; color: white; text-align: center; font-size: 1.2rem; }
     </style>
 </head>
 <body>
 
 <div id="login-admin">
-    <div style="text-align:center; width: 80%; max-width: 300px;">
-        <h2 style="color:var(--gold);">ACCESO MAESTRO</h2>
-        <input type="password" id="master-key" placeholder="Introduce la Clave Maestra">
-        <button class="btn btn-add" onclick="verificarMaestro()">ENTRAR AL SISTEMA</button>
+    <div class="login-card">
+        <i class="fas fa-user-shield" style="font-size: 3rem; color: var(--gold);"></i>
+        <h2 style="color:var(--gold); margin-top: 15px;">ACCESO MAESTRO</h2>
+        <input type="password" id="master-key" placeholder="••••••••">
+        <button onclick="verificarMaestro()" style="background: var(--gold); color: black; border: none; padding: 15px 40px; border-radius: 10px; font-weight: bold; cursor: pointer; width: 100%;">ENTRAR AL SISTEMA</button>
     </div>
 </div>
 
 <div class="container">
     <div class="header">
-        <h1>MASTER CONTROL J.A.D.I</h1>
-        <p>Gestión Global de Usuarios y Empresas</p>
+        <h1 style="color: var(--gold); margin: 0; letter-spacing: 3px;">DATABASE J.A.D.I</h1>
+        <p style="color: #666; margin: 5px 0 0;">Visualización completa de registros</p>
     </div>
 
     <div class="admin-box">
-        <h3>Crear Cuenta Nueva</h3>
-        <input type="text" id="new-nombre" placeholder="Nombre completo">
-        <input type="tel" id="new-tel" placeholder="Teléfono (servirá como ID)">
-        <input type="text" id="new-pass" placeholder="Contraseña">
-        <select id="new-rol">
-            <option value="TND">Tienda (Ventas)</option>
-            <option value="ZPT">Taller (Reparación)</option>
-            <option value="EMP">Empleado</option>
-            <option value="ADM">Administrador</option>
-        </select>
-        <button class="btn btn-add" onclick="crearCuenta()">CREAR USUARIO AHORA</button>
-    </div>
-
-    <div class="admin-box">
-        <h3>Usuarios en el Sistema</h3>
-        <table class="user-list">
+        <h3><i class="fas fa-users"></i> Listado Total de Usuarios</h3>
+        <table>
             <thead>
                 <tr>
                     <th>Nombre</th>
+                    <th>Teléfono</th>
+                    <th>Contraseña</th>
                     <th>Rol</th>
-                    <th>Acción</th>
+                    <th>UID / Empresa</th>
+                    <th>Acciones</th>
                 </tr>
             </thead>
             <tbody id="lista-usuarios">
@@ -95,7 +81,6 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // CLAVE MAESTRA (Cámbiala aquí si quieres)
     const CLAVE_SECRETA = "JADI2026"; 
 
     function verificarMaestro() {
@@ -108,38 +93,35 @@
         }
     }
 
-    function crearCuenta() {
-        const nom = document.getElementById('new-nombre').value;
-        const tel = document.getElementById('new-tel').value;
-        const pas = document.getElementById('new-pass').value;
-        const rol = document.getElementById('new-rol').value;
-
-        if(!nom || !tel || !pas) return alert("Faltan datos");
-
-        db.ref('usuarios/' + tel).set({
-            nombre: nom,
-            telefono: tel,
-            pass: pas,
-            rolCodigo: rol,
-            empresaID: "JADI-CORP",
-            uid: rol + tel.slice(-4)
-        }).then(() => {
-            alert("Cuenta creada exitosamente");
-            document.querySelectorAll('input').forEach(i => i.value = "");
-        });
-    }
-
     function cargarUsuarios() {
         db.ref('usuarios').on('value', snap => {
             const tabla = document.getElementById('lista-usuarios');
             tabla.innerHTML = "";
+            
+            if(!snap.exists()) {
+                tabla.innerHTML = "<tr><td colspan='6' style='text-align:center; color:#555;'>No hay datos en la base de datos.</td></tr>";
+                return;
+            }
+
             snap.forEach(user => {
                 const u = user.val();
+                const key = user.key;
+                
                 tabla.innerHTML += `
                     <tr>
-                        <td>${u.nombre}<br><small style="color:#666">${u.telefono}</small></td>
-                        <td>${u.rolCodigo}</td>
-                        <td><button class="btn-del" onclick="eliminarUsuario('${user.key}')">Eliminar</button></td>
+                        <td style="font-weight:bold;">${u.nombre || 'N/A'}</td>
+                        <td><a href="tel:${u.telefono}" style="color:white; text-decoration:none;"><i class="fas fa-phone-alt" style="font-size:0.7rem; color:var(--gold);"></i> ${u.telefono}</a></td>
+                        <td><span class="pass-text">${u.pass || '****'}</span></td>
+                        <td><span class="badge">${u.rolCodigo || 'USER'}</span></td>
+                        <td style="font-size: 0.75rem; color: #888;">
+                            ID: ${u.uid || '---'}<br>
+                            Emp: ${u.empresaID || 'SIN EMPRESA'}
+                        </td>
+                        <td>
+                            <button class="btn-del" onclick="eliminarUsuario('${key}')">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </td>
                     </tr>
                 `;
             });
@@ -147,7 +129,7 @@
     }
 
     function eliminarUsuario(id) {
-        if(confirm("¿Estás seguro de eliminar esta cuenta?")) {
+        if(confirm("⚠ ATENCIÓN: ¿Seguro que quieres borrar a este usuario? Esta acción no se puede deshacer.")) {
             db.ref('usuarios/' + id).remove();
         }
     }
