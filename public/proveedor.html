@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>J.A.D.I - Dashboard</title>
+    <title>J.A.D.I REPAIZ - Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --gold: #fbc02d; --dark: #000; --card: #111; }
+        :root { --gold: #fbc02d; --dark: #000; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; margin: 0; overflow: hidden; height: 100vh; }
 
-        /* 1. ENCABEZADO CON JERARQUÍA */
+        /* HEADER CON JERARQUÍA SOLICITADA */
         .top-header { 
-            height: 90px; 
+            height: 100px; 
             border-bottom: 1px solid #222; 
             display: flex; 
             flex-direction: column; 
@@ -19,129 +19,92 @@
             align-items: center; 
             background: #000; 
             position: relative; 
-            z-index: 500; 
         }
         
-        /* Marca J.A.D.I pequeña arriba */
-        .brand-small { 
-            font-size: 0.65rem; 
-            color: #555; 
-            letter-spacing: 4px; 
-            text-transform: uppercase; 
-            margin-bottom: 4px;
-            font-weight: bold;
-        }
+        .brand-mini { font-size: 0.6rem; color: #666; letter-spacing: 3px; margin-bottom: 5px; text-transform: uppercase; }
+        .local-title { font-size: 1.8rem; color: var(--gold); font-weight: 800; text-transform: uppercase; margin: 0; }
 
-        /* Nombre del Local Grande y Llamativo */
-        .local-name-big { 
-            font-size: 1.6rem; 
-            color: var(--gold); 
-            font-weight: 900; 
-            text-transform: uppercase; 
-            letter-spacing: 1px;
-            text-shadow: 0 0 15px rgba(251, 192, 45, 0.2);
+        /* BOTÓN DE PERFIL SUPERIOR DERECHA */
+        .profile-corner { 
+            position: absolute; right: 20px; top: 25px; 
+            width: 50px; height: 50px; border-radius: 50%; 
+            border: 2px solid #333; cursor: pointer; 
+            display: flex; align-items: center; justify-content: center;
+            background: #111; overflow: hidden; transition: 0.3s;
         }
+        .profile-corner:hover { border-color: var(--gold); }
+        .profile-corner i { font-size: 1.4rem; color: #444; }
 
-        /* 2. FOTO DE PERFIL (SUPERIOR DERECHA) */
-        .profile-btn { 
-            position: absolute; 
-            right: 20px; 
-            top: 20px; 
-            width: 45px; 
-            height: 45px; 
-            border-radius: 50%; 
-            border: 2px solid #333; 
-            overflow: hidden; 
-            cursor: pointer; 
-            transition: 0.3s;
-            background: #1a1a1a;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .profile-btn:hover { border-color: var(--gold); transform: scale(1.05); }
-        .profile-btn img { width: 100%; height: 100%; object-fit: cover; }
-        .profile-btn i { color: #444; font-size: 1.2rem; }
-
-        /* VISTA INICIAL (BOTONES CENTRALES) */
-        #vista-inicio { height: calc(100vh - 90px); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; }
-        .btn-menu { width: 280px; padding: 20px; background: #111; border: 1px solid #333; color: white; border-radius: 12px; cursor: pointer; font-size: 1rem; font-weight: bold; display: flex; align-items: center; gap: 15px; }
+        /* CONTENIDO PRINCIPAL */
+        #main-wrapper { height: calc(100vh - 100px); display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        
+        .btn-box { width: 280px; padding: 20px; background: #111; border: 1px solid #333; color: white; border-radius: 12px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 15px; margin-bottom: 15px; }
         .btn-sucursales { border-color: var(--gold); color: var(--gold); }
 
-        /* MATRIZ */
-        #pantalla-matriz { position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background: #000; z-index: 1000; display: none; flex-direction: column; }
-        .tabs-container { display: flex; background: #0a0a0a; padding: 10px; gap: 5px; border-bottom: 1px solid #222; margin-top: 90px; }
-        .tab-btn { flex: 1; padding: 12px; background: #1a1a1a; border: 1px solid #333; color: #666; border-radius: 5px; cursor: pointer; font-size: 0.7rem; font-weight: bold; text-transform: uppercase; }
-        .tab-btn.active { border-color: var(--gold); color: var(--gold); }
+        /* CAPA MATRIZ */
+        #area-matriz { position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background: #000; z-index: 1000; display: none; flex-direction: column; }
+        .tab-bar { display: flex; background: #0a0a0a; padding: 10px; gap: 5px; border-bottom: 1px solid #222; margin-top: 100px; }
+        .tab-item { flex: 1; padding: 12px; background: #111; border: 1px solid #333; color: #555; border-radius: 5px; cursor: pointer; font-size: 0.7rem; font-weight: bold; }
+        .tab-item.active { border-color: var(--gold); color: var(--gold); }
         
-        .work-zone { flex-grow: 1; padding: 20px; display: flex; justify-content: center; }
-        .card-trabajo { background: var(--card); border: 1px solid #222; border-radius: 15px; width: 100%; max-width: 1000px; padding: 30px; text-align: center; }
-        
+        .workspace { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .btn-back { position: fixed; bottom: 30px; left: 30px; background: var(--gold); color: black; border: none; width: 55px; height: 55px; border-radius: 50%; cursor: pointer; z-index: 1100; }
     </style>
 </head>
 <body>
 
 <div class="top-header">
-    <div class="brand-small">J.A.D.I REPAIZ</div>
-    <div class="local-name-big" id="txt-local">NOMBRE DEL LOCAL</div>
+    <div class="brand-mini">J.A.D.I REPAIZ</div>
+    <h1 class="local-title" id="display-local-name">NOMBRE DEL LOCAL</h1>
     
-    <div class="profile-btn" onclick="abrirConfigPerfil()" title="Configuración de Perfil">
-        <i class="fas fa-user"></i>
-        </div>
+    <div class="profile-corner" onclick="alert('Configuración de Perfil')">
+        <i class="fas fa-user-circle"></i>
+    </div>
 </div>
 
-<div id="vista-inicio">
-    <button class="btn-menu btn-sucursales" onclick="abrirMatriz()">
+<div id="main-wrapper">
+    <button class="btn-box btn-sucursales" onclick="abrirMatriz()">
         <i class="fas fa-city"></i> SUCURSALES
     </button>
-    <button class="btn-menu" style="color:#ff4444; border-color:#441111;" onclick="confirm('¿Eliminar cuenta?')">
-        <i class="fas fa-trash-alt"></i> ELIMINAR CUENTA
+    <button class="btn-box" style="color:#ff4444; border-color:#441111;" onclick="cerrarSesion()">
+        <i class="fas fa-sign-out-alt"></i> CERRAR SESIÓN / ELIMINAR
     </button>
 </div>
 
-<div id="pantalla-matriz">
-    <div class="tabs-container">
-        <button class="tab-btn active" onclick="cambiarSeccion(this, 'inventario')">Inventario</button>
-        <button class="tab-btn" onclick="cambiarSeccion(this, 'personal')">Personal</button>
-        <button class="tab-btn" onclick="cambiarSeccion(this, 'venta')">Venta</button>
-        <button class="tab-btn" onclick="cambiarSeccion(this, 'facturas')">Facturación</button>
+<div id="area-matriz">
+    <div class="tab-bar">
+        <button class="tab-item active">INVENTARIO</button>
+        <button class="tab-item">PERSONAL</button>
+        <button class="tab-item">VENTA</button>
+        <button class="tab-item">FACTURACIÓN</button>
     </div>
-
-    <div class="work-zone">
-        <div class="card-trabajo">
-            <h2 id="titulo-seccion" style="color:var(--gold);">Inventario</h2>
-            <div id="contenido-dinamico">
-                <p style="color:#444;">Área de trabajo para el local.</p>
-                <button style="background:var(--gold); border:none; padding:15px 30px; border-radius:8px; font-weight:bold; cursor:pointer;">
-                    CREAR INVENTARIO
-                </button>
-            </div>
-        </div>
+    <div class="workspace">
+        <h2 style="color:var(--gold);">HOLA</h2>
     </div>
-
     <button class="btn-back" onclick="cerrarMatriz()"><i class="fas fa-arrow-left"></i></button>
 </div>
 
 <script>
+    // BLOQUEO DE SESIÓN: Si no hay marca, lo saca al login
+    window.onload = function() {
+        if (localStorage.getItem('sesion_activa') !== 'true') {
+            window.location.href = "index.html"; 
+        }
+    };
+
     function abrirMatriz() {
-        document.getElementById('vista-inicio').style.display = 'none';
-        document.getElementById('pantalla-matriz').style.display = 'flex';
+        document.getElementById('main-wrapper').style.display = 'none';
+        document.getElementById('area-matriz').style.display = 'flex';
     }
 
     function cerrarMatriz() {
-        document.getElementById('pantalla-matriz').style.display = 'none';
-        document.getElementById('vista-inicio').style.display = 'flex';
+        document.getElementById('area-matriz').style.display = 'none';
+        document.getElementById('main-wrapper').style.display = 'flex';
     }
 
-    function abrirConfigPerfil() {
-        alert("Abriendo configuración de perfil y edición de datos...");
-    }
-
-    function cambiarSeccion(btn, tipo) {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        document.getElementById('titulo-seccion').innerText = tipo.toUpperCase();
+    function cerrarSesion() {
+        localStorage.removeItem('sesion_activa'); // Borra la memoria
+        window.location.href = "index.html";
     }
 </script>
 
