@@ -3,91 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>J.A.D.I REPAIZ - Ecosistema Digital</title>
+    <title>J.A.D.I REPAIZ - Inicio de Sesión</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --gold: #fbc02d; --dark: #000; --input-bg: #111; --white: #ffffff; }
+        :root { --gold: #fbc02d; --dark: #000; --input-bg: #111; }
         body { 
-            font-family: -apple-system, system-ui, sans-serif; 
-            background: var(--dark); color: var(--white); 
+            font-family: -apple-system, sans-serif; 
+            background: var(--dark); color: white; 
             margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh;
         }
         .container { width: 90%; max-width: 380px; text-align: center; padding: 20px; }
-        .logo { font-size: 3.5rem; font-weight: bold; color: var(--gold); margin-bottom: 5px; text-shadow: 0 0 20px rgba(251, 192, 45, 0.4); }
-        .tagline { color: #888; font-size: 0.9rem; margin-bottom: 30px; letter-spacing: 1px; }
+        .logo { font-size: 3.5rem; font-weight: bold; color: var(--gold); margin-bottom: 5px; }
+        .tagline { color: #888; font-size: 0.8rem; margin-bottom: 30px; letter-spacing: 2px; }
         
-        .input-group { margin-bottom: 15px; }
         input { 
             width: 100%; padding: 15px; border-radius: 12px; border: 1px solid #333; 
-            background: var(--input-bg); color: white; font-size: 1rem; box-sizing: border-box; outline: none;
+            background: var(--input-bg); color: white; font-size: 1rem; box-sizing: border-box; margin-bottom: 12px;
         }
-        input:focus { border-color: var(--gold); }
+        input:focus { border-color: var(--gold); outline: none; }
 
         .btn-main { 
             width: 100%; padding: 15px; border-radius: 12px; border: none; 
             background: var(--gold); color: black; font-weight: bold; font-size: 1.1rem; cursor: pointer;
-            transition: transform 0.2s;
         }
-        .btn-main:active { transform: scale(0.98); }
-
+        
         .btn-google {
             width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #444; 
             background: white; color: black; font-weight: bold; margin-top: 15px;
             display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer;
         }
 
-        .links { margin-top: 25px; display: flex; flex-direction: column; gap: 12px; font-size: 0.9rem; }
-        .links a { color: var(--gold); text-decoration: none; opacity: 0.8; }
-        .links a:hover { opacity: 1; }
+        .forgot-pass { display: block; margin-top: 15px; color: #888; text-decoration: none; font-size: 0.9rem; }
+        .forgot-pass:hover { color: var(--gold); }
 
-        .divider { margin: 20px 0; display: flex; align-items: center; color: #444; }
-        .divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: #333; margin: 0 10px; }
+        .divider { margin: 25px 0; display: flex; align-items: center; color: #444; font-size: 0.8rem; }
+        .divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: #222; margin: 0 10px; }
 
-        #loader { display: none; margin-top: 15px; color: var(--gold); }
+        .footer-links { margin-top: 30px; border-top: 1px solid #222; padding-top: 20px; }
+        .footer-links a { color: var(--gold); text-decoration: none; font-weight: bold; }
+        
+        #loader { display: none; margin-top: 10px; color: var(--gold); }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="logo">J.A.D.I</div>
-    <div class="tagline">REPARACIÓN • VENTA • GARANTÍA</div>
+    <div class="tagline">ECOSISTEMA DE CALZADO</div>
 
-    <div id="login-form">
-        <div class="input-group">
-            <input type="text" id="user-input" placeholder="Teléfono o ID de Usuario">
-        </div>
-        <div class="input-group">
-            <input type="password" id="pass-input" placeholder="Contraseña">
-        </div>
-        <button class="btn-main" onclick="iniciarSesion()">INGRESAR AL SISTEMA</button>
+    <div id="login-section">
+        <input type="text" id="user-input" placeholder="Usuario, Teléfono o Email">
+        <input type="password" id="pass-input" placeholder="Contraseña">
         
-        <div class="divider">o continúa con</div>
+        <button class="btn-main" onclick="iniciarSesion()">INICIAR SESIÓN</button>
+        
+        <a href="#" class="forgot-pass" onclick="recuperarClave()">¿Has olvidado tu contraseña?</a>
+
+        <div class="divider">O ENTRA CON</div>
 
         <button class="btn-google" onclick="loginConGoogle()">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" width="20">
-            Cuenta Gmail
+            <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" width="18">
+            Continuar con Google
         </button>
 
-        <div id="loader"><i class="fas fa-circle-notch fa-spin"></i> Conectando...</div>
+        <div id="loader"><i class="fas fa-spinner fa-spin"></i> Validando datos...</div>
     </div>
 
-    <div class="links">
-        <a href="registro_empleado.html"><i class="fas fa-users"></i> Unirse como Colaborador</a>
-        <a href="admin.html"><i class="fas fa-store"></i> Registrar Taller o Tienda Nueva</a>
-    </div>
-    
-    <div style="margin-top: 35px; border-top: 1px solid #222; padding-top: 20px;">
-        <a href="cliente.html" style="background: #1a1a1a; padding: 12px 25px; border-radius: 30px; border: 1px solid var(--gold); display: inline-block;">
-            <i class="fas fa-shield-alt"></i> Garantía y Rastreo
-        </a>
+    <div class="footer-links">
+        <p style="color:#666; font-size: 0.9rem;">¿No tienes cuenta?</p>
+        <a href="registro_empleado.html">REGISTRARSE AHORA</a>
     </div>
 </div>
 
 <script>
-    // CONFIGURACIÓN FIREBASE
+    // Configuración Firebase (Usando tus credenciales actuales)
     const firebaseConfig = {
         apiKey: "AIzaSyAKPxG1osuR9hsj-PsmwJrzK-3W_XM1UyU",
         authDomain: "jadi-repaiz.firebaseapp.com",
@@ -100,86 +92,70 @@
     const db = firebase.database();
     const auth = firebase.auth();
 
-    // MAPA DE RUTAS SEGÚN ROL
-    const paginas = {
-        'ADM': 'admin_panel.html',
-        'ZPT': 'zapatero.html',
-        'EMP': 'proveedor.html',
-        'DEL': 'motorizado.html',
-        'TND': 'tienda_ventas.html' // Nueva ruta para Tiendas
-    };
+    const paginas = { 'ADM': 'admin_panel.html', 'ZPT': 'zapatero.html', 'EMP': 'proveedor.html', 'DEL': 'motorizado.html', 'TND': 'tienda_ventas.html' };
 
-    // 1. LOGIN MANUAL (TELÉFONO/ID)
+    // FUNCIÓN: LOGIN MANUAL
     async function iniciarSesion() {
         const input = document.getElementById('user-input').value.trim();
         const pass = document.getElementById('pass-input').value.trim();
-        const loader = document.getElementById('loader');
+        if(!input || !pass) return alert("Por favor, llena todos los campos.");
 
-        if(!input || !pass) return alert("Ingresa tus credenciales");
-
-        loader.style.display = "block";
+        document.getElementById('loader').style.display = "block";
 
         try {
-            // Buscamos por teléfono
-            let snap = await db.ref('usuarios/' + input).once('value');
-            let user = snap.val();
+            // Buscamos en la base de datos
+            const snap = await db.ref('usuarios').once('value');
+            let usuarioEncontrado = null;
 
-            // Si no encuentra por teléfono, busca por UID
-            if(!user) {
-                const snapID = await db.ref('usuarios').orderByChild('uid').equalTo(input.toUpperCase()).once('value');
-                if(snapID.exists()) {
-                    const data = snapID.val();
-                    user = data[Object.keys(data)[0]];
+            snap.forEach(child => {
+                const u = child.val();
+                // Validamos por teléfono, email o UID
+                if((u.telefono === input || u.correo === input || u.uid === input.toUpperCase()) && u.pass === pass) {
+                    usuarioEncontrado = u;
                 }
-            }
+            });
 
-            if(user && user.pass === pass) {
-                localStorage.setItem('session_jadi', JSON.stringify(user));
-                window.location.href = paginas[user.rolCodigo] || 'index.html';
+            if(usuarioEncontrado) {
+                localStorage.setItem('session_jadi', JSON.stringify(usuarioEncontrado));
+                window.location.href = paginas[usuarioEncontrado.rolCodigo] || 'index.html';
             } else {
-                alert("Usuario o clave incorrectos");
+                alert("Credenciales incorrectas o usuario no registrado.");
             }
         } catch (e) {
-            alert("Error de conexión");
+            alert("Error de conexión con el servidor.");
         } finally {
-            loader.style.display = "none";
+            document.getElementById('loader').style.display = "none";
         }
     }
 
-    // 2. LOGIN CON GOOGLE
+    // FUNCIÓN: GOOGLE LOGIN
     function loginConGoogle() {
         const provider = new firebase.auth.GoogleAuthProvider();
         auth.signInWithPopup(provider).then(async (result) => {
-            const userGoogle = result.user;
-            
-            // Verificamos si este correo ya está registrado en nuestro sistema
-            const snap = await db.ref('usuarios').orderByChild('correo').equalTo(userGoogle.email).once('value');
-            
+            const email = result.user.email;
+            // Verificar si ya existe en DB
+            const snap = await db.ref('usuarios').orderByChild('correo').equalTo(email).once('value');
             if(snap.exists()) {
                 const data = snap.val();
-                const userRegistrado = data[Object.keys(data)[0]];
-                localStorage.setItem('session_jadi', JSON.stringify(userRegistrado));
-                window.location.href = paginas[userRegistrado.rolCodigo];
+                const user = data[Object.keys(data)[0]];
+                localStorage.setItem('session_jadi', JSON.stringify(user));
+                window.location.href = paginas[user.rolCodigo];
             } else {
-                // Si es nuevo, lo mandamos a completar su perfil (Dueño, Cliente, etc.)
-                alert("Cuenta Google vinculada. Por favor, completa tu registro.");
-                window.location.href = 'registro_empleado.html?email=' + userGoogle.email;
+                alert("Email vinculado. Completa tu registro como Tienda, Taller o Empleado.");
+                window.location.href = 'registro_empleado.html?email=' + email;
             }
-        }).catch((error) => {
-            console.error(error);
-            alert("Fallo el ingreso con Google");
-        });
+        }).catch(() => alert("Error al conectar con Google."));
     }
 
-    // Auto-login
-    window.onload = () => {
-        const sesion = localStorage.getItem('session_jadi');
-        if(sesion) {
-            const user = JSON.parse(sesion);
-            // Descomenta la siguiente línea para activar entrada automática:
-            // window.location.href = paginas[user.rolCodigo];
+    // FUNCIÓN: OLVIDÉ MI CONTRASEÑA
+    function recuperarClave() {
+        const userEmail = prompt("Introduce tu correo electrónico para restablecer la clave:");
+        if (userEmail) {
+            auth.sendPasswordResetEmail(userEmail)
+                .then(() => alert("¡Listo! Te hemos enviado un enlace a tu correo para cambiar la contraseña."))
+                .catch((error) => alert("Error: Asegúrate de que el correo sea el correcto."));
         }
-    };
+    }
 </script>
 
 </body>
