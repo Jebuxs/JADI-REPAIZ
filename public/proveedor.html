@@ -4,38 +4,46 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>J.A.D.I - Panel Operativo</title>
-    
+
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
+
     <style>
         :root { --gold: #fbc02d; --dark: #000; --card: #111; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; margin: 0; overflow: hidden; height: 100vh; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; margin: 0; display: flex; flex-direction: column; height: 100vh; }
+        
+        /* HEADER */
         .top-header { height: 100px; border-bottom: 1px solid #222; display: flex; flex-direction: column; justify-content: center; align-items: center; background: #000; }
         .local-title { font-size: 1.6rem; color: var(--gold); font-weight: 800; text-transform: uppercase; margin: 0; }
-        #main-wrapper { height: calc(100vh - 100px); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; }
+        
+        /* CONTENIDO */
+        #main-wrapper { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; }
         .btn-box { width: 280px; padding: 20px; background: #111; border: 1px solid #333; color: white; border-radius: 12px; cursor: pointer; font-weight: bold; text-align: center; }
-        #pantalla-perfil { position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background: #000; z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; }
+        
+        /* PANTALLA PERFIL */
+        #pantalla-perfil { position: fixed; inset: 0; background: #000; z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; }
         .card-form { background: #0d0d0d; border: 1px solid #222; border-radius: 15px; width: 90%; max-width: 400px; padding: 25px; }
+        
         .input-group { margin-bottom: 15px; text-align: left; position: relative; }
         .input-field { width: 100%; padding: 12px; background: #000; border: 1px solid #333; color: white; border-radius: 8px; box-sizing: border-box; outline: none; }
         .toggle-eye { position: absolute; right: 12px; top: 38px; color: #444; cursor: pointer; }
+        
         .btn-action { width: 100%; padding: 15px; background: var(--gold); color: black; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        .btn-back { position: fixed; bottom: 30px; left: 30px; background: var(--gold); color: black; border: none; width: 55px; height: 55px; border-radius: 50%; cursor: pointer; }
+        .btn-back { position: fixed; bottom: 30px; left: 30px; background: var(--gold); color: black; border: none; width: 55px; height: 55px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
     </style>
 </head>
 <body>
 
 <div class="top-header">
-    <div class="brand-mini" style="font-size: 0.6rem; letter-spacing: 3px; color: #444;">J.A.D.I REPAIZ</div>
-    <h1 class="local-title" id="display-nombre-local">CARGANDO...</h1>
+    <div style="font-size: 0.6rem; letter-spacing: 3px; color: #444;">J.A.D.I REPAIZ</div>
+    <h1 class="local-title" id="display-nombre-local">SIN CONEXIÓN</h1>
 </div>
 
 <div id="main-wrapper">
-    <button class="btn-box" onclick="abrirPerfil()"><i class="fas fa-user-cog"></i> MI PERFIL</button>
+    <button class="btn-box" onclick="abrirPerfil()"><i class="fas fa-user-cog"></i> CONFIGURACIÓN</button>
     <button class="btn-box" style="color:#ff4444; border-color:#441111;" onclick="cerrarSesion()">CERRAR SESIÓN</button>
 </div>
 
@@ -68,15 +76,22 @@
         appId: "1:847134630000:web:0b780eaeda63b991d554b5"
     };
 
-    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    // Inicialización inmediata
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+
     const db = firebase.database();
     const auth = firebase.auth();
 
-    window.onload = () => {
-        db.ref('Ecosistema_JADI/Configuracion/nombreLocal').on('value', (snap) => {
-            document.getElementById('display-nombre-local').innerText = snap.exists() ? snap.val().toUpperCase() : "JADI REPAIZ";
-        });
-    };
+    // Sincronización del nombre del local (Forzada)
+    db.ref('Ecosistema_JADI/Configuracion/nombreLocal').on('value', (snap) => {
+        const nombre = snap.val();
+        document.getElementById('display-nombre-local').innerText = nombre ? nombre.toUpperCase() : "JADI REPAIZ";
+    }, (error) => {
+        console.error("Error de DB:", error);
+        document.getElementById('display-nombre-local').innerText = "ERROR DE RED";
+    });
 
     function abrirPerfil() { document.getElementById('pantalla-perfil').style.display = 'flex'; }
     function regresar() { document.getElementById('pantalla-perfil').style.display = 'none'; }
@@ -91,17 +106,18 @@
     async function actualizarPassword() {
         const p1 = document.getElementById('p1').value;
         const p2 = document.getElementById('p2').value;
-        if (!p1 || !p2) return alert("Llena los campos.");
+        if (!p1 || !p2) return alert("Pana, llena los campos.");
 
         const user = auth.currentUser;
-        if (!user) return alert("Reingresa al sistema para validar tu identidad.");
+        if (!user) return alert("Sesión no detectada.");
 
         const cred = firebase.auth.EmailAuthProvider.credential(user.email, p1);
         try {
             await user.reauthenticateWithCredential(cred);
             await user.updatePassword(p2);
             alert("✅ ¡Contraseña actualizada!");
-            document.getElementById('p1').value = ""; document.getElementById('p2').value = "";
+            document.getElementById('p1').value = ""; 
+            document.getElementById('p2').value = "";
         } catch (e) { alert("Error: " + e.message); }
     }
 
