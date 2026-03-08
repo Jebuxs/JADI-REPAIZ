@@ -3,156 +3,134 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>J.A.D.I - Matriz Expandida</title>
+    <title>J.A.D.I - Matriz Full Screen</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --gold: #fbc02d; --dark: #0d0d0d; --card: #1a1a1a; --side: #111; }
+        :root { --gold: #fbc02d; --dark: #000; --card: #111; --side: #0a0a0a; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; margin: 0; height: 100vh; overflow: hidden; }
 
-        /* CABECERA FIJA */
-        .top-header { position: fixed; top: 0; left: 0; width: 100%; height: 70px; display: flex; justify-content: center; align-items: center; background: var(--dark); border-bottom: 1px solid #222; z-index: 100; }
-        .header-info h1 { margin: 0; font-size: 1.4rem; color: var(--gold); letter-spacing: 2px; }
-        .header-info span { font-size: 0.75rem; color: #666; }
+        /* HEADER */
+        .top-header { position: fixed; top: 0; left: 0; width: 100%; height: 70px; display: flex; justify-content: center; align-items: center; background: var(--dark); border-bottom: 1px solid #222; z-index: 10; }
+        .header-info { text-align: center; }
+        .header-info h1 { margin: 0; font-size: 1.3rem; color: var(--gold); }
+        .header-info span { font-size: 0.7rem; color: #555; }
 
-        .profile-zone { position: fixed; top: 15px; right: 20px; z-index: 101; cursor: pointer; }
-        .profile-img { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--gold); }
+        .profile-zone { position: fixed; top: 15px; right: 20px; z-index: 11; }
+        .profile-img { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--gold); }
 
-        /* MENÚ LATERAL RETRÁCTIL */
-        .sidebar { 
-            position: fixed; top: 70px; left: 0; width: 220px; height: calc(100vh - 70px); 
-            background: var(--side); border-right: 1px solid #222; padding: 20px 10px; 
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); z-index: 90;
+        /* SIDEBAR INICIAL */
+        .sidebar { position: fixed; top: 70px; left: 0; width: 220px; height: calc(100vh - 70px); background: var(--side); border-right: 1px solid #222; padding: 20px 10px; z-index: 5; }
+        .nav-btn { width: 100%; padding: 12px; margin-bottom: 10px; background: #1a1a1a; border: 1px solid #333; color: #888; text-align: left; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 10px; }
+        .btn-danger { color: #ff4444 !important; border-color: #441111; margin-top: 20px; }
+
+        /* --- LA MATRIZ (PANTALLA COMPLETA) --- */
+        #capa-matriz { 
+            position: fixed; top: 70px; left: 0; width: 100%; height: calc(100vh - 70px); 
+            background: var(--dark); z-index: 200; display: none; /* Oculta por defecto */
+            overflow-y: auto; padding: 20px; box-sizing: border-box;
         }
-        .sidebar.collapsed { left: -220px; } /* Se esconde a la izquierda */
 
-        .nav-btn { width: 100%; padding: 12px; margin-bottom: 10px; background: #222; border: 1px solid #333; color: #aaa; text-align: left; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 10px; }
-        .nav-btn:hover { background: #282828; color: var(--gold); }
-        .btn-danger { color: #ff4444 !important; }
+        .tabs-superior { display: flex; gap: 5px; background: #111; padding: 8px; border-radius: 8px; border: 1px solid #222; margin-bottom: 20px; position: sticky; top: 0; z-index: 201; }
+        .tab-btn { flex: 1; padding: 12px; background: #0a0a0a; border: 1px solid #333; color: #555; cursor: pointer; border-radius: 5px; font-size: 0.75rem; font-weight: bold; }
+        .tab-btn.active { border: 1px solid var(--gold); color: var(--gold); background: #1a1a1a; }
 
-        /* ÁREA DE TRABAJO DINÁMICA */
-        .main-content { 
-            margin-left: 220px; margin-top: 70px; height: calc(100vh - 70px); 
-            padding: 25px; transition: all 0.4s ease; overflow-y: auto; 
-        }
-        .main-content.expanded { margin-left: 0; } /* Toma todo el ancho */
+        /* ÁREA DE TRABAJO DENTRO DE MATRIZ */
+        .work-area { background: #111; border: 1px solid #222; border-radius: 12px; padding: 20px; min-height: 400px; }
 
-        /* TABS DE MATRIZ */
-        .tabs-header { display: flex; gap: 5px; background: #111; padding: 8px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #222; overflow-x: auto; }
-        .tab-item { flex: 1; padding: 12px; text-align: center; background: #1a1a1a; border: 1px solid #333; color: #666; cursor: pointer; border-radius: 6px; font-size: 0.75rem; font-weight: bold; white-space: nowrap; }
-        .tab-item.active { background: #222; color: var(--gold); border: 1px solid var(--gold); }
+        /* BOTÓN VOLVER */
+        .btn-volver { position: fixed; bottom: 25px; left: 25px; background: var(--gold); color: black; border: none; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; z-index: 300; display: none; box-shadow: 0 0 15px rgba(251, 192, 45, 0.3); }
 
-        .workspace-box { background: var(--card); border-radius: 15px; padding: 20px; border: 1px solid #222; min-height: 400px; }
-
-        /* BOTÓN PARA VOLVER A VER EL MENÚ */
-        #btn-return { position: fixed; bottom: 20px; left: 20px; background: var(--gold); color: black; border: none; width: 45px; height: 45px; border-radius: 50%; cursor: pointer; display: none; z-index: 110; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        /* PANTALLA DE BIENVENIDA (DETRÁS) */
+        .main-view { margin-left: 220px; margin-top: 70px; padding: 40px; text-align: center; color: #333; }
     </style>
 </head>
 <body>
 
 <div class="top-header">
     <div class="header-info">
-        <h1 id="txt-nombre-local">NOMBRE LOCAL</h1>
-        <span id="txt-id-local">ID: 0000000000</span>
+        <h1 id="shop-name">NOMBRE DEL LOCAL</h1>
+        <span id="shop-id">ID: 0000000000</span>
     </div>
 </div>
 
-<div class="profile-zone" onclick="alert('Editar Perfil')">
-    <img src="https://via.placeholder.com/40" class="profile-img" alt="perfil">
+<div class="profile-zone">
+    <img src="https://via.placeholder.com/40" class="profile-img">
 </div>
 
-<div id="sidebar" class="sidebar">
-    <button class="nav-btn" onclick="activarMatriz()" style="background:var(--gold); color:black; border:none;">
-        <i class="fas fa-th-large"></i> <b>Abrir Matriz</b>
+<div class="sidebar">
+    <button class="nav-btn" onclick="abrirMatriz()" style="border: 1px solid var(--gold); color: var(--gold);">
+        <i class="fas fa-th-large"></i> Abrir Matriz
     </button>
-    <button class="nav-btn btn-danger" onclick="confirm('¿Eliminar cuenta?')">
-        <i class="fas fa-trash-alt"></i> Eliminar Registro
+    <button class="nav-btn btn-danger" onclick="alert('Eliminar registro...')">
+        <i class="fas fa-trash"></i> Eliminar Cuenta
     </button>
 </div>
 
-<button id="btn-return" onclick="cerrarMatriz()" title="Cerrar Matriz">
-    <i class="fas fa-arrow-left"></i>
+<div class="main-view">
+    <i class="fas fa-arrow-left" style="font-size: 2rem; margin-bottom: 20px;"></i>
+    <h3>Usa el menú lateral para gestionar la matriz</h3>
+</div>
+
+<div id="capa-matriz">
+    <div class="tabs-superior">
+        <button class="tab-btn active" onclick="cambiarSeccion(this, 'inventario')">INVENTARIO</button>
+        <button class="tab-btn" onclick="cambiarSeccion(this, 'personal')">PERSONAL</button>
+        <button class="tab-btn" onclick="cambiarSeccion(this, 'venta')">VENTA</button>
+        <button class="tab-btn" onclick="cambiarSeccion(this, 'facturas')">FACTURACIONES</button>
+    </div>
+
+    <div class="work-area">
+        <h2 id="titulo-seccion" style="color:var(--gold); margin-top:0;">Inventario</h2>
+        <div id="contenido-matriz">
+            </div>
+    </div>
+</div>
+
+<button id="btn-cerrar-matriz" class="btn-volver" onclick="cerrarMatriz()">
+    <i class="fas fa-chevron-left"></i>
 </button>
-
-<div id="main-content" class="main-content">
-    
-    <div id="area-matriz" style="display: none;">
-        <div class="tabs-header">
-            <button class="tab-item active" onclick="setTab(this, 'inventario')">INVENTARIO</button>
-            <button class="tab-item" onclick="setTab(this, 'personal')">PERSONAL</button>
-            <button class="tab-item" onclick="setTab(this, 'venta')">VENTA</button>
-            <button class="tab-item" onclick="setTab(this, 'facturas')">FACTURACIONES</button>
-        </div>
-
-        <div class="workspace-box">
-            <h3 id="workspace-title" style="color:var(--gold); margin-top:0;">Gestión de Inventario</h3>
-            <hr border="0" style="border-top:1px solid #333; margin-bottom:20px;">
-            <div id="workspace-content">
-                </div>
-        </div>
-    </div>
-
-    <div id="area-bienvenida" style="text-align: center; margin-top: 15vh;">
-        <i class="fas fa-store" style="font-size: 4rem; color: #222;"></i>
-        <h2 style="color: #444;">Bienvenido al Panel de Gestión</h2>
-        <p style="color: #333;">Selecciona "Abrir Matriz" en el menú para comenzar.</p>
-    </div>
-
-</div>
 
 <script>
     const firebaseConfig = { databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com" };
     firebase.initializeApp(firebaseConfig);
 
-    function activarMatriz() {
-        // 1. Esconder Menú Lateral y Expandir Contenido
-        document.getElementById('sidebar').classList.add('collapsed');
-        document.getElementById('main-content').classList.add('expanded');
-        
-        // 2. Cambiar pantallas
-        document.getElementById('area-bienvenida').style.display = 'none';
-        document.getElementById('area-matriz').style.display = 'block';
-        
-        // 3. Mostrar botón de retorno
-        document.getElementById('btn-return').style.display = 'block';
-        
-        cargarContenido('inventario');
+    function abrirMatriz() {
+        // Mostramos la capa que cubre todo
+        document.getElementById('capa-matriz').style.display = 'block';
+        document.getElementById('btn-cerrar-matriz').style.display = 'block';
+        cargarModulo('inventario');
     }
 
     function cerrarMatriz() {
-        // 1. Mostrar Menú Lateral y Contraer Contenido
-        document.getElementById('sidebar').classList.remove('collapsed');
-        document.getElementById('main-content').classList.remove('expanded');
-        
-        // 2. Cambiar pantallas
-        document.getElementById('area-bienvenida').style.display = 'block';
-        document.getElementById('area-matriz').style.display = 'none';
-        
-        // 3. Esconder botón de retorno
-        document.getElementById('btn-return').style.display = 'none';
+        // Escondemos la capa y volvemos al menú
+        document.getElementById('capa-matriz').style.display = 'none';
+        document.getElementById('btn-cerrar-matriz').style.display = 'none';
     }
 
-    function setTab(btn, seccion) {
-        document.querySelectorAll('.tab-item').forEach(b => b.classList.remove('active'));
+    function cambiarSeccion(btn, seccion) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        cargarContenido(seccion);
+        cargarModulo(seccion);
     }
 
-    function cargarContenido(seccion) {
-        const title = document.getElementById('workspace-title');
-        const content = document.getElementById('workspace-content');
+    function cargarModulo(seccion) {
+        const titulo = document.getElementById('titulo-seccion');
+        const contenido = document.getElementById('contenido-matriz');
         
+        titulo.innerText = seccion.toUpperCase();
+
         if(seccion === 'inventario') {
-            title.innerText = "Inventario de Calzado";
-            content.innerHTML = `
-                <button onclick="alert('Formulario para crear')" style="background:var(--gold); border:none; padding:12px 20px; border-radius:8px; font-weight:bold; cursor:pointer;">
-                    <i class="fas fa-plus"></i> CREAR INVENTARIO
-                </button>
+            contenido.innerHTML = `
+                <div style="border: 1px dashed #333; padding: 40px; text-align: center; border-radius: 10px;">
+                    <button onclick="alert('Abriendo Formulario...')" style="background:var(--gold); border:none; padding:15px 30px; border-radius:8px; font-weight:bold; cursor:pointer; font-size:1rem;">
+                        <i class="fas fa-plus"></i> CREAR INVENTARIO
+                    </button>
+                </div>
             `;
         } else {
-            title.innerText = seccion.toUpperCase();
-            content.innerHTML = `<p style="color:#666;">Módulo ${seccion} en desarrollo...</p>`;
+            contenido.innerHTML = `<p style="color:#555; text-align:center; padding:50px;">Módulo de ${seccion} en construcción...</p>`;
         }
     }
 </script>
