@@ -1,1 +1,5 @@
-{"projects": {"default": "jadi-repaiz"}}
+{
+  "projects": {
+    "default": "jadi-repaiz"
+  }
+}
