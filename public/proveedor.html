@@ -32,4 +32,213 @@
         /* PANTALLAS */
         #pantalla-perfil, #pantalla-matriz { position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background: #000; z-index: 2000; display: none; flex-direction: column; }
 
-        .nav-perfil-horizontal { display: flex; gap: 10px; padding: 15px; background
+        .nav-perfil-horizontal { display: flex; gap: 10px; padding: 15px; background: #0a0a0a; border-bottom: 1px solid #222; overflow-x: auto; margin-top: 100px; }
+        .nav-perfil-horizontal::-webkit-scrollbar { display: none; }
+        .btn-nav-perfil { padding: 10px 20px; background: #111; border: 1px solid #333; color: var(--text-dim); border-radius: 20px; cursor: pointer; font-size: 0.7rem; font-weight: bold; text-transform: uppercase; white-space: nowrap; }
+        .btn-nav-perfil.active { border-color: var(--gold); color: var(--gold); }
+
+        .content-area { flex-grow: 1; padding: 30px; display: flex; flex-direction: column; align-items: center; overflow-y: auto; }
+        .card-form { background: #0d0d0d; border: 1px solid #222; border-radius: 15px; width: 100%; max-width: 450px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        
+        /* INPUTS CON OJO */
+        .input-group { margin-bottom: 15px; text-align: left; position: relative; }
+        .input-group label { display: block; font-size: 0.7rem; color: #555; margin-bottom: 5px; text-transform: uppercase; }
+        .input-field { width: 100%; padding: 12px; background: #000; border: 1px solid #333; color: white; border-radius: 8px; box-sizing: border-box; outline: none; padding-right: 40px; }
+        .input-field:focus { border-color: var(--gold); }
+        
+        .toggle-eye { position: absolute; right: 12px; top: 32px; color: #444; cursor: pointer; font-size: 1rem; }
+
+        .btn-action { width: 100%; padding: 15px; background: var(--gold); color: black; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; transition: 0.3s; text-transform: uppercase; }
+        .btn-back { position: fixed; bottom: 30px; left: 30px; background: var(--gold); color: black; border: none; width: 55px; height: 55px; border-radius: 50%; cursor: pointer; z-index: 3000; font-size: 1.2rem; }
+    </style>
+</head>
+<body>
+
+<div class="top-header">
+    <div class="brand-mini">J.A.D.I REPAIZ</div>
+    <h1 class="local-title" id="display-nombre-local">TU LOCAL</h1>
+    <div class="profile-corner" onclick="abrirPerfil()">
+        <i class="fas fa-user-cog"></i>
+    </div>
+</div>
+
+<div id="main-wrapper">
+    <button class="btn-box btn-sucursales" onclick="abrirMatriz()">
+        <i class="fas fa-city"></i> SUCURSALES
+    </button>
+    <button class="btn-box" style="color:#ff4444; border-color:#441111;" onclick="cerrarSesion()">
+        <i class="fas fa-sign-out-alt"></i> CERRAR SESIÓN
+    </button>
+</div>
+
+<div id="pantalla-perfil">
+    <div class="nav-perfil-horizontal">
+        <button class="btn-nav-perfil active" onclick="seccionPerfil(this, 'seguridad')">Seguridad</button>
+        <button class="btn-nav-perfil" onclick="seccionPerfil(this, 'ubicacion')">Ubicación</button>
+        <button class="btn-nav-perfil" onclick="seccionPerfil(this, 'personal')">Info Personal</button>
+    </div>
+    <div class="content-area">
+        <div class="card-form">
+            <h2 id="titulo-perfil" style="color:var(--gold); margin-top:0;">SEGURIDAD</h2>
+            <hr border="0" style="border-top:1px solid #222; margin: 15px 0;">
+            <div id="body-perfil"></div>
+        </div>
+    </div>
+    <button class="btn-back" onclick="regresar()"><i class="fas fa-arrow-left"></i></button>
+</div>
+
+<div id="pantalla-matriz">
+    <div class="content-area">
+        <h1 style="color:var(--gold); font-size: 3rem; letter-spacing: 10px;">HOLA</h1>
+    </div>
+    <button class="btn-back" onclick="regresar()"><i class="fas fa-arrow-left"></i></button>
+</div>
+
+<script>
+    // CONFIGURACIÓN DE FIREBASE (REEMPLAZA CON TUS DATOS REALES)
+    const firebaseConfig = {
+        apiKey: "TU_API_KEY",
+        authDomain: "TU_PROYECTO.firebaseapp.com",
+        databaseURL: "https://TU_PROYECTO.firebaseio.com",
+        projectId: "TU_PROYECTO_ID",
+        storageBucket: "TU_PROYECTO.appspot.com",
+        messagingSenderId: "ID_SENDER",
+        appId: "ID_APP"
+    };
+    
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+
+    window.onload = function() {
+        document.getElementById('main-wrapper').style.display = 'flex';
+        // Leer nombre del local al iniciar
+        const dbRef = firebase.database().ref('Ecosistema_JADI/Configuracion/nombreLocal');
+        dbRef.on('value', (snapshot) => {
+            if(snapshot.exists()) {
+                document.getElementById('display-nombre-local').innerText = snapshot.val().toUpperCase();
+            }
+        });
+    };
+
+    function abrirPerfil() {
+        document.getElementById('pantalla-perfil').style.display = 'flex';
+        seccionPerfil(document.querySelector('.btn-nav-perfil'), 'seguridad');
+    }
+
+    function abrirMatriz() {
+        document.getElementById('pantalla-matriz').style.display = 'flex';
+    }
+
+    function regresar() {
+        document.getElementById('pantalla-perfil').style.display = 'none';
+        document.getElementById('pantalla-matriz').style.display = 'none';
+        document.getElementById('main-wrapper').style.display = 'flex';
+    }
+
+    function togglePass(id, icon) {
+        const input = document.getElementById(id);
+        if (input.type === "password") {
+            input.type = "text";
+            icon.classList.replace("fa-eye", "fa-eye-slash");
+            icon.style.color = "var(--gold)";
+        } else {
+            input.type = "password";
+            icon.classList.replace("fa-eye-slash", "fa-eye");
+            icon.style.color = "#444";
+        }
+    }
+
+    function seccionPerfil(btn, tipo) {
+        document.querySelectorAll('.btn-nav-perfil').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const body = document.getElementById('body-perfil');
+        const titulo = document.getElementById('titulo-perfil');
+        titulo.innerText = tipo.toUpperCase();
+
+        if(tipo === 'seguridad') {
+            body.innerHTML = `
+                <div class="input-group">
+                    <label>Contraseña Actual</label>
+                    <input type="password" id="p1" class="input-field" placeholder="••••••••">
+                    <i class="fas fa-eye toggle-eye" onclick="togglePass('p1', this)"></i>
+                </div>
+                <div class="input-group">
+                    <label>Nueva Contraseña</label>
+                    <input type="password" id="p2" class="input-field" placeholder="Mínimo 6 caracteres">
+                    <i class="fas fa-eye toggle-eye" onclick="togglePass('p2', this)"></i>
+                </div>
+                <div class="input-group">
+                    <label>Confirmar Nueva</label>
+                    <input type="password" id="p3" class="input-field" placeholder="Repite la clave">
+                    <i class="fas fa-eye toggle-eye" onclick="togglePass('p3', this)"></i>
+                </div>
+                <button class="btn-action" onclick="actualizarPassword()">ACTUALIZAR</button>`;
+        } else if(tipo === 'ubicacion') {
+            body.innerHTML = `
+                <div class="input-group">
+                    <label>Nombre del Local</label>
+                    <input type="text" id="loc-name" class="input-field" placeholder="Nombre para el encabezado">
+                </div>
+                <div class="input-group">
+                    <label>Dirección</label>
+                    <input type="text" id="loc-dir" class="input-field" placeholder="Calle, Ciudad...">
+                </div>
+                <button class="btn-action" onclick="guardarDatosLocal()">GUARDAR UBICACIÓN</button>`;
+        } else {
+            body.innerHTML = `<p style="color:#444; text-align:center;">Próximamente...</p>`;
+        }
+    }
+
+    // ACTUALIZAR CONTRASEÑA CON RE-AUTENTICACIÓN
+    async function actualizarPassword() {
+        const actual = document.getElementById('p1').value;
+        const nueva = document.getElementById('p2').value;
+        const confirma = document.getElementById('p3').value;
+
+        if (!actual || !nueva || !confirma) { alert("Llena todos los campos."); return; }
+        if (nueva !== confirma) { alert("Las claves nuevas no coinciden."); return; }
+
+        const user = firebase.auth().currentUser;
+        const credencial = firebase.auth.EmailAuthProvider.credential(user.email, actual);
+
+        try {
+            await user.reauthenticateWithCredential(credencial);
+            await user.updatePassword(nueva);
+            alert("✅ Se cambió la contraseña correctamente. Tu sesión permanecerá activa.");
+            document.getElementById('p1').value = "";
+            document.getElementById('p2').value = "";
+            document.getElementById('p3').value = "";
+        } catch (error) {
+            if (error.code === 'auth/wrong-password') alert("❌ La contraseña actual es incorrecta.");
+            else alert("Error: " + error.message);
+        }
+    }
+
+    // GUARDAR DATOS DEL LOCAL BAJO REGLAS SEGURAS
+    async function guardarDatosLocal() {
+        const nombre = document.getElementById('loc-name').value;
+        const dir = document.getElementById('loc-dir').value;
+
+        if(!nombre || !dir) { alert("Completa ambos campos."); return; }
+
+        try {
+            await firebase.database().ref('Ecosistema_JADI/Configuracion').update({
+                nombreLocal: nombre,
+                direccion: dir
+            });
+            alert("✅ Configuración guardada y protegida.");
+        } catch (error) {
+            alert("Error de seguridad: " + error.message);
+        }
+    }
+
+    function cerrarSesion() {
+        if(confirm("¿Cerrar sesión en J.A.D.I?")) {
+            firebase.auth().signOut().then(() => { window.location.href = "index.html"; });
+        }
+    }
+</script>
+
+</body>
+</html>
