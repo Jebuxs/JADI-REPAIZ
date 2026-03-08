@@ -3,82 +3,105 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>J.A.D.I - Panel Proveedor</title>
+    <title>J.A.D.I - Dashboard</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* REGLAS DE FUERZA BRUTA PARA ELIMINAR CUALQUIER BARRA LATERAL VIEJA */
+        body, html { background: #000 !important; color: #fff !important; margin: 0 !important; padding: 0 !important; height: 100vh; overflow: hidden; font-family: 'Segoe UI', sans-serif; }
+        
+        /* ENCABEZADO QUE PEDISTE MANTENER */
+        .hdr-main { position: fixed; top: 0; width: 100%; height: 80px; background: #000; border-bottom: 2px solid #222; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
+        .hdr-main h1 { margin: 0; font-size: 1.3rem; color: #fbc02d; text-transform: uppercase; letter-spacing: 2px; }
+        .hdr-main span { font-size: 0.8rem; color: #666; margin-top: 5px; }
+
+        .foto-p { position: fixed; top: 20px; right: 20px; z-index: 10000; }
+        .foto-p img { width: 40px; height: 40px; border-radius: 50%; border: 1px solid #fbc02d; }
+
+        /* VISTA DE BOTONES (SIN SIDEBAR) */
+        #cnt-botones { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; gap: 25px; padding-top: 80px; box-sizing: border-box; }
+        
+        .btn-acc { width: 290px; padding: 22px; background: #111; border: 1px solid #333; color: #fff; border-radius: 15px; cursor: pointer; font-size: 1.1rem; font-weight: bold; display: flex; align-items: center; gap: 15px; transition: 0.2s; }
+        .btn-acc i { font-size: 1.4rem; }
+        .btn-gold { border-color: #fbc02d; color: #fbc02d; }
+        .btn-red { border-color: #441111; color: #ff4444; }
+
+        /* PANTALLA HOLA (MATRIZ) */
+        #pnt-hola { position: fixed; top: 80px; left: 0; width: 100%; height: calc(100vh - 80px); background: #000; z-index: 11000; display: none; flex-direction: column; align-items: center; justify-content: center; }
+        .txt-hola { font-size: 5rem; font-weight: 900; color: #fbc02d; letter-spacing: 15px; }
+
+        .btn-retorno { position: fixed; bottom: 30px; left: 30px; background: #fbc02d; color: #000; border: none; width: 55px; height: 55px; border-radius: 50%; cursor: pointer; font-size: 1.3rem; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+    </style>
 </head>
-<body style="background-color: #000; color: white; margin: 0; font-family: 'Segoe UI', sans-serif; height: 100vh; overflow: hidden;">
+<body>
 
-    <div id="header-fixed" style="position: fixed; top: 0; width: 100%; height: 75px; background: #000; border-bottom: 1px solid #222; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000;">
-        <h1 id="db-nombre-local" style="margin: 0; font-size: 1.2rem; color: #fbc02d; text-transform: uppercase; letter-spacing: 2px;">CARGANDO...</h1>
-        <span id="db-id-local" style="font-size: 0.7rem; color: #555; font-family: monospace;">ID: 0000000000</span>
+    <header class="hdr-main">
+        <h1 id="lbl-nombre">CARGANDO...</h1>
+        <span id="lbl-id">ID: 0000000000</span>
+    </header>
+
+    <div class="foto-p">
+        <img id="img-p" src="https://via.placeholder.com/40">
     </div>
 
-    <div style="position: fixed; top: 15px; right: 20px; z-index: 1001;">
-        <img id="db-foto-perfil" src="https://via.placeholder.com/40" style="width: 40px; height: 40px; border-radius: 50%; border: 1px solid #fbc02d;">
-    </div>
-
-    <div id="vista-inicio" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; gap: 20px;">
-        <button onclick="abrirMatriz()" style="width: 280px; padding: 20px; background: #111; border: 1px solid #fbc02d; color: #fbc02d; border-radius: 15px; cursor: pointer; font-size: 1rem; font-weight: bold; display: flex; align-items: center; gap: 15px;">
+    <div id="cnt-botones">
+        <button class="btn-acc btn-gold" onclick="fnShowMatrix()">
             <i class="fas fa-city"></i> SUCURSALES
         </button>
         
-        <button onclick="eliminarCuenta()" style="width: 280px; padding: 20px; background: #111; border: 1px solid #441111; color: #ff4444; border-radius: 15px; cursor: pointer; font-size: 1rem; font-weight: bold; display: flex; align-items: center; gap: 15px;">
+        <button class="btn-acc btn-red" onclick="fnDeleteAcc()">
             <i class="fas fa-user-times"></i> ELIMINAR CUENTA
         </button>
     </div>
 
-    <div id="pantalla-matriz" style="position: fixed; top: 75px; left: 0; width: 100%; height: calc(100vh - 75px); background: #000; z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center;">
-        <div style="font-size: 5rem; font-weight: 900; color: #fbc02d; letter-spacing: 10px;">HOLA</div>
-        
-        <button onclick="cerrarMatriz()" style="position: fixed; bottom: 30px; left: 30px; background: #fbc02d; color: black; border: none; width: 55px; height: 55px; border-radius: 50%; cursor: pointer; font-size: 1.2rem;">
+    <div id="pnt-hola">
+        <div class="txt-hola">HOLA</div>
+        <button class="btn-retorno" onclick="fnHideMatrix()">
             <i class="fas fa-arrow-left"></i>
         </button>
     </div>
 
 <script>
-    // FIREBASE
+    // 1. Configuración Firebase
     const firebaseConfig = { databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com" };
     firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+    const database = firebase.database();
 
-    // PERSISTENCIA DE ID (Asegúrate que el login guarde el ID en localStorage)
-    const USUARIO_ID = localStorage.getItem('user_id') || "3001234567"; 
+    // 2. Persistencia de Sesión
+    // El ID se recupera de la memoria para que no tengas que loguearte otra vez
+    const MI_ID = localStorage.getItem('user_id') || "3001234567"; 
 
     window.onload = function() {
-        // Cargar datos reales
-        db.ref('usuarios/' + USUARIO_ID).on('value', snap => {
+        // Cargar datos del encabezado
+        database.ref('usuarios/' + MI_ID).on('value', snap => {
             if(snap.exists()) {
-                const data = snap.val();
-                document.getElementById('db-nombre-local').innerText = data.nombre || "J.A.D.I LOCAL";
-                document.getElementById('db-id-local').innerText = "ID: " + USUARIO_ID;
+                const d = snap.val();
+                document.getElementById('lbl-nombre').innerText = d.nombre || "J.A.D.I REPAIZ";
+                document.getElementById('lbl-id').innerText = "ID: " + MI_ID;
             }
         });
 
-        // REVISAR SI YA ESTABA DENTRO PARA NO PEDIR CLAVE
-        if(localStorage.getItem('sesion_activa') === 'true') {
-            console.log("Sesión mantenida");
-            // Si quieres que entre directo al HOLA al recargar, activa la siguiente línea:
-            // abrirMatriz();
+        // REVISAR SI YA ESTABA LOGUEADO
+        if(localStorage.getItem('logged_in') === 'YES') {
+            console.log("Manteniendo sesión...");
         }
+    };
+
+    function fnShowMatrix() {
+        // Guardamos en memoria que entramos a sucursales
+        localStorage.setItem('logged_in', 'YES');
+        document.getElementById('cnt-botones').style.display = 'none';
+        document.getElementById('pnt-hola').style.display = 'flex';
     }
 
-    function abrirMatriz() {
-        localStorage.setItem('sesion_activa', 'true');
-        document.getElementById('vista-inicio').style.display = 'none';
-        document.getElementById('pantalla-matriz').style.display = 'flex';
+    function fnHideMatrix() {
+        document.getElementById('pnt-hola').style.display = 'none';
+        document.getElementById('cnt-botones').style.display = 'flex';
     }
 
-    function cerrarMatriz() {
-        // Mantenemos la sesion_activa en true para que no pida login, 
-        // pero volvemos visualmente a los dos botones
-        document.getElementById('pantalla-matriz').style.display = 'none';
-        document.getElementById('vista-inicio').style.display = 'flex';
-    }
-
-    function eliminarCuenta() {
-        if(confirm("¿Seguro que quieres eliminar el registro?")) {
+    function fnDeleteAcc() {
+        if(confirm("¿Seguro que quieres eliminar tu registro?")) {
             localStorage.clear();
             window.location.href = "index.html";
         }
