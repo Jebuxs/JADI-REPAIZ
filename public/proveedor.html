@@ -3,142 +3,161 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>J.A.D.I - Gestión de Inventarios</title>
+    <title>J.A.D.I - Dashboard Proveedor</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --gold: #fbc02d; --dark: #000; --card: #111; --green: #2ecc71; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; margin: 0; padding: 15px; }
-        .container { max-width: 1200px; margin: auto; }
-        
-        /* Cabecera Dinámica */
-        .header-shop { border-left: 4px solid var(--gold); padding-left: 15px; margin-bottom: 25px; }
-        .header-shop h1 { margin: 0; color: var(--gold); font-size: 1.5rem; }
-        
-        /* Controles Principales */
-        .admin-controls { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-        .btn { padding: 12px 20px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.3s; }
-        .btn-main { background: var(--gold); color: black; }
-        .btn-edit { background: #3498db; color: white; }
-        .btn-staff { background: #555; color: white; }
-        
-        /* Tabla de Inventario */
-        .table-container { background: var(--card); border-radius: 12px; border: 1px solid #333; overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; min-width: 800px; }
-        th { background: #1a1a1a; color: var(--gold); padding: 15px; text-align: left; font-size: 0.8rem; text-transform: uppercase; }
-        td { padding: 12px 15px; border-bottom: 1px solid #222; font-size: 0.85rem; }
-        
-        .status-badge { padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; }
-        .active { background: rgba(46, 204, 113, 0.2); color: #2ecc71; }
-        
-        /* Secciones Ocultas */
-        .hidden { display: none; }
-        .modal { background: rgba(0,0,0,0.9); position: fixed; top:0; left:0; width:100%; height:100%; display: flex; justify-content: center; align-items: center; z-index: 100; }
-        .modal-content { background: var(--card); padding: 25px; border-radius: 15px; border: 1px solid var(--gold); width: 90%; max-width: 400px; }
+        :root { --gold: #fbc02d; --dark: #0d0d0d; --card: #1a1a1a; --side: #111; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; margin: 0; height: 100vh; overflow: hidden; }
+
+        /* 1. CENTRO SUPERIOR: NOMBRE E ID */
+        .top-header { position: fixed; top: 0; left: 0; width: 100%; height: 70px; display: flex; justify-content: center; align-items: center; background: var(--dark); border-bottom: 1px solid #222; z-index: 10; }
+        .header-info { text-align: center; }
+        .header-info h1 { margin: 0; font-size: 1.4rem; color: var(--gold); letter-spacing: 2px; }
+        .header-info span { font-size: 0.75rem; color: #666; font-family: monospace; }
+
+        /* 2. SUPERIOR DERECHA: PERFIL */
+        .profile-zone { position: fixed; top: 15px; right: 20px; z-index: 11; cursor: pointer; display: flex; align-items: center; gap: 10px; }
+        .profile-img { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--gold); object-fit: cover; }
+
+        /* 3. IZQUIERDA: LISTA DE BOTONES */
+        .sidebar { position: fixed; top: 70px; left: 0; width: 220px; height: calc(100vh - 70px); background: var(--side); border-right: 1px solid #222; padding: 20px 10px; }
+        .nav-btn { width: 100%; padding: 12px; margin-bottom: 10px; background: #222; border: 1px solid #333; color: #aaa; text-align: left; border-radius: 8px; cursor: pointer; transition: 0.3s; display: flex; align-items: center; gap: 10px; }
+        .nav-btn:hover { background: #282828; color: var(--gold); }
+        .nav-btn.active { background: var(--gold); color: black; font-weight: bold; border: none; }
+        .btn-danger { color: #ff4444 !important; border-color: #441111; }
+
+        /* ÁREA DE TRABAJO (CENTRAL Y DERECHA) */
+        .main-content { margin-left: 220px; margin-top: 70px; height: calc(100vh - 70px); padding: 25px; overflow-y: auto; }
+
+        /* BOTONES SUPERIORES (TABLA DE TRABAJO) */
+        .tabs-header { display: flex; gap: 5px; background: #111; padding: 10px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #222; }
+        .tab-item { flex: 1; padding: 10px; text-align: center; background: #222; border: none; color: #777; cursor: pointer; border-radius: 5px; font-size: 0.8rem; font-weight: bold; }
+        .tab-item.active { background: #333; color: var(--gold); border-bottom: 2px solid var(--gold); }
+        .tab-item.locked { opacity: 0.3; cursor: not-allowed; }
+
+        .workspace-box { background: var(--card); border-radius: 15px; padding: 20px; border: 1px solid #222; min-height: 300px; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="header-shop">
-        <h1 id="nombre-tienda">Cargando Tienda...</h1>
-        <p id="info-propietario" style="color:#666; margin:5px 0;">ID Propietario: ---</p>
+<div class="top-header">
+    <div class="header-info">
+        <h1 id="txt-nombre-local">NOMBRE DEL LOCAL</h1>
+        <span id="txt-id-local">ID: JADI-000000</span>
     </div>
+</div>
 
-    <div class="admin-controls">
-        <button id="btn-inventario" class="btn btn-main" onclick="abrirInventario()">
-            <i class="fas fa-plus-circle"></i> <span id="txt-inventario">Crear Inventario</span>
-        </button>
-        
-        <button class="btn btn-staff" onclick="togglePersonal()">
-            <i class="fas fa-users-cog"></i> Habilitar Personal
-        </button>
+<div class="profile-zone" onclick="abrirPerfil()">
+    <img src="https://via.placeholder.com/40" class="profile-img" alt="Perfil">
+</div>
+
+<div class="sidebar">
+    <button id="btn-matriz-toggle" class="nav-btn" onclick="toggleMatriz()">
+        <i class="fas fa-th-large"></i> <span id="label-matriz">Abrir Matriz</span>
+    </button>
+    <button class="nav-btn btn-danger" onclick="eliminarRegistro()">
+        <i class="fas fa-user-times"></i> Eliminar Registro
+    </button>
+</div>
+
+<div class="main-content">
+    <div id="pantalla-matriz" class="hidden" style="display: none;">
+        <div class="tabs-header">
+            <button class="tab-item active" onclick="verSeccion('inventario')">INVENTARIO</button>
+            <button id="tab-personal" class="tab-item" onclick="verSeccion('personal')">PERSONAL</button>
+            <button id="tab-venta" class="tab-item" onclick="verSeccion('venta')">VENTA</button>
+            <button id="tab-facturas" class="tab-item" onclick="verSeccion('facturas')">FACTURACIONES</button>
+        </div>
+
+        <div class="workspace-box">
+            <h3 id="titulo-seccion" style="color:var(--gold);">Inventario General</h3>
+            <div id="contenido-dinamico">
+                <p style="color:#555;">Selecciona una opción arriba para comenzar a trabajar.</p>
+            </div>
+        </div>
     </div>
-
-    <div class="table-container">
-        <h3 style="padding:15px; margin:0; border-bottom:1px solid #333;">Detalle de Stock Registrado</h3>
-        <table>
-            <thead>
-                <tr>
-                    <th>Referencia / Modelo</th>
-                    <th>Categoría</th>
-                    <th>Talla</th>
-                    <th>Color</th>
-                    <th>Cantidad</th>
-                    <th>Precio Sugerido</th>
-                    <th>Estado</th>
-                </tr>
-            </thead>
-            <tbody id="tabla-inventario">
-                </tbody>
-        </table>
+    
+    <div id="pantalla-bienvenida">
+        <h2 style="color:#333; text-align:center; margin-top:100px;">Presiona "Abrir Matriz" para gestionar el local</h2>
     </div>
 </div>
 
 <script>
-    const firebaseConfig = {
-        databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com"
-    };
+    // CONFIGURACIÓN FIREBASE
+    const firebaseConfig = { databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // Simulamos la tienda activa (esto vendría del login)
-    const TIENDA_ID = "TND7890"; 
-    let tieneInventario = false;
+    // DATOS SIMULADOS (En el futuro vienen del login)
+    let esDueño = true; 
+    let TIENDA_ID = "3001234567";
 
-    // 1. CARGAR DATOS DE LA TIENDA Y VERIFICAR BOTÓN
-    function cargarModulo() {
-        db.ref('tiendas/' + TIENDA_ID).on('value', snap => {
-            if(snap.exists()) {
-                const t = snap.val();
-                document.getElementById('nombre-tienda').innerText = t.nombre || "Local J.A.D.I";
-                document.getElementById('info-propietario').innerText = "Dueño: " + (t.propietario || "---");
-                
-                // Si existe la rama 'inventario', cambiamos el botón
-                if(t.inventario) {
-                    tieneInventario = true;
-                    document.getElementById('txt-inventario').innerText = "Editar Inventario";
-                    document.getElementById('btn-inventario').className = "btn btn-edit";
-                    cargarTablaInventario(t.inventario);
-                }
-            }
-        });
+    function toggleMatriz() {
+        const pMatriz = document.getElementById('pantalla-matriz');
+        const pBienvenida = document.getElementById('pantalla-bienvenida');
+        const btnLabel = document.getElementById('label-matriz');
+        const btnNav = document.getElementById('btn-matriz-toggle');
+
+        if(pMatriz.style.display === 'none') {
+            pMatriz.style.display = 'block';
+            pBienvenida.style.display = 'none';
+            btnLabel.innerText = "Matriz";
+            btnNav.classList.add('active');
+            verSeccion('inventario'); // Carga por defecto
+        } else {
+            pMatriz.style.display = 'none';
+            pBienvenida.style.display = 'block';
+            btnLabel.innerText = "Abrir Matriz";
+            btnNav.classList.remove('active');
+        }
     }
 
-    // 2. LOGICA TABLA: MOSTRAR DATOS O VACÍO
-    function cargarTablaInventario(data) {
-        const tbody = document.getElementById('tabla-inventario');
-        tbody.innerHTML = "";
+    function verSeccion(tipo) {
+        const titulo = document.getElementById('titulo-seccion');
+        const contenido = document.getElementById('contenido-dinamico');
         
-        Object.keys(data).forEach(key => {
-            const item = data[key];
-            tbody.innerHTML += `
-                <tr>
-                    <td style="font-weight:bold; color:white;">${item.modelo || ''}</td>
-                    <td>${item.categoria || ''}</td>
-                    <td>${item.talla || ''}</td>
-                    <td>${item.color || ''}</td>
-                    <td style="color:var(--gold);">${item.cantidad || '0'}</td>
-                    <td>${item.precio ? '$' + item.precio : ''}</td>
-                    <td><span class="status-badge active">EN STOCK</span></td>
-                </tr>
-            `;
-        });
+        // Desmarcar todos los tabs
+        document.querySelectorAll('.tab-item').forEach(b => b.classList.remove('active'));
+        
+        // Lógica de permisos
+        if(!esDueño && tipo === 'personal') {
+            alert("Solo el dueño puede gestionar el personal");
+            return;
+        }
+
+        switch(tipo) {
+            case 'inventario':
+                titulo.innerText = "Gestión de Inventario";
+                contenido.innerHTML = "<button style='background:var(--gold); border:none; padding:10px; border-radius:5px;'>+ Crear Inventario</button>";
+                break;
+            case 'personal':
+                titulo.innerText = "Gestión de Personal";
+                contenido.innerHTML = "<p>Aquí el dueño habilita accesos a empleados.</p>";
+                break;
+            case 'venta':
+                titulo.innerText = "Punto de Venta";
+                contenido.innerHTML = "<p>Módulo de ventas diarias.</p>";
+                break;
+            case 'facturas':
+                titulo.innerText = "Historial de Facturación";
+                contenido.innerHTML = "<p>Listado de facturas generadas.</p>";
+                break;
+        }
     }
 
-    // Funciones de acción (Para los siguientes pasos)
-    function abrirInventario() {
-        const accion = tieneInventario ? "Editando" : "Creando";
-        alert(accion + " inventario para la tienda...");
-        // Aquí iría el formulario de carga
-    }
+    function abrirPerfil() { alert("Configuración de Perfil"); }
+    function eliminarRegistro() { confirm("¿Seguro que deseas eliminar esta cuenta?"); }
 
-    function togglePersonal() {
-        alert("Abriendo panel de permisos para trabajadores...");
-    }
-
-    window.onload = cargarModulo;
+    // Cargar nombre e ID desde Firebase
+    db.ref('usuarios/' + TIENDA_ID).once('value', snap => {
+        if(snap.exists()){
+            document.getElementById('txt-nombre-local').innerText = snap.val().nombre || "LOCAL J.A.D.I";
+            document.getElementById('txt-id-local').innerText = "ID: " + TIENDA_ID;
+        }
+    });
 </script>
+
 </body>
 </html>
