@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>J.A.D.I - Dashboard Proveedor</title>
+    <title>J.A.D.I - Matriz Expandida</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -11,152 +11,150 @@
         :root { --gold: #fbc02d; --dark: #0d0d0d; --card: #1a1a1a; --side: #111; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; margin: 0; height: 100vh; overflow: hidden; }
 
-        /* 1. CENTRO SUPERIOR: NOMBRE E ID */
-        .top-header { position: fixed; top: 0; left: 0; width: 100%; height: 70px; display: flex; justify-content: center; align-items: center; background: var(--dark); border-bottom: 1px solid #222; z-index: 10; }
-        .header-info { text-align: center; }
+        /* CABECERA FIJA */
+        .top-header { position: fixed; top: 0; left: 0; width: 100%; height: 70px; display: flex; justify-content: center; align-items: center; background: var(--dark); border-bottom: 1px solid #222; z-index: 100; }
         .header-info h1 { margin: 0; font-size: 1.4rem; color: var(--gold); letter-spacing: 2px; }
-        .header-info span { font-size: 0.75rem; color: #666; font-family: monospace; }
+        .header-info span { font-size: 0.75rem; color: #666; }
 
-        /* 2. SUPERIOR DERECHA: PERFIL */
-        .profile-zone { position: fixed; top: 15px; right: 20px; z-index: 11; cursor: pointer; display: flex; align-items: center; gap: 10px; }
-        .profile-img { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--gold); object-fit: cover; }
+        .profile-zone { position: fixed; top: 15px; right: 20px; z-index: 101; cursor: pointer; }
+        .profile-img { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--gold); }
 
-        /* 3. IZQUIERDA: LISTA DE BOTONES */
-        .sidebar { position: fixed; top: 70px; left: 0; width: 220px; height: calc(100vh - 70px); background: var(--side); border-right: 1px solid #222; padding: 20px 10px; }
-        .nav-btn { width: 100%; padding: 12px; margin-bottom: 10px; background: #222; border: 1px solid #333; color: #aaa; text-align: left; border-radius: 8px; cursor: pointer; transition: 0.3s; display: flex; align-items: center; gap: 10px; }
+        /* MENÚ LATERAL RETRÁCTIL */
+        .sidebar { 
+            position: fixed; top: 70px; left: 0; width: 220px; height: calc(100vh - 70px); 
+            background: var(--side); border-right: 1px solid #222; padding: 20px 10px; 
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); z-index: 90;
+        }
+        .sidebar.collapsed { left: -220px; } /* Se esconde a la izquierda */
+
+        .nav-btn { width: 100%; padding: 12px; margin-bottom: 10px; background: #222; border: 1px solid #333; color: #aaa; text-align: left; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 10px; }
         .nav-btn:hover { background: #282828; color: var(--gold); }
-        .nav-btn.active { background: var(--gold); color: black; font-weight: bold; border: none; }
-        .btn-danger { color: #ff4444 !important; border-color: #441111; }
+        .btn-danger { color: #ff4444 !important; }
 
-        /* ÁREA DE TRABAJO (CENTRAL Y DERECHA) */
-        .main-content { margin-left: 220px; margin-top: 70px; height: calc(100vh - 70px); padding: 25px; overflow-y: auto; }
+        /* ÁREA DE TRABAJO DINÁMICA */
+        .main-content { 
+            margin-left: 220px; margin-top: 70px; height: calc(100vh - 70px); 
+            padding: 25px; transition: all 0.4s ease; overflow-y: auto; 
+        }
+        .main-content.expanded { margin-left: 0; } /* Toma todo el ancho */
 
-        /* BOTONES SUPERIORES (TABLA DE TRABAJO) */
-        .tabs-header { display: flex; gap: 5px; background: #111; padding: 10px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #222; }
-        .tab-item { flex: 1; padding: 10px; text-align: center; background: #222; border: none; color: #777; cursor: pointer; border-radius: 5px; font-size: 0.8rem; font-weight: bold; }
-        .tab-item.active { background: #333; color: var(--gold); border-bottom: 2px solid var(--gold); }
-        .tab-item.locked { opacity: 0.3; cursor: not-allowed; }
+        /* TABS DE MATRIZ */
+        .tabs-header { display: flex; gap: 5px; background: #111; padding: 8px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #222; overflow-x: auto; }
+        .tab-item { flex: 1; padding: 12px; text-align: center; background: #1a1a1a; border: 1px solid #333; color: #666; cursor: pointer; border-radius: 6px; font-size: 0.75rem; font-weight: bold; white-space: nowrap; }
+        .tab-item.active { background: #222; color: var(--gold); border: 1px solid var(--gold); }
 
-        .workspace-box { background: var(--card); border-radius: 15px; padding: 20px; border: 1px solid #222; min-height: 300px; }
+        .workspace-box { background: var(--card); border-radius: 15px; padding: 20px; border: 1px solid #222; min-height: 400px; }
+
+        /* BOTÓN PARA VOLVER A VER EL MENÚ */
+        #btn-return { position: fixed; bottom: 20px; left: 20px; background: var(--gold); color: black; border: none; width: 45px; height: 45px; border-radius: 50%; cursor: pointer; display: none; z-index: 110; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
     </style>
 </head>
 <body>
 
 <div class="top-header">
     <div class="header-info">
-        <h1 id="txt-nombre-local">NOMBRE DEL LOCAL</h1>
-        <span id="txt-id-local">ID: JADI-000000</span>
+        <h1 id="txt-nombre-local">NOMBRE LOCAL</h1>
+        <span id="txt-id-local">ID: 0000000000</span>
     </div>
 </div>
 
-<div class="profile-zone" onclick="abrirPerfil()">
-    <img src="https://via.placeholder.com/40" class="profile-img" alt="Perfil">
+<div class="profile-zone" onclick="alert('Editar Perfil')">
+    <img src="https://via.placeholder.com/40" class="profile-img" alt="perfil">
 </div>
 
-<div class="sidebar">
-    <button id="btn-matriz-toggle" class="nav-btn" onclick="toggleMatriz()">
-        <i class="fas fa-th-large"></i> <span id="label-matriz">Abrir Matriz</span>
+<div id="sidebar" class="sidebar">
+    <button class="nav-btn" onclick="activarMatriz()" style="background:var(--gold); color:black; border:none;">
+        <i class="fas fa-th-large"></i> <b>Abrir Matriz</b>
     </button>
-    <button class="nav-btn btn-danger" onclick="eliminarRegistro()">
-        <i class="fas fa-user-times"></i> Eliminar Registro
+    <button class="nav-btn btn-danger" onclick="confirm('¿Eliminar cuenta?')">
+        <i class="fas fa-trash-alt"></i> Eliminar Registro
     </button>
 </div>
 
-<div class="main-content">
-    <div id="pantalla-matriz" class="hidden" style="display: none;">
+<button id="btn-return" onclick="cerrarMatriz()" title="Cerrar Matriz">
+    <i class="fas fa-arrow-left"></i>
+</button>
+
+<div id="main-content" class="main-content">
+    
+    <div id="area-matriz" style="display: none;">
         <div class="tabs-header">
-            <button class="tab-item active" onclick="verSeccion('inventario')">INVENTARIO</button>
-            <button id="tab-personal" class="tab-item" onclick="verSeccion('personal')">PERSONAL</button>
-            <button id="tab-venta" class="tab-item" onclick="verSeccion('venta')">VENTA</button>
-            <button id="tab-facturas" class="tab-item" onclick="verSeccion('facturas')">FACTURACIONES</button>
+            <button class="tab-item active" onclick="setTab(this, 'inventario')">INVENTARIO</button>
+            <button class="tab-item" onclick="setTab(this, 'personal')">PERSONAL</button>
+            <button class="tab-item" onclick="setTab(this, 'venta')">VENTA</button>
+            <button class="tab-item" onclick="setTab(this, 'facturas')">FACTURACIONES</button>
         </div>
 
         <div class="workspace-box">
-            <h3 id="titulo-seccion" style="color:var(--gold);">Inventario General</h3>
-            <div id="contenido-dinamico">
-                <p style="color:#555;">Selecciona una opción arriba para comenzar a trabajar.</p>
-            </div>
+            <h3 id="workspace-title" style="color:var(--gold); margin-top:0;">Gestión de Inventario</h3>
+            <hr border="0" style="border-top:1px solid #333; margin-bottom:20px;">
+            <div id="workspace-content">
+                </div>
         </div>
     </div>
-    
-    <div id="pantalla-bienvenida">
-        <h2 style="color:#333; text-align:center; margin-top:100px;">Presiona "Abrir Matriz" para gestionar el local</h2>
+
+    <div id="area-bienvenida" style="text-align: center; margin-top: 15vh;">
+        <i class="fas fa-store" style="font-size: 4rem; color: #222;"></i>
+        <h2 style="color: #444;">Bienvenido al Panel de Gestión</h2>
+        <p style="color: #333;">Selecciona "Abrir Matriz" en el menú para comenzar.</p>
     </div>
+
 </div>
 
 <script>
-    // CONFIGURACIÓN FIREBASE
     const firebaseConfig = { databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com" };
     firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
 
-    // DATOS SIMULADOS (En el futuro vienen del login)
-    let esDueño = true; 
-    let TIENDA_ID = "3001234567";
-
-    function toggleMatriz() {
-        const pMatriz = document.getElementById('pantalla-matriz');
-        const pBienvenida = document.getElementById('pantalla-bienvenida');
-        const btnLabel = document.getElementById('label-matriz');
-        const btnNav = document.getElementById('btn-matriz-toggle');
-
-        if(pMatriz.style.display === 'none') {
-            pMatriz.style.display = 'block';
-            pBienvenida.style.display = 'none';
-            btnLabel.innerText = "Matriz";
-            btnNav.classList.add('active');
-            verSeccion('inventario'); // Carga por defecto
-        } else {
-            pMatriz.style.display = 'none';
-            pBienvenida.style.display = 'block';
-            btnLabel.innerText = "Abrir Matriz";
-            btnNav.classList.remove('active');
-        }
+    function activarMatriz() {
+        // 1. Esconder Menú Lateral y Expandir Contenido
+        document.getElementById('sidebar').classList.add('collapsed');
+        document.getElementById('main-content').classList.add('expanded');
+        
+        // 2. Cambiar pantallas
+        document.getElementById('area-bienvenida').style.display = 'none';
+        document.getElementById('area-matriz').style.display = 'block';
+        
+        // 3. Mostrar botón de retorno
+        document.getElementById('btn-return').style.display = 'block';
+        
+        cargarContenido('inventario');
     }
 
-    function verSeccion(tipo) {
-        const titulo = document.getElementById('titulo-seccion');
-        const contenido = document.getElementById('contenido-dinamico');
+    function cerrarMatriz() {
+        // 1. Mostrar Menú Lateral y Contraer Contenido
+        document.getElementById('sidebar').classList.remove('collapsed');
+        document.getElementById('main-content').classList.remove('expanded');
         
-        // Desmarcar todos los tabs
+        // 2. Cambiar pantallas
+        document.getElementById('area-bienvenida').style.display = 'block';
+        document.getElementById('area-matriz').style.display = 'none';
+        
+        // 3. Esconder botón de retorno
+        document.getElementById('btn-return').style.display = 'none';
+    }
+
+    function setTab(btn, seccion) {
         document.querySelectorAll('.tab-item').forEach(b => b.classList.remove('active'));
-        
-        // Lógica de permisos
-        if(!esDueño && tipo === 'personal') {
-            alert("Solo el dueño puede gestionar el personal");
-            return;
-        }
-
-        switch(tipo) {
-            case 'inventario':
-                titulo.innerText = "Gestión de Inventario";
-                contenido.innerHTML = "<button style='background:var(--gold); border:none; padding:10px; border-radius:5px;'>+ Crear Inventario</button>";
-                break;
-            case 'personal':
-                titulo.innerText = "Gestión de Personal";
-                contenido.innerHTML = "<p>Aquí el dueño habilita accesos a empleados.</p>";
-                break;
-            case 'venta':
-                titulo.innerText = "Punto de Venta";
-                contenido.innerHTML = "<p>Módulo de ventas diarias.</p>";
-                break;
-            case 'facturas':
-                titulo.innerText = "Historial de Facturación";
-                contenido.innerHTML = "<p>Listado de facturas generadas.</p>";
-                break;
-        }
+        btn.classList.add('active');
+        cargarContenido(seccion);
     }
 
-    function abrirPerfil() { alert("Configuración de Perfil"); }
-    function eliminarRegistro() { confirm("¿Seguro que deseas eliminar esta cuenta?"); }
-
-    // Cargar nombre e ID desde Firebase
-    db.ref('usuarios/' + TIENDA_ID).once('value', snap => {
-        if(snap.exists()){
-            document.getElementById('txt-nombre-local').innerText = snap.val().nombre || "LOCAL J.A.D.I";
-            document.getElementById('txt-id-local').innerText = "ID: " + TIENDA_ID;
+    function cargarContenido(seccion) {
+        const title = document.getElementById('workspace-title');
+        const content = document.getElementById('workspace-content');
+        
+        if(seccion === 'inventario') {
+            title.innerText = "Inventario de Calzado";
+            content.innerHTML = `
+                <button onclick="alert('Formulario para crear')" style="background:var(--gold); border:none; padding:12px 20px; border-radius:8px; font-weight:bold; cursor:pointer;">
+                    <i class="fas fa-plus"></i> CREAR INVENTARIO
+                </button>
+            `;
+        } else {
+            title.innerText = seccion.toUpperCase();
+            content.innerHTML = `<p style="color:#666;">Módulo ${seccion} en desarrollo...</p>`;
         }
-    });
+    }
 </script>
 
 </body>
