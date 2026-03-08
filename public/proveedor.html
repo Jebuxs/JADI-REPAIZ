@@ -3,149 +3,142 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ventas J.A.D.I - Proveedor</title>
+    <title>J.A.D.I - Gestión de Inventarios</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --gold: #fbc02d; --dark: #000; --card: #111; }
-        body { font-family: sans-serif; background: var(--dark); color: white; margin: 0; padding: 15px; }
-        .header-venta { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        :root { --gold: #fbc02d; --dark: #000; --card: #111; --green: #2ecc71; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; margin: 0; padding: 15px; }
+        .container { max-width: 1200px; margin: auto; }
         
-        .search-box { margin: 20px 0; position: relative; }
-        .input-search { width: 100%; padding: 15px; border-radius: 25px; border: 1px solid var(--gold); background: #000; color: white; box-sizing: border-box; font-size: 1rem; }
-
-        .lista-productos { margin-top: 10px; }
-        .item-venta { background: var(--card); padding: 15px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #222; }
+        /* Cabecera Dinámica */
+        .header-shop { border-left: 4px solid var(--gold); padding-left: 15px; margin-bottom: 25px; }
+        .header-shop h1 { margin: 0; color: var(--gold); font-size: 1.5rem; }
         
-        .btn-vender { background: var(--gold); color: black; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        .badge-stock { font-size: 0.7rem; background: #333; padding: 3px 7px; border-radius: 5px; color: var(--gold); }
+        /* Controles Principales */
+        .admin-controls { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .btn { padding: 12px 20px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.3s; }
+        .btn-main { background: var(--gold); color: black; }
+        .btn-edit { background: #3498db; color: white; }
+        .btn-staff { background: #555; color: white; }
         
-        #carrito-flotante { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 400px; background: var(--gold); color: black; padding: 15px; border-radius: 15px; display: none; justify-content: space-between; align-items: center; font-weight: bold; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        /* Tabla de Inventario */
+        .table-container { background: var(--card); border-radius: 12px; border: 1px solid #333; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 800px; }
+        th { background: #1a1a1a; color: var(--gold); padding: 15px; text-align: left; font-size: 0.8rem; text-transform: uppercase; }
+        td { padding: 12px 15px; border-bottom: 1px solid #222; font-size: 0.85rem; }
+        
+        .status-badge { padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; }
+        .active { background: rgba(46, 204, 113, 0.2); color: #2ecc71; }
+        
+        /* Secciones Ocultas */
+        .hidden { display: none; }
+        .modal { background: rgba(0,0,0,0.9); position: fixed; top:0; left:0; width:100%; height:100%; display: flex; justify-content: center; align-items: center; z-index: 100; }
+        .modal-content { background: var(--card); padding: 25px; border-radius: 15px; border: 1px solid var(--gold); width: 90%; max-width: 400px; }
     </style>
 </head>
 <body>
 
-<div class="header-venta">
-    <span><i class="fas fa-user"></i> <span id="nombre-vendedor">---</span></span>
-    <button onclick="location.href='admin_panel.html'" style="background:none; border:none; color:var(--gold);"><i class="fas fa-cog"></i></button>
-</div>
-
-<div class="search-box">
-    <input type="text" id="busqueda" class="input-search" placeholder="🔍 Buscar suela o material..." onkeyup="filtrarProductos()">
-</div>
-
-<div class="lista-productos" id="contenedor-ventas">
+<div class="container">
+    <div class="header-shop">
+        <h1 id="nombre-tienda">Cargando Tienda...</h1>
+        <p id="info-propietario" style="color:#666; margin:5px 0;">ID Propietario: ---</p>
     </div>
 
-<div id="carrito-flotante" onclick="finalizarVenta()">
-    <span>🛒 <span id="items-count">0</span> Items Seleccionados</span>
-    <span id="total-venta">$0.00</span>
+    <div class="admin-controls">
+        <button id="btn-inventario" class="btn btn-main" onclick="abrirInventario()">
+            <i class="fas fa-plus-circle"></i> <span id="txt-inventario">Crear Inventario</span>
+        </button>
+        
+        <button class="btn btn-staff" onclick="togglePersonal()">
+            <i class="fas fa-users-cog"></i> Habilitar Personal
+        </button>
+    </div>
+
+    <div class="table-container">
+        <h3 style="padding:15px; margin:0; border-bottom:1px solid #333;">Detalle de Stock Registrado</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Referencia / Modelo</th>
+                    <th>Categoría</th>
+                    <th>Talla</th>
+                    <th>Color</th>
+                    <th>Cantidad</th>
+                    <th>Precio Sugerido</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody id="tabla-inventario">
+                </tbody>
+        </table>
+    </div>
 </div>
 
 <script>
     const firebaseConfig = {
-        apiKey: "AIzaSyAKPxG1osuR9hsj-PsmwJrzK-3W_XM1UyU",
-        databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com",
+        databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com"
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    const session = JSON.parse(localStorage.getItem('session_jadi'));
-    const empresaID = session.empresaID;
-    document.getElementById('nombre-vendedor').innerText = session.nombre;
+    // Simulamos la tienda activa (esto vendría del login)
+    const TIENDA_ID = "TND7890"; 
+    let tieneInventario = false;
 
-    let productosData = [];
-    let carrito = [];
-
-    // 1. CARGAR PRODUCTOS DESDE EL INVENTARIO QUE CREAMOS
-    function cargarProductosVenta() {
-        db.ref('Ecosistema_JADI/Inventarios/' + empresaID).on('value', snap => {
-            const container = document.getElementById('contenedor-ventas');
-            container.innerHTML = "";
-            productosData = [];
-
-            snap.forEach(child => {
-                const p = child.val();
-                p.id = child.key; // Guardamos el ID de Firebase para el descuento
-                productosData.push(p);
-
-                container.innerHTML += `
-                    <div class="item-venta">
-                        <div>
-                            <div style="font-weight:bold">${p.nombre}</div>
-                            <div class="badge-stock">${p.total_unidades} pares disp.</div>
-                        </div>
-                        <div style="text-align:right">
-                            <div style="margin-bottom:5px">$${parseFloat(p.precio_venta).toFixed(2)}</div>
-                            <button class="btn-vender" onclick="agregarAlCarrito('${p.id}', '${p.nombre}', ${p.precio_venta}, ${p.total_unidades})">
-                                <i class="fas fa-plus"></i> Agregar
-                            </button>
-                        </div>
-                    </div>
-                `;
-            });
+    // 1. CARGAR DATOS DE LA TIENDA Y VERIFICAR BOTÓN
+    function cargarModulo() {
+        db.ref('tiendas/' + TIENDA_ID).on('value', snap => {
+            if(snap.exists()) {
+                const t = snap.val();
+                document.getElementById('nombre-tienda').innerText = t.nombre || "Local J.A.D.I";
+                document.getElementById('info-propietario').innerText = "Dueño: " + (t.propietario || "---");
+                
+                // Si existe la rama 'inventario', cambiamos el botón
+                if(t.inventario) {
+                    tieneInventario = true;
+                    document.getElementById('txt-inventario').innerText = "Editar Inventario";
+                    document.getElementById('btn-inventario').className = "btn btn-edit";
+                    cargarTablaInventario(t.inventario);
+                }
+            }
         });
     }
 
-    // 2. LÓGICA DEL CARRITO
-    function agregarAlCarrito(id, nombre, precio, stock) {
-        if(stock <= 0) return alert("¡Sin stock disponible!");
+    // 2. LOGICA TABLA: MOSTRAR DATOS O VACÍO
+    function cargarTablaInventario(data) {
+        const tbody = document.getElementById('tabla-inventario');
+        tbody.innerHTML = "";
         
-        carrito.push({ id, nombre, precio });
-        actualizarUI();
-    }
-
-    function actualizarUI() {
-        const float = document.getElementById('carrito-flotante');
-        const count = document.getElementById('items-count');
-        const totalTxt = document.getElementById('total-venta');
-
-        if(carrito.length > 0) {
-            float.style.display = 'flex';
-            count.innerText = carrito.length;
-            const total = carrito.reduce((sum, item) => sum + parseFloat(item.precio), 0);
-            totalTxt.innerText = "$" + total.toFixed(2);
-        } else {
-            float.style.display = 'none';
-        }
-    }
-
-    // 3. DESCONTAR DEL INVENTARIO Y GUARDAR VENTA
-    async function finalizarVenta() {
-        if(!confirm("¿Confirmar venta y descontar stock?")) return;
-
-        for(let item of carrito) {
-            const refProd = db.ref(`Ecosistema_JADI/Inventarios/${empresaID}/${item.id}`);
-            
-            // Leemos el stock actual para restar 1 unidad
-            const snap = await refProd.once('value');
-            const data = snap.val();
-            
-            let nuevoTotal = data.total_unidades - 1;
-            
-            // Lógica simple: si restamos unidades, también ajustamos bultos si es necesario
-            // (Esta es una versión base, luego podemos hacerla más compleja)
-            await refProd.update({
-                total_unidades: nuevoTotal
-            });
-        }
-
-        // Guardar el registro de la venta para los reportes
-        const ventaRef = db.ref(`Ecosistema_JADI/Ventas/${empresaID}`).push();
-        await ventaRef.set({
-            fecha: new Date().toLocaleString(),
-            vendedor: session.nombre,
-            items: carrito,
-            total: carrito.reduce((sum, i) => sum + parseFloat(i.precio), 0)
+        Object.keys(data).forEach(key => {
+            const item = data[key];
+            tbody.innerHTML += `
+                <tr>
+                    <td style="font-weight:bold; color:white;">${item.modelo || ''}</td>
+                    <td>${item.categoria || ''}</td>
+                    <td>${item.talla || ''}</td>
+                    <td>${item.color || ''}</td>
+                    <td style="color:var(--gold);">${item.cantidad || '0'}</td>
+                    <td>${item.precio ? '$' + item.precio : ''}</td>
+                    <td><span class="status-badge active">EN STOCK</span></td>
+                </tr>
+            `;
         });
-
-        alert("¡Venta realizada con éxito!");
-        carrito = [];
-        actualizarUI();
     }
 
-    cargarProductosVenta();
+    // Funciones de acción (Para los siguientes pasos)
+    function abrirInventario() {
+        const accion = tieneInventario ? "Editando" : "Creando";
+        alert(accion + " inventario para la tienda...");
+        // Aquí iría el formulario de carga
+    }
+
+    function togglePersonal() {
+        alert("Abriendo panel de permisos para trabajadores...");
+    }
+
+    window.onload = cargarModulo;
 </script>
 </body>
 </html>
