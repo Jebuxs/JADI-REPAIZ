@@ -11,29 +11,19 @@
     <style>
         :root { --gold: #fbc02d; --dark: #000; --input-bg: #111; }
         body { font-family: -apple-system, sans-serif; background: var(--dark); color: white; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow: hidden; }
-        
         .container { width: 90%; max-width: 380px; text-align: center; padding: 20px; position: relative; }
-        
         #loader { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; flex-direction: column; align-items: center; justify-content: center; }
         .spinner { width: 40px; height: 40px; border: 4px solid #333; border-top-color: var(--gold); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 15px; }
         @keyframes spin { to { transform: rotate(360deg); } }
-
-        .logo-main { width: 120px; margin-bottom: 10px; }
         .brand-text { font-size: 1.8rem; font-weight: 900; letter-spacing: 5px; color: var(--gold); margin-bottom: 30px; }
-
         .form-box { display: flex; flex-direction: column; gap: 15px; }
         .input-group { position: relative; }
         .input-group i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #555; }
-        
         input { width: 100%; padding: 15px 15px 15px 45px; background: var(--input-bg); border: 1px solid #222; border-radius: 12px; color: white; font-size: 1rem; box-sizing: border-box; outline: none; transition: 0.3s; }
         input:focus { border-color: var(--gold); background: #1a1a1a; }
-
         .btn-login { background: var(--gold); color: black; padding: 15px; border: none; border-radius: 12px; font-weight: 800; font-size: 1rem; cursor: pointer; transition: 0.3s; margin-top: 10px; }
-        .btn-login:active { transform: scale(0.98); }
-
         .footer-links { margin-top: 25px; font-size: 0.8rem; color: #666; }
         .footer-links a { color: var(--gold); text-decoration: none; font-weight: bold; }
-
         #panel-registro { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: black; z-index: 500; flex-direction: column; align-items: center; justify-content: center; }
         .reg-card { width: 85%; max-width: 350px; background: #080808; padding: 25px; border-radius: 20px; border: 1px solid #111; }
     </style>
@@ -42,11 +32,11 @@
 
     <div id="loader">
         <div class="spinner"></div>
-        <div style="letter-spacing: 2px; font-size: 0.7rem; color: var(--gold);">SINCRONIZANDO SISTEMA</div>
+        <div style="letter-spacing: 2px; font-size: 0.7rem; color: var(--gold);">SINCRONIZANDO</div>
     </div>
 
     <div class="container" id="login-view">
-        <div class="brand-text">J.A.DI REPAIZ</div>
+        <div class="brand-text">J.A.D.I REPAIZ</div>
         <div class="form-box">
             <div class="input-group">
                 <i class="fas fa-user"></i>
@@ -67,16 +57,16 @@
         <div class="reg-card">
             <h2 style="color:var(--gold); margin-bottom:20px;">NUEVO REGISTRO</h2>
             <div class="form-box">
-                <input type="text" id="reg-name" placeholder="Nombre y Apellido" style="padding-left:15px;">
-                <input type="tel" id="reg-tel" placeholder="Número Celular" style="padding-left:15px;">
-                <select id="reg-rol" style="width:100%; padding:15px; background:#111; color:white; border:1px solid #222; border-radius:12px; margin-bottom:5px;">
+                <input type="text" id="reg-name" placeholder="Nombre y Apellido">
+                <input type="tel" id="reg-tel" placeholder="Número Celular">
+                <select id="reg-rol" style="width:100%; padding:15px; background:#111; color:white; border:1px solid #222; border-radius:12px;">
                     <option value="PRV">PROVEEDOR</option>
                     <option value="ZPT">ZAPATERO</option>
                     <option value="DLV">DELIVERY</option>
                     <option value="CLN">CLIENTE</option>
                 </select>
-                <input type="password" id="reg-pass" placeholder="Crear Contraseña" style="padding-left:15px;">
-                <input type="password" id="reg-confirm" placeholder="Confirmar Contraseña" style="padding-left:15px;">
+                <input type="password" id="reg-pass" placeholder="Crear Contraseña">
+                <input type="password" id="reg-confirm" placeholder="Confirmar Contraseña">
                 <button class="btn-login" onclick="validarYCrearEcosistema()">CREAR CUENTA</button>
                 <button onclick="toggleRegistro(false)" style="background:transparent; color:#555; border:none; margin-top:10px; cursor:pointer;">Cancelar</button>
             </div>
@@ -91,23 +81,14 @@
         projectId: "jadi-repaiz"
     };
 
-    if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-    }
-    
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     const auth = firebase.auth();
 
-    // Aseguramos que la sesión persista al navegar
+    // PERSISTENCIA LOCAL (CRUCIAL)
     auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 
-    const paginasMaster = { 
-        'ZPT':'zapatero.html', 
-        'PRV':'proveedor.html', 
-        'CLN':'cliente.html', 
-        'DLV':'delivery.html', 
-        'ADM':'admin_panel.html' 
-    };
+    const paginasMaster = { 'ZPT':'zapatero.html', 'PRV':'proveedor.html', 'CLN':'cliente.html', 'DLV':'delivery.html', 'ADM':'admin_panel.html' };
 
     function toggleLoader(s) { document.getElementById('loader').style.display = s ? 'flex' : 'none'; }
     function toggleRegistro(s) { document.getElementById('panel-registro').style.display = s ? 'flex' : 'none'; }
@@ -122,90 +103,13 @@
             let user = null;
             const t = input.replace(/\D/g,'');
 
-            // Búsqueda original por teléfono
+            // 1. Buscamos en Database (Como tú lo tenías)
             if (t.length >= 7) {
                 const snap = await db.ref('usuarios/' + t).once('value');
                 if (snap.exists()) user = snap.val();
             }
-
-            // Búsqueda original por UID
             if (!user) {
                 const snapID = await db.ref('usuarios').orderByChild('uid').equalTo(input.toUpperCase()).once('value');
                 if (snapID.exists()) {
                     const data = snapID.val();
-                    user = data[Object.keys(data)[0]];
-                }
-            }
-
-            if(user && user.pass === pass) {
-                // FUSIÓN DE SEGURIDAD: Login en Auth de Firebase
-                const emailFake = user.telefono + "@jadi.com";
-                try {
-                    await auth.signInWithEmailAndPassword(emailFake, pass);
-                } catch(e) {
-                    if(e.code === 'auth/user-not-found') {
-                        await auth.createUserWithEmailAndPassword(emailFake, pass);
-                    }
-                }
-
-                localStorage.setItem('session_jadi', JSON.stringify(user));
-                window.location.href = paginasMaster[user.rolCodigo] || 'index.html';
-            } else { 
-                toggleLoader(false);
-                alert("Credenciales incorrectas"); 
-            }
-        } catch(e) { 
-            toggleLoader(false); 
-            console.error(e);
-            alert("Error de conexión"); 
-        }
-    }
-
-    async function validarYCrearEcosistema() {
-        const n = document.getElementById('reg-name').value;
-        const t = document.getElementById('reg-tel').value.replace(/\D/g,'');
-        const r = document.getElementById('reg-rol').value;
-        const p = document.getElementById('reg-pass').value;
-        const c = document.getElementById('reg-confirm').value;
-
-        if(!n || t.length < 9 || !p) return alert("Por favor, llene todos los campos correctamente");
-        if(p !== c) return alert("Las contraseñas no coinciden");
-
-        toggleLoader(true);
-        try {
-            // REGISTRO EN EL MOTOR DE SEGURIDAD (AUTH)
-            await auth.createUserWithEmailAndPassword(t + "@jadi.com", p);
-
-            const obj = {
-                nombre: n,
-                telefono: t,
-                rolCodigo: r,
-                pass: p,
-                empresaID: "JADI-CORP",
-                uid: r + t.slice(-4),
-                fechaRegistro: new Date().toISOString()
-            };
-
-            await db.ref('usuarios/' + t).set(obj);
-            localStorage.setItem('session_jadi', JSON.stringify(obj));
-            window.location.href = paginasMaster[r];
-        } catch(e) {
-            toggleLoader(false);
-            alert("No se pudo crear la cuenta: " + e.message);
-        }
-    }
-
-    // Tu función especial de administrador se mantiene intacta
-    async function crearAdminSecreto() {
-        const n = document.getElementById('adm-name')?.value || "ADMIN";
-        const t = document.getElementById('adm-tel')?.value.replace(/\D/g,'') || "000000000";
-        const p = document.getElementById('adm-pass')?.value || "1234";
-        toggleLoader(true);
-        const obj = { nombre: n, telefono: t, rolCodigo: 'ADM', pass: p, empresaID: "JADI-CORP", uid: "ADM"+t.slice(-4) };
-        await db.ref('usuarios/' + t).set(obj);
-        toggleLoader(false);
-        alert("Admin Creado");
-    }
-</script>
-</body>
-</html>
+                    user = data
