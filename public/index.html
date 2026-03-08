@@ -32,19 +32,20 @@
         
         .btn-google {
             width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #444; 
-            background: white; color: black; font-weight: bold; margin-top: 15px;
+            background: white; color: black; font-weight: bold; margin-bottom: 15px;
             display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer;
         }
 
         .forgot-pass { display: block; margin-top: 15px; color: #888; text-decoration: none; font-size: 0.9rem; }
         .forgot-pass:hover { color: var(--gold); }
 
-        .divider { margin: 25px 0; display: flex; align-items: center; color: #444; font-size: 0.8rem; }
+        .divider { margin: 20px 0; display: flex; align-items: center; color: #444; font-size: 0.8rem; }
         .divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: #222; margin: 0 10px; }
 
         .footer-links { margin-top: 30px; border-top: 1px solid #222; padding-top: 20px; }
-        .footer-links a { color: var(--gold); text-decoration: none; font-weight: bold; }
+        .footer-links a { color: var(--gold); text-decoration: none; font-weight: bold; cursor: pointer; }
         
+        #reg-section { display: none; } /* Oculto al inicio */
         #loader { display: none; margin-top: 10px; color: var(--gold); }
     </style>
 </head>
@@ -57,29 +58,39 @@
     <div id="login-section">
         <input type="text" id="user-input" placeholder="Usuario, Teléfono o Email">
         <input type="password" id="pass-input" placeholder="Contraseña">
-        
         <button class="btn-main" onclick="iniciarSesion()">INICIAR SESIÓN</button>
-        
         <a href="#" class="forgot-pass" onclick="recuperarClave()">¿Has olvidado tu contraseña?</a>
+        
+        <div class="footer-links">
+            <p style="color:#666; font-size: 0.9rem;">¿Eres nuevo?</p>
+            <a onclick="mostrarRegistro()">REGISTRARSE AHORA</a>
+        </div>
+    </div>
 
-        <div class="divider">O ENTRA CON</div>
-
+    <div id="reg-section">
+        <h3 style="color: var(--gold);">Crear Cuenta</h3>
+        <p style="color: #888; font-size: 0.9rem; margin-bottom: 20px;">Elige cómo quieres registrarte:</p>
+        
         <button class="btn-google" onclick="loginConGoogle()">
             <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" width="18">
-            Continuar con Google
+            Registrarse con Gmail
         </button>
 
-        <div id="loader"><i class="fas fa-spinner fa-spin"></i> Validando datos...</div>
+        <div class="divider">O MANUALMENTE</div>
+
+        <button class="btn-main" style="background: transparent; border: 1px solid var(--gold); color: var(--gold);" onclick="location.href='registro_empleado.html'">
+            Registro con Teléfono
+        </button>
+
+        <div class="footer-links">
+            <a onclick="mostrarLogin()"><i class="fas fa-arrow-left"></i> Volver al Inicio</a>
+        </div>
     </div>
 
-    <div class="footer-links">
-        <p style="color:#666; font-size: 0.9rem;">¿No tienes cuenta?</p>
-        <a href="registro_empleado.html">REGISTRARSE AHORA</a>
-    </div>
+    <div id="loader"><i class="fas fa-spinner fa-spin"></i> Procesando...</div>
 </div>
 
 <script>
-    // Configuración Firebase (Usando tus credenciales actuales)
     const firebaseConfig = {
         apiKey: "AIzaSyAKPxG1osuR9hsj-PsmwJrzK-3W_XM1UyU",
         authDomain: "jadi-repaiz.firebaseapp.com",
@@ -94,46 +105,43 @@
 
     const paginas = { 'ADM': 'admin_panel.html', 'ZPT': 'zapatero.html', 'EMP': 'proveedor.html', 'DEL': 'motorizado.html', 'TND': 'tienda_ventas.html' };
 
-    // FUNCIÓN: LOGIN MANUAL
+    // CAMBIAR VISTAS
+    function mostrarRegistro() {
+        document.getElementById('login-section').style.display = 'none';
+        document.getElementById('reg-section').style.display = 'block';
+    }
+
+    function mostrarLogin() {
+        document.getElementById('reg-section').style.display = 'none';
+        document.getElementById('login-section').style.display = 'block';
+    }
+
+    // LOGIN MANUAL
     async function iniciarSesion() {
         const input = document.getElementById('user-input').value.trim();
         const pass = document.getElementById('pass-input').value.trim();
-        if(!input || !pass) return alert("Por favor, llena todos los campos.");
-
+        if(!input || !pass) return alert("Llena todos los campos.");
         document.getElementById('loader').style.display = "block";
-
         try {
-            // Buscamos en la base de datos
             const snap = await db.ref('usuarios').once('value');
-            let usuarioEncontrado = null;
-
+            let encontrado = null;
             snap.forEach(child => {
                 const u = child.val();
-                // Validamos por teléfono, email o UID
-                if((u.telefono === input || u.correo === input || u.uid === input.toUpperCase()) && u.pass === pass) {
-                    usuarioEncontrado = u;
-                }
+                if((u.telefono === input || u.correo === input || u.uid === input.toUpperCase()) && u.pass === pass) { encontrado = u; }
             });
-
-            if(usuarioEncontrado) {
-                localStorage.setItem('session_jadi', JSON.stringify(usuarioEncontrado));
-                window.location.href = paginas[usuarioEncontrado.rolCodigo] || 'index.html';
-            } else {
-                alert("Credenciales incorrectas o usuario no registrado.");
-            }
-        } catch (e) {
-            alert("Error de conexión con el servidor.");
-        } finally {
-            document.getElementById('loader').style.display = "none";
-        }
+            if(encontrado) {
+                localStorage.setItem('session_jadi', JSON.stringify(encontrado));
+                window.location.href = paginas[encontrado.rolCodigo] || 'index.html';
+            } else { alert("Datos incorrectos."); }
+        } catch (e) { alert("Error de red."); }
+        finally { document.getElementById('loader').style.display = "none"; }
     }
 
-    // FUNCIÓN: GOOGLE LOGIN
+    // GMAIL REGISTRO/LOGIN
     function loginConGoogle() {
         const provider = new firebase.auth.GoogleAuthProvider();
         auth.signInWithPopup(provider).then(async (result) => {
             const email = result.user.email;
-            // Verificar si ya existe en DB
             const snap = await db.ref('usuarios').orderByChild('correo').equalTo(email).once('value');
             if(snap.exists()) {
                 const data = snap.val();
@@ -141,19 +149,18 @@
                 localStorage.setItem('session_jadi', JSON.stringify(user));
                 window.location.href = paginas[user.rolCodigo];
             } else {
-                alert("Email vinculado. Completa tu registro como Tienda, Taller o Empleado.");
+                alert("Cuenta vinculada. Ahora completa tu perfil.");
                 window.location.href = 'registro_empleado.html?email=' + email;
             }
-        }).catch(() => alert("Error al conectar con Google."));
+        }).catch(() => alert("Error con Google."));
     }
 
-    // FUNCIÓN: OLVIDÉ MI CONTRASEÑA
     function recuperarClave() {
-        const userEmail = prompt("Introduce tu correo electrónico para restablecer la clave:");
-        if (userEmail) {
-            auth.sendPasswordResetEmail(userEmail)
-                .then(() => alert("¡Listo! Te hemos enviado un enlace a tu correo para cambiar la contraseña."))
-                .catch((error) => alert("Error: Asegúrate de que el correo sea el correcto."));
+        const email = prompt("Introduce tu correo:");
+        if (email) {
+            auth.sendPasswordResetEmail(email)
+                .then(() => alert("Email enviado."))
+                .catch(() => alert("Correo no válido."));
         }
     }
 </script>
