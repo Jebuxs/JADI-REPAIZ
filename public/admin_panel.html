@@ -13,10 +13,10 @@
         .container { max-width: 1000px; margin: auto; }
         .admin-box { background: var(--card); padding: 15px; border-radius: 15px; border: 1px solid #333; margin-bottom: 20px; overflow-x: auto; }
         h2 { color: var(--gold); text-align: center; letter-spacing: 2px; }
-        table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        table { width: 100%; border-collapse: collapse; min-width: 800px; }
         th { text-align: left; color: var(--gold); border-bottom: 2px solid #333; padding: 10px; font-size: 0.8rem; }
         td { padding: 10px; border-bottom: 1px solid #222; font-size: 0.85rem; }
-        .btn-del { background: var(--red); color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
+        .btn-del { background: var(--red); color: white; border: none; padding: 8px; border-radius: 5px; cursor: pointer; }
         #login-admin { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark); z-index: 1000; display: none; justify-content: center; align-items: center; }
         .login-card { background: var(--card); padding: 30px; border-radius: 20px; border: 1px solid var(--gold); text-align: center; width: 300px; }
         input[type="password"] { width: 100%; padding: 12px; margin: 15px 0; border-radius: 8px; border: 1px solid #333; background: #000; color: white; text-align: center; }
@@ -33,7 +33,7 @@
 </div>
 
 <div class="container">
-    <button onclick="localStorage.removeItem('master_auth'); location.reload();" style="float:right; background:none; color:#444; border:1px solid #444; cursor:pointer; padding:5px;">Cerrar</button>
+    <button onclick="localStorage.removeItem('master_auth'); location.reload();" style="float:right; background:none; color:#444; border:1px solid #444; cursor:pointer; padding:5px; font-size: 0.7rem;">Cerrar Master</button>
     <h2>BASE DE DATOS J.A.D.I</h2>
 
     <div class="admin-box">
@@ -41,28 +41,26 @@
             <thead>
                 <tr>
                     <th>Nombre</th>
-                    <th>Teléfono/ID</th>
+                    <th>ID / Celular</th>
                     <th>Clave</th>
                     <th>Rol</th>
-                    <th>Ruta Origen</th>
+                    <th>Empresa / Ingreso</th>
                     <th>Acción</th>
                 </tr>
             </thead>
             <tbody id="lista-usuarios">
-                <tr><td colspan="6" style="text-align:center;">Buscando usuarios en la nube...</td></tr>
+                <tr><td colspan="6" style="text-align:center;">Cargando usuarios desde us-central1...</td></tr>
             </tbody>
         </table>
     </div>
 </div>
 
 <script>
+    // CONFIGURACIÓN CORREGIDA CON TU URL REAL DE LA IMAGEN
     const firebaseConfig = {
         apiKey: "AIzaSyAKPxG1osuR9hsj-PsmwJrzK-3W_XM1UyU",
-        authDomain: "jadi-repaiz.firebaseapp.com",
-        databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com",
-        projectId: "jadi-repaiz",
-        storageBucket: "jadi-repaiz.appspot.com",
-        appId: "1:847134630000:web:0b7806aeda52b991d554b5"
+        databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com", // Ruta confirmada
+        projectId: "jadi-repaiz"
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
@@ -72,7 +70,7 @@
     window.onload = () => {
         if(localStorage.getItem('master_auth') === 'true') {
             document.getElementById('login-admin').style.display = 'none';
-            rastrearUsuarios();
+            cargarUsuarios();
         } else {
             document.getElementById('login-admin').style.display = 'flex';
         }
@@ -82,53 +80,53 @@
         if(document.getElementById('master-key').value === CLAVE_SECRETA) {
             localStorage.setItem('master_auth', 'true');
             document.getElementById('login-admin').style.display = 'none';
-            rastrearUsuarios();
+            cargarUsuarios();
         } else { alert("Clave Incorrecta"); }
     }
 
-    function rastrearUsuarios() {
-        const tbody = document.getElementById('lista-usuarios');
-        tbody.innerHTML = "";
+    function cargarUsuarios() {
+        // En tu imagen se ve que la ruta es directamente 'usuarios'
+        db.ref('usuarios').on('value', snap => {
+            const tbody = document.getElementById('lista-usuarios');
+            tbody.innerHTML = "";
 
-        // BUSCADOR 1: Ruta raíz 'usuarios'
-        db.ref('usuarios').on('value', snap => procesarSnap(snap, 'Raíz'));
+            if(!snap.exists()) {
+                tbody.innerHTML = "<tr><td colspan='6' style='text-align:center;'>No se encontraron usuarios en 'usuarios/'</td></tr>";
+                return;
+            }
 
-        // BUSCADOR 2: Ruta ecosistema 'Ecosistema_JADI/usuarios'
-        db.ref('Ecosistema_JADI/usuarios').on('value', snap => procesarSnap(snap, 'Ecosistema'));
-    }
+            snap.forEach(child => {
+                const u = child.val();
+                const id = child.key; // Es el número de teléfono
 
-    function procesarSnap(snap, origen) {
-        const tbody = document.getElementById('lista-usuarios');
-        if(!snap.exists()) return;
-
-        snap.forEach(child => {
-            const u = child.val();
-            const id = child.key;
-            
-            // Evitar duplicados si aparecen en ambas rutas
-            if(document.getElementById('row-' + id)) return;
-
-            const tr = document.createElement('tr');
-            tr.id = 'row-' + id;
-            tr.innerHTML = `
-                <td style="color:var(--gold); font-weight:bold;">${u.nombre || 'N/A'}</td>
-                <td>${u.telefono || id}</td>
-                <td>${u.pass || '---'}</td>
-                <td>${u.rolCodigo || '??'}</td>
-                <td style="font-size:0.7rem; color:#555;">${origen}</td>
-                <td>
-                    <button class="btn-del" onclick="eliminarUsuario('${origen === 'Raíz' ? 'usuarios/' : 'Ecosistema_JADI/usuarios/'}${id}')">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </td>
-            `;
-            tbody.appendChild(tr);
+                tbody.innerHTML += `
+                    <tr>
+                        <td style="color:var(--gold); font-weight:bold;">${u.nombre || 'N/A'}</td>
+                        <td>
+                            <small style="color:#666;">UID: ${u.uid || '---'}</small><br>
+                            ${u.telefono || id}
+                        </td>
+                        <td style="font-family:monospace; font-size:0.8rem;">${u.pass || '---'}</td>
+                        <td style="font-weight:bold; color:var(--gold);">${u.rolCodigo || '??'}</td>
+                        <td style="font-size:0.75rem; color:#888;">
+                            Empresa: ${u.empresaNombre || 'N/A'}<br>
+                            ID Emp: ${u.empresaID || '---'}<br>
+                            F. Ingreso: ${u.fecha_ingreso || '---'}
+                        </td>
+                        <td>
+                            <button class="btn-del" onclick="eliminarUsuario('${id}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
         });
     }
 
-    function eliminarUsuario(rutaCompleta) {
-        if(confirm("¿Eliminar este registro permanentemente?")) {
-            db.ref(rutaCompleta).remove();
+    function eliminarUsuario(id) {
+        if(confirm("¿Seguro que quieres borrar al usuario con teléfono " + id + "?")) {
+            db.ref('usuarios/' + id).remove();
         }
     }
 </script>
