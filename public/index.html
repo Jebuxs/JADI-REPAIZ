@@ -3,60 +3,184 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>J.A.D.I REPAIZ - Sistema Activo</title>
+    <title>J.A.D.I REPAIZ - Ecosistema Digital</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #2c3e50;
-            color: white;
-            text-align: center;
+        :root { --gold: #fbc02d; --dark: #000; --input-bg: #111; --white: #ffffff; }
+        body { 
+            font-family: -apple-system, system-ui, sans-serif; 
+            background: var(--dark); color: var(--white); 
+            margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh;
         }
-        .container {
-            border: 5px solid #ecf0f1;
-            padding: 40px;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        .container { width: 90%; max-width: 380px; text-align: center; padding: 20px; }
+        .logo { font-size: 3.5rem; font-weight: bold; color: var(--gold); margin-bottom: 5px; text-shadow: 0 0 20px rgba(251, 192, 45, 0.4); }
+        .tagline { color: #888; font-size: 0.9rem; margin-bottom: 30px; letter-spacing: 1px; }
+        
+        .input-group { margin-bottom: 15px; }
+        input { 
+            width: 100%; padding: 15px; border-radius: 12px; border: 1px solid #333; 
+            background: var(--input-bg); color: white; font-size: 1rem; box-sizing: border-box; outline: none;
         }
-        h1 {
-            font-size: 3.5rem;
-            margin: 0;
-            letter-spacing: 2px;
+        input:focus { border-color: var(--gold); }
+
+        .btn-main { 
+            width: 100%; padding: 15px; border-radius: 12px; border: none; 
+            background: var(--gold); color: black; font-weight: bold; font-size: 1.1rem; cursor: pointer;
+            transition: transform 0.2s;
         }
-        p {
-            font-size: 1.2rem;
-            color: #bdc3c7;
-            margin-top: 10px;
+        .btn-main:active { transform: scale(0.98); }
+
+        .btn-google {
+            width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #444; 
+            background: white; color: black; font-weight: bold; margin-top: 15px;
+            display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer;
         }
-        .status {
-            display: inline-block;
-            margin-top: 20px;
-            padding: 10px 20px;
-            background-color: #27ae60;
-            border-radius: 50px;
-            font-weight: bold;
-            animation: pulse 2s infinite;
-        }
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
+
+        .links { margin-top: 25px; display: flex; flex-direction: column; gap: 12px; font-size: 0.9rem; }
+        .links a { color: var(--gold); text-decoration: none; opacity: 0.8; }
+        .links a:hover { opacity: 1; }
+
+        .divider { margin: 20px 0; display: flex; align-items: center; color: #444; }
+        .divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: #333; margin: 0 10px; }
+
+        #loader { display: none; margin-top: 15px; color: var(--gold); }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h1>HOLA</h1>
-        <h2>J.A.D.I REPAIZ</h2>
-        <p>Sistema conectado con éxito desde GitHub</p>
-        <div class="status">● SISTEMA ONLINE</div>
+<div class="container">
+    <div class="logo">J.A.D.I</div>
+    <div class="tagline">REPARACIÓN • VENTA • GARANTÍA</div>
+
+    <div id="login-form">
+        <div class="input-group">
+            <input type="text" id="user-input" placeholder="Teléfono o ID de Usuario">
+        </div>
+        <div class="input-group">
+            <input type="password" id="pass-input" placeholder="Contraseña">
+        </div>
+        <button class="btn-main" onclick="iniciarSesion()">INGRESAR AL SISTEMA</button>
+        
+        <div class="divider">o continúa con</div>
+
+        <button class="btn-google" onclick="loginConGoogle()">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" width="20">
+            Cuenta Gmail
+        </button>
+
+        <div id="loader"><i class="fas fa-circle-notch fa-spin"></i> Conectando...</div>
     </div>
+
+    <div class="links">
+        <a href="registro_empleado.html"><i class="fas fa-users"></i> Unirse como Colaborador</a>
+        <a href="admin.html"><i class="fas fa-store"></i> Registrar Taller o Tienda Nueva</a>
+    </div>
+    
+    <div style="margin-top: 35px; border-top: 1px solid #222; padding-top: 20px;">
+        <a href="cliente.html" style="background: #1a1a1a; padding: 12px 25px; border-radius: 30px; border: 1px solid var(--gold); display: inline-block;">
+            <i class="fas fa-shield-alt"></i> Garantía y Rastreo
+        </a>
+    </div>
+</div>
+
+<script>
+    // CONFIGURACIÓN FIREBASE
+    const firebaseConfig = {
+        apiKey: "AIzaSyAKPxG1osuR9hsj-PsmwJrzK-3W_XM1UyU",
+        authDomain: "jadi-repaiz.firebaseapp.com",
+        databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com",
+        projectId: "jadi-repaiz",
+        storageBucket: "jadi-repaiz.appspot.com",
+        appId: "1:847134630000:web:0b7806aeda52b991d554b5"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const auth = firebase.auth();
+
+    // MAPA DE RUTAS SEGÚN ROL
+    const paginas = {
+        'ADM': 'admin_panel.html',
+        'ZPT': 'zapatero.html',
+        'EMP': 'proveedor.html',
+        'DEL': 'motorizado.html',
+        'TND': 'tienda_ventas.html' // Nueva ruta para Tiendas
+    };
+
+    // 1. LOGIN MANUAL (TELÉFONO/ID)
+    async function iniciarSesion() {
+        const input = document.getElementById('user-input').value.trim();
+        const pass = document.getElementById('pass-input').value.trim();
+        const loader = document.getElementById('loader');
+
+        if(!input || !pass) return alert("Ingresa tus credenciales");
+
+        loader.style.display = "block";
+
+        try {
+            // Buscamos por teléfono
+            let snap = await db.ref('usuarios/' + input).once('value');
+            let user = snap.val();
+
+            // Si no encuentra por teléfono, busca por UID
+            if(!user) {
+                const snapID = await db.ref('usuarios').orderByChild('uid').equalTo(input.toUpperCase()).once('value');
+                if(snapID.exists()) {
+                    const data = snapID.val();
+                    user = data[Object.keys(data)[0]];
+                }
+            }
+
+            if(user && user.pass === pass) {
+                localStorage.setItem('session_jadi', JSON.stringify(user));
+                window.location.href = paginas[user.rolCodigo] || 'index.html';
+            } else {
+                alert("Usuario o clave incorrectos");
+            }
+        } catch (e) {
+            alert("Error de conexión");
+        } finally {
+            loader.style.display = "none";
+        }
+    }
+
+    // 2. LOGIN CON GOOGLE
+    function loginConGoogle() {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        auth.signInWithPopup(provider).then(async (result) => {
+            const userGoogle = result.user;
+            
+            // Verificamos si este correo ya está registrado en nuestro sistema
+            const snap = await db.ref('usuarios').orderByChild('correo').equalTo(userGoogle.email).once('value');
+            
+            if(snap.exists()) {
+                const data = snap.val();
+                const userRegistrado = data[Object.keys(data)[0]];
+                localStorage.setItem('session_jadi', JSON.stringify(userRegistrado));
+                window.location.href = paginas[userRegistrado.rolCodigo];
+            } else {
+                // Si es nuevo, lo mandamos a completar su perfil (Dueño, Cliente, etc.)
+                alert("Cuenta Google vinculada. Por favor, completa tu registro.");
+                window.location.href = 'registro_empleado.html?email=' + userGoogle.email;
+            }
+        }).catch((error) => {
+            console.error(error);
+            alert("Fallo el ingreso con Google");
+        });
+    }
+
+    // Auto-login
+    window.onload = () => {
+        const sesion = localStorage.getItem('session_jadi');
+        if(sesion) {
+            const user = JSON.parse(sesion);
+            // Descomenta la siguiente línea para activar entrada automática:
+            // window.location.href = paginas[user.rolCodigo];
+        }
+    };
+</script>
 
 </body>
 </html>
