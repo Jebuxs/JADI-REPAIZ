@@ -3,78 +3,92 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>J.A.D.I - CONTROL FINAL</title>
+    <title>DB JADI - VISUALIZACIÓN TOTAL</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        body { background: #000; color: #fff; font-family: sans-serif; padding: 20px; }
-        h2 { color: #fbc02d; text-align: center; border-bottom: 1px solid #333; padding-bottom: 10px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #111; }
-        th { background: #222; color: #fbc02d; padding: 12px; text-align: left; border: 1px solid #333; }
-        td { padding: 12px; border: 1px solid #333; font-size: 0.9rem; }
-        .btn-borrar { background: #ff4444; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
-        #estado { text-align: center; color: #888; margin-top: 10px; font-size: 0.8rem; }
+        body { background: #000; color: #fff; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 15px; }
+        h2 { color: #fbc02d; text-align: center; text-transform: uppercase; letter-spacing: 2px; }
+        #estado { text-align: center; font-size: 0.8rem; color: #666; margin-bottom: 20px; }
+        
+        .card { 
+            background: #111; border: 1px solid #333; border-radius: 15px; 
+            padding: 18px; margin-bottom: 15px; border-left: 5px solid #fbc02d;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+        .nombre { color: #fbc02d; font-weight: bold; font-size: 1.2rem; display: block; border-bottom: 1px solid #222; padding-bottom: 5px; margin-bottom: 10px; }
+        
+        .grid-datos { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.85rem; }
+        .dato-item { color: #888; }
+        .dato-item b { color: #ddd; display: block; font-size: 0.75rem; text-transform: uppercase; }
+        
+        .btn-del { 
+            background: #441111; color: #ff6666; border: 1px solid #662222; 
+            padding: 10px; border-radius: 8px; width: 100%; margin-top: 15px; 
+            font-weight: bold; cursor: pointer; transition: 0.3s;
+        }
+        .btn-del:active { background: #ff4444; color: white; }
     </style>
 </head>
 <body>
 
-    <h2>BASE DE DATOS J.A.D.I</h2>
-    <div id="estado">Conectando...</div>
+    <h2>DATABASE J.A.D.I</h2>
+    <div id="estado">Sincronizando registros...</div>
 
-    <table>
-        <thead>
-            <tr>
-                <th>Nombre</th>
-                <th>Teléfono</th>
-                <th>Rol</th>
-                <th>Empresa</th>
-                <th>Acción</th>
-            </tr>
-        </thead>
-        <tbody id="tabla-cuerpo">
-            </tbody>
-    </table>
+    <div id="contenedor-usuarios">
+        </div>
 
 <script>
-    // Configuración DIRECTA
-    const config = {
+    const firebaseConfig = {
         databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com"
     };
     
-    if (!firebase.apps.length) { firebase.initializeApp(config); }
+    if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
     const db = firebase.database();
 
-    // Función de carga inmediata
     db.ref('usuarios').on('value', (snap) => {
-        const cuerpo = document.getElementById('tabla-cuerpo');
+        const contenedor = document.getElementById('contenedor-usuarios');
         const estado = document.getElementById('estado');
-        cuerpo.innerHTML = "";
+        contenedor.innerHTML = "";
         
         if (snap.exists()) {
-            estado.innerText = "✅ Datos recibidos correctamente";
+            estado.innerText = "Sincronizado: " + snap.numChildren() + " usuarios encontrados";
             snap.forEach((child) => {
                 const u = child.val();
                 const id = child.key;
-                cuerpo.innerHTML += `
-                    <tr>
-                        <td style="font-weight:bold; color:#fbc02d;">${u.nombre || 'N/A'}</td>
-                        <td>${u.telefono || id}</td>
-                        <td>${u.rolCodigo || 'N/A'}</td>
-                        <td>${u.empresaNombre || 'N/A'}</td>
-                        <td><button class="btn-borrar" onclick="eliminar('${id}')">Borrar</button></td>
-                    </tr>
+                
+                // MAPEO INTELIGENTE: Busca el dato en cualquier nombre posible
+                const nombre = u.nombre || u.userName || "Sin Nombre";
+                const telefono = u.telefono || u.phone || id;
+                const clave = u.pass || u.password || u.clave || "---";
+                const rol = u.rolCodigo || u.rol || u.tipo || "USER";
+                const empresa = u.empresaNombre || u.empresa || u.taller || "JADI CENTRAL";
+                const fecha = u.fecha_ingreso || u.registro || "Antiguo";
+                const uid = u.uid || u.user_id || "N/A";
+
+                contenedor.innerHTML += `
+                    <div class="card">
+                        <span class="nombre">${nombre.toUpperCase()}</span>
+                        <div class="grid-datos">
+                            <div class="dato-item"><b>Teléfono/ID</b>${telefono}</div>
+                            <div class="dato-item"><b>Contraseña</b>${clave}</div>
+                            <div class="dato-item"><b>Rol de Usuario</b>${rol}</div>
+                            <div class="dato-item"><b>UID Sistema</b>${uid}</div>
+                            <div class="dato-item"><b>Asignado a</b>${empresa}</div>
+                            <div class="dato-item"><b>Fecha Registro</b>${fecha}</div>
+                        </div>
+                        <button class="btn-del" onclick="eliminar('${id}')">ELIMINAR CUENTA</button>
+                    </div>
                 `;
             });
         } else {
-            estado.innerText = "❌ No hay datos en la carpeta 'usuarios'";
-            cuerpo.innerHTML = "<tr><td colspan='5' style='text-align:center;'>Carpeta vacía</td></tr>";
+            estado.innerText = "Base de datos vacía";
+            contenedor.innerHTML = "<p style='text-align:center; color:#444;'>No hay registros en /usuarios</p>";
         }
-    }, (error) => {
-        estado.innerText = "🚫 Error de Firebase: " + error.message;
     });
 
     function eliminar(id) {
-        if(confirm("¿Borrar a " + id + "?")) {
+        if(confirm("¿Estás seguro de borrar permanentemente este usuario?")) {
             db.ref('usuarios/' + id).remove();
         }
     }
