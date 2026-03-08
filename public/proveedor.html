@@ -3,120 +3,102 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>J.A.D.I - Panel Limpio</title>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <title>J.A.D.I - Sesión Permanente</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root { --gold: #fbc02d; --dark: #000; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; margin: 0; padding: 0; overflow: hidden; height: 100vh; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; margin: 0; overflow: hidden; height: 100vh; }
 
-        /* CABECERA FIJA */
-        .top-header { position: absolute; top: 0; width: 100%; height: 70px; background: #000; border-bottom: 1px solid #222; display: flex; justify-content: center; align-items: center; z-index: 500; }
-        .header-info h1 { margin: 0; font-size: 1.2rem; color: var(--gold); }
-        .header-info span { font-size: 0.7rem; color: #555; display: block; text-align: center; }
+        .top-header { height: 70px; border-bottom: 1px solid #222; display: flex; justify-content: center; align-items: center; background: #000; }
+        .header-info h1 { margin: 0; font-size: 1.2rem; color: var(--gold); text-transform: uppercase; }
 
-        /* --- VISTA 1: MENÚ INICIAL --- */
-        #vista-menu { 
-            position: absolute; top: 70px; left: 0; width: 100%; height: calc(100vh - 70px); 
-            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; z-index: 10;
-        }
-        .btn-grande { 
-            width: 280px; padding: 20px; background: #111; border: 1px solid #333; color: white; 
-            border-radius: 15px; cursor: pointer; font-size: 1rem; font-weight: bold; display: flex; align-items: center; gap: 15px; transition: 0.3s;
-        }
-        .btn-grande:hover { border-color: var(--gold); color: var(--gold); }
-        .btn-danger { color: #ff4444 !important; border-color: #441111; }
-
-        /* --- VISTA 2: SUCURSALES (MATRIZ) --- */
-        #vista-sucursales { 
-            position: fixed; top: 70px; left: 0; width: 100% !important; height: calc(100vh - 70px) !important; 
-            background: #000 !important; z-index: 9999 !important; /* MÁXIMA PRIORIDAD */
-            display: none; padding: 20px; box-sizing: border-box; overflow-y: auto;
+        /* VISTA PRINCIPAL */
+        #vista-inicio { 
+            height: calc(100vh - 70px); 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; 
         }
 
-        .tabs-barra { display: flex; gap: 5px; margin-bottom: 20px; overflow-x: auto; background: #000; padding: 10px 0; position: sticky; top: 0; }
-        .tab-btn { flex: 1; padding: 12px; background: #111; border: 1px solid #333; color: #555; border-radius: 8px; cursor: pointer; font-size: 0.7rem; font-weight: bold; min-width: 110px; }
-        .tab-btn.active { border-color: var(--gold); color: var(--gold); background: #1a1a1a; }
+        .btn-menu { 
+            width: 260px; padding: 20px; background: #111; border: 1px solid #333; color: white; 
+            border-radius: 12px; cursor: pointer; font-size: 1rem; font-weight: bold; display: flex; align-items: center; gap: 15px; 
+        }
+        .btn-sucursales { border-color: var(--gold); color: var(--gold); }
+        .btn-logout { color: #888; border-color: #222; font-size: 0.8rem; padding: 10px; width: 150px; margin-top: 50px; }
 
-        .caja-trabajo { background: #0a0a0a; border: 1px solid #222; border-radius: 15px; padding: 20px; min-height: 400px; }
+        /* PANTALLA MATRIZ */
+        #pantalla-matriz { 
+            position: fixed; top: 70px; left: 0; width: 100%; height: calc(100vh - 70px); 
+            background: #000; z-index: 1000; display: none; 
+            flex-direction: column; align-items: center; justify-content: center;
+        }
 
-        /* BOTÓN VOLVER FLOTANTE */
-        .btn-float-back { position: fixed; bottom: 30px; left: 30px; background: var(--gold); color: black; border: none; width: 55px; height: 55px; border-radius: 50%; cursor: pointer; z-index: 10000; display: none; box-shadow: 0 5px 20px rgba(0,0,0,0.8); font-size: 1.2rem; }
+        .mensaje-hola { font-size: 3.5rem; font-weight: bold; color: var(--gold); letter-spacing: 5px; text-shadow: 0 0 20px rgba(251, 192, 45, 0.4); }
+
+        .btn-volver { 
+            position: fixed; bottom: 30px; left: 30px; background: var(--gold); color: black; 
+            border: none; width: 55px; height: 55px; border-radius: 50%; cursor: pointer; font-size: 1.2rem; box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+        }
     </style>
 </head>
 <body>
 
 <div class="top-header">
     <div class="header-info">
-        <h1 id="local-name">NOMBRE DEL LOCAL</h1>
-        <span id="local-id">ID: 0000000000</span>
+        <h1>J.A.D.I REPAIZ</h1>
     </div>
 </div>
 
-<div id="vista-menu">
-    <button class="btn-grande" onclick="activarSucursales()" style="border-color: var(--gold); color: var(--gold);">
-        <i class="fas fa-city" style="font-size: 1.5rem;"></i> SUCURSALES
+<div id="vista-inicio">
+    <button class="btn-menu btn-sucursales" onclick="abrirMatriz()">
+        <i class="fas fa-city"></i> SUCURSALES
     </button>
     
-    <button class="btn-grande btn-danger" onclick="confirm('¿Eliminar tu cuenta?')">
-        <i class="fas fa-trash-alt" style="font-size: 1.5rem;"></i> ELIMINAR CUENTA
+    <button class="btn-menu btn-logout" onclick="cerrarSesion()">
+        <i class="fas fa-sign-out-alt"></i> CERRAR SESIÓN
     </button>
 </div>
 
-<div id="vista-sucursales">
-    <div class="tabs-barra">
-        <button class="tab-btn active" onclick="cambiarSeccion(this, 'inventario')">INVENTARIO</button>
-        <button class="tab-btn" onclick="cambiarSeccion(this, 'personal')">PERSONAL</button>
-        <button class="tab-btn" onclick="cambiarSeccion(this, 'venta')">VENTA</button>
-        <button class="tab-btn" onclick="cambiarSeccion(this, 'facturas')">FACTURACIONES</button>
-    </div>
-
-    <div class="caja-trabajo">
-        <h2 id="seccion-titulo" style="color:var(--gold); margin-top:0;">Inventario</h2>
-        <div id="seccion-contenido">
-            </div>
-    </div>
+<div id="pantalla-matriz">
+    <div class="mensaje-hola">HOLA</div>
+    
+    <button class="btn-volver" onclick="cerrarMatriz()">
+        <i class="fas fa-arrow-left"></i>
+    </button>
 </div>
 
-<button id="btn-back-main" class="btn-float-back" onclick="cerrarSucursales()">
-    <i class="fas fa-arrow-left"></i>
-</button>
-
 <script>
-    function activarSucursales() {
-        // Apagamos el menú y prendemos la matriz al 100%
-        document.getElementById('vista-menu').style.setProperty('display', 'none', 'important');
-        document.getElementById('vista-sucursales').style.setProperty('display', 'block', 'important');
-        document.getElementById('btn-back-main').style.display = 'block';
-        cambiarSeccion(null, 'inventario');
-    }
-
-    function cerrarSucursales() {
-        document.getElementById('vista-menu').style.setProperty('display', 'flex', 'important');
-        document.getElementById('vista-sucursales').style.setProperty('display', 'none', 'important');
-        document.getElementById('btn-back-main').style.display = 'none';
-    }
-
-    function cambiarSeccion(btn, seccion) {
-        if(btn) {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-        }
-        const titulo = document.getElementById('seccion-titulo');
-        const contenido = document.getElementById('seccion-contenido');
-        titulo.innerText = seccion.toUpperCase();
-
-        if(seccion === 'inventario') {
-            contenido.innerHTML = `
-                <div style="text-align:center; padding:50px; border: 1px dashed #333; border-radius:15px; margin-top:20px;">
-                    <button onclick="alert('Abriendo Carga de Stock...')" style="background:var(--gold); border:none; padding:15px 30px; border-radius:10px; font-weight:bold; cursor:pointer; font-size:1rem;">
-                        <i class="fas fa-plus"></i> CREAR INVENTARIO
-                    </button>
-                </div>
-            `;
+    // --- LÓGICA DE PERSISTENCIA ---
+    
+    window.onload = function() {
+        // Al cargar la página, revisamos si ya "estaba logueado"
+        const sesionActiva = localStorage.getItem('jadi_sesion');
+        
+        if (sesionActiva === 'true') {
+            console.log("Sesión recuperada");
+            // Aquí podrías incluso recuperar el nombre del local si lo guardamos
         } else {
-            contenido.innerHTML = `<p style="color:#444; text-align:center; margin-top:40px;">Módulo en construcción.</p>`;
+            // Si no hay sesión, lo mandamos al index (opcional)
+            // window.location.href = "index.html"; 
+        }
+    };
+
+    function abrirMatriz() {
+        // Guardamos en la memoria del navegador que la sesión está activa
+        localStorage.setItem('jadi_sesion', 'true');
+        
+        document.getElementById('vista-inicio').style.display = 'none';
+        document.getElementById('pantalla-matriz').style.display = 'flex';
+    }
+
+    function cerrarMatriz() {
+        document.getElementById('pantalla-matriz').style.display = 'none';
+        document.getElementById('vista-inicio').style.display = 'flex';
+    }
+
+    function cerrarSesion() {
+        if(confirm("¿Quieres cerrar sesión? Te pedirá clave la próxima vez.")) {
+            localStorage.removeItem('jadi_sesion');
+            window.location.href = "index.html"; // O a donde tengas el login
         }
     }
 </script>
