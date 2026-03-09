@@ -3,46 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>J.A.D.I REPAIZ - Acceso Google</title>
+    <title>J.A.D.I - Ecosistema Profesional</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root { --gold: #fbc02d; --dark: #000; }
-        body { font-family: sans-serif; background: var(--dark); color: white; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; text-align: center; }
-        .login-card { width: 90%; max-width: 350px; padding: 40px; background: #080808; border-radius: 25px; border: 1px solid #111; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .brand { font-size: 2.5rem; font-weight: 900; color: var(--gold); letter-spacing: 5px; margin-bottom: 10px; }
-        .slogan { font-size: 0.7rem; color: #555; letter-spacing: 2px; margin-bottom: 40px; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .card { width: 90%; max-width: 400px; padding: 30px; background: #0a0a0a; border-radius: 20px; border: 1px solid #1a1a1a; text-align: center; }
+        .brand { font-size: 2.2rem; font-weight: 900; color: var(--gold); letter-spacing: 4px; margin-bottom: 5px; }
         
-        .btn-google { 
-            width: 100%; padding: 15px; background: white; color: #000; border: none; border-radius: 12px; 
-            font-weight: bold; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; transition: 0.3s;
-        }
-        .btn-google:hover { background: #eee; transform: translateY(-2px); }
-        .btn-google i { color: #4285F4; font-size: 1.2rem; }
+        /* Botón Google */
+        .btn-google { width: 100%; padding: 15px; background: white; color: black; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 20px; }
+        
+        /* Secciones */
+        #selector-rol, #seccion-telefono { display: none; margin-top: 20px; text-align: left; }
+        
+        .rol-option { background: #111; padding: 15px; margin-bottom: 10px; border-radius: 12px; border: 1px solid #222; cursor: pointer; transition: 0.3s; display: flex; align-items: center; gap: 15px; }
+        .rol-option:hover { border-color: var(--gold); background: #1a1a1a; }
+        .rol-option i { color: var(--gold); width: 20px; text-align: center; }
+        
+        input { width: 100%; padding: 15px; background: #111; border: 1px solid #222; border-radius: 12px; color: white; font-size: 1rem; margin-top: 10px; box-sizing: border-box; outline: none; }
+        input:focus { border-color: var(--gold); }
+
+        .btn-final { width: 100%; padding: 15px; background: var(--gold); color: black; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; margin-top: 20px; }
 
         #loader { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:100; flex-direction:column; align-items:center; justify-content:center; }
-        .spinner { width: 30px; height: 30px; border: 3px solid #222; border-top-color: var(--gold); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 10px; }
-        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
-    <div id="loader">
-        <div class="spinner"></div>
-        <div style="color:var(--gold); font-size: 0.8rem; letter-spacing: 2px;">VERIFICANDO IDENTIDAD</div>
-    </div>
+    <div id="loader"><div style="color:var(--gold)">PROCESANDO...</div></div>
 
-    <div class="login-card">
+    <div class="card">
         <div class="brand">J.A.D.I</div>
-        <div class="slogan">EL ALMA EN LOS PASOS</div>
         
-        <button class="btn-google" onclick="accesoGoogle()">
-            <i class="fab fa-google"></i> Continuar con Google
-        </button>
+        <div id="vista-login">
+            <div style="font-size: 0.7rem; color: #444; letter-spacing: 2px; margin-bottom: 20px;">ACCESO AL ECOSISTEMA</div>
+            <button class="btn-google" onclick="accesoGoogle()">
+                <i class="fab fa-google"></i> Continuar con Gmail
+            </button>
+        </div>
 
-        <p id="msg-error" style="color: #ff5252; font-size: 0.8rem; margin-top: 20px; display: none;"></p>
+        <div id="selector-rol">
+            <p style="font-size: 0.9rem; color: var(--gold); margin-bottom: 15px;">¿Cuál es tu función?</p>
+            <div class="rol-option" onclick="seleccionarRol('CLIENTE')"> <i class="fas fa-user"></i> <span>CLIENTE</span> </div>
+            <div class="rol-option" onclick="seleccionarRol('ZAPATERO')"> <i class="fas fa-hammer"></i> <span>ZAPATERO</span> </div>
+            <div class="rol-option" onclick="seleccionarRol('TIENDA')"> <i class="fas fa-store"></i> <span>TIENDA</span> </div>
+            <div class="rol-option" onclick="seleccionarRol('PROVEEDOR')"> <i class="fas fa-box-open"></i> <span>PROVEEDOR</span> </div>
+            <div class="rol-option" onclick="seleccionarRol('MOTORIZADO')"> <i class="fas fa-motorcycle"></i> <span>MOTORIZADO</span> </div>
+        </div>
+
+        <div id="seccion-telefono">
+            <p style="font-size: 0.9rem; color: var(--gold);">Para terminar, ingresa tu teléfono:</p>
+            <input type="tel" id="user-tel" placeholder="Ej: 0987654321" maxlength="10">
+            <button class="btn-final" onclick="finalizarRegistro()">FINALIZAR REGISTRO</button>
+        </div>
     </div>
 
 <script>
@@ -57,48 +74,73 @@
     const auth = firebase.auth();
     const db = firebase.database();
 
-    const paginasMaster = { 'ZPT':'zapatero.html', 'PRV':'proveedor.html', 'CLN':'cliente.html', 'DLV':'delivery.html', 'ADM':'admin_panel.html' };
+    let tempUser = null;
+    let rolSeleccionado = "";
 
     async function accesoGoogle() {
         const provider = new firebase.auth.GoogleAuthProvider();
         document.getElementById('loader').style.display = 'flex';
-
         try {
             const result = await auth.signInWithPopup(provider);
-            const user = result.user;
-
-            // 1. Buscamos si el usuario ya existe en nuestra base de datos por su email
-            const snap = await db.ref('usuarios').orderByChild('email').equalTo(user.email).once('value');
-            
+            tempUser = result.user;
+            const snap = await db.ref('usuarios/' + tempUser.uid).once('value');
             if (snap.exists()) {
-                // USUARIO EXISTE: Redirigir según su rol
-                const data = snap.val();
-                const userData = Object.values(data)[0];
-                localStorage.setItem('session_jadi', JSON.stringify(userData));
-                window.location.href = paginasMaster[userData.rolCodigo] || 'index.html';
+                irAPanel(snap.val());
             } else {
-                // USUARIO NUEVO: Guardar datos básicos y mandarlo a completar perfil (o asignar rol por defecto)
-                // Por seguridad, si es nuevo, podrías mandarlo a una pantalla de "Completar Registro"
-                const nuevoUser = {
-                    nombre: user.displayName,
-                    email: user.email,
-                    foto: user.photoURL,
-                    rolCodigo: 'CLN', // Rol por defecto
-                    empresaID: 'SISTEMA_JADI',
-                    fecha_ingreso: new Date().toLocaleDateString()
-                };
-                
-                // Guardamos usando su UID de Google como llave para que sea único
-                await db.ref('usuarios/' + user.uid).set(nuevoUser);
-                localStorage.setItem('session_jadi', JSON.stringify(nuevoUser));
-                window.location.href = 'cliente.html'; // O la página que decidas para nuevos
+                document.getElementById('vista-login').style.display = 'none';
+                document.getElementById('selector-rol').style.display = 'block';
+                document.getElementById('loader').style.display = 'none';
             }
-        } catch (error) {
-            console.error(error);
-            document.getElementById('msg-error').innerText = "Error: " + error.message;
-            document.getElementById('msg-error').style.display = 'block';
-            document.getElementById('loader').style.display = 'none';
-        }
+        } catch (error) { alert("Error: " + error.message); document.getElementById('loader').style.display = 'none'; }
+    }
+
+    function seleccionarRol(rol) {
+        rolSeleccionado = rol;
+        document.getElementById('selector-rol').style.display = 'none';
+        document.getElementById('seccion-telefono').style.display = 'block';
+    }
+
+    async function finalizarRegistro() {
+        const tel = document.getElementById('user-tel').value.trim();
+        if (tel.length < 7) return alert("Ingresa un número de teléfono válido");
+
+        document.getElementById('loader').style.display = 'flex';
+        try {
+            const prefijo = generarPrefijo(rolSeleccionado);
+            const snapCount = await db.ref('contadores/' + rolSeleccionado).once('value');
+            let num = (snapCount.val() || 0) + 1;
+            await db.ref('contadores/' + rolSeleccionado).set(num);
+            
+            const idUnico = prefijo + num.toString().padStart(4, '0');
+
+            const nuevoUser = {
+                uid: tempUser.uid,
+                nombre: tempUser.displayName,
+                email: tempUser.email,
+                telefono: tel,
+                rolNombre: rolSeleccionado,
+                rolCodigo: rolSeleccionado.toLowerCase(),
+                id_jadi: idUnico,
+                fecha_registro: new Date().toLocaleDateString()
+            };
+
+            await db.ref('usuarios/' + tempUser.uid).set(nuevoUser);
+            irAPanel(nuevoUser);
+        } catch (e) { alert("Error: " + e.message); }
+    }
+
+    function generarPrefijo(rol) {
+        const consonantes = rol.replace(/[AEIOU]/gi, '');
+        return consonantes.slice(0, 3).toUpperCase();
+    }
+
+    function irAPanel(data) {
+        localStorage.setItem('session_jadi', JSON.stringify(data));
+        const paginas = { 
+            'cliente': 'cliente.html', 'zapatero': 'zapatero.html', 
+            'motorizado': 'delivery.html', 'tienda': 'tienda.html', 'proveedor': 'proveedor.html' 
+        };
+        window.location.href = paginas[data.rolCodigo] || 'cliente.html';
     }
 </script>
 </body>
