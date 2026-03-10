@@ -3,145 +3,164 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Perfil - J.A.D.I</title>
+    <title>Perfil J.A.D.I</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --gold: #fbc02d; --dark: #000; --card: #0a0a0a; }
-        body { font-family: sans-serif; background: var(--dark); color: white; margin: 0; padding: 20px; }
-        .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 30px; }
-        .profile-card { background: var(--card); border: 1px solid #1a1a1a; border-radius: 20px; padding: 25px; text-align: center; }
-        .user-img { width: 100px; height: 100px; border-radius: 50%; border: 3px solid var(--gold); margin-bottom: 15px; object-fit: cover; }
-        .badge { display: inline-block; padding: 5px 15px; border-radius: 20px; background: #222; color: var(--gold); font-size: 0.7rem; font-weight: bold; margin-bottom: 10px; }
-        .data-row { display: flex; justify-content: space-between; padding: 15px 0; border-bottom: 1px solid #111; font-size: 0.9rem; }
-        .data-label { color: #555; }
-        .btn-edit { width: 100%; padding: 15px; background: var(--gold); color: black; border: none; border-radius: 12px; margin-top: 20px; cursor: pointer; font-weight: bold; font-size: 1rem; }
+        :root { --gold: #fbc02d; --dark: #000; --card: #0a0a0a; --gray: #1a1a1a; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; margin: 0; padding: 20px; }
         
-        /* Pantalla de Edición (Modal Full) */
-        #pantalla-editar { display: none; position: fixed; inset: 0; background: #000; z-index: 1000; padding: 20px; overflow-y: auto; }
+        /* Contenedores */
+        .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+        .profile-card { background: var(--card); border: 1px solid #1a1a1a; border-radius: 20px; padding: 25px; text-align: center; }
+        .user-img { width: 90px; height: 90px; border-radius: 50%; border: 2px solid var(--gold); margin-bottom: 10px; object-fit: cover; }
+        
+        /* Botones y Inputs */
+        .btn-action { width: 100%; padding: 15px; background: var(--gold); color: black; border: none; border-radius: 12px; margin-top: 15px; cursor: pointer; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .btn-outline { background: none; border: 1px solid #333; color: white; margin-top: 10px; }
+        
         .input-group { margin-bottom: 15px; text-align: left; }
-        .input-group label { display: block; font-size: 0.7rem; color: var(--gold); margin-bottom: 5px; text-transform: uppercase; }
-        .input-field { width: 100%; padding: 12px; background: #111; border: 1px solid #222; color: white; border-radius: 8px; box-sizing: border-box; }
-        .pass-box { position: relative; }
-        .pass-box i { position: absolute; right: 15px; top: 40px; color: #444; cursor: pointer; }
+        .input-group label { display: block; font-size: 0.65rem; color: var(--gold); margin-bottom: 5px; letter-spacing: 1px; }
+        .field { width: 100%; padding: 12px; background: #111; border: 1px solid #222; color: white; border-radius: 8px; box-sizing: border-box; }
+        
+        /* Modales / Pantallazos */
+        #editor-full { display: none; position: fixed; inset: 0; background: #000; z-index: 1000; padding: 20px; overflow-y: auto; }
+        .map-container { width: 100%; height: 200px; background: #111; border-radius: 12px; margin-top: 10px; border: 1px solid #333; display: flex; align-items: center; justify-content: center; overflow: hidden; }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <i class="fas fa-arrow-left" onclick="history.back()" style="cursor: pointer;"></i>
-        <div style="font-weight: 900; letter-spacing: 2px;">MI PERFIL</div>
-        <i class="fas fa-cog"></i>
-    </div>
-
-    <div id="vista-perfil" class="profile-card">
-        <img id="p-img" src="" class="user-img">
-        <div id="p-badge" class="badge">ROL</div>
-        <h2 id="p-nom">Cargando...</h2>
-        <p id="p-id" style="color: #444; font-size: 0.8rem;">ID: ---</p>
-
-        <div class="data-row"><span class="data-label">Email</span><span id="p-email">---</span></div>
-        <div class="data-row"><span class="data-label">Teléfono</span><span id="p-tel">---</span></div>
-        <div class="data-row"><span class="data-label">Empresa/Taller</span><span id="p-empresa">---</span></div>
-
-        <button class="btn-edit" onclick="abrirEditor()"><i class="fas fa-edit"></i> EDITAR PERFIL</button>
-    </div>
-
-    <div id="pantalla-editar">
+    <div id="vista-perfil">
         <div class="header">
-            <i class="fas fa-times" onclick="cerrarEditor()" style="cursor: pointer;"></i>
-            <div style="font-weight: 900; letter-spacing: 2px;">EDITAR DATOS</div>
-            <span onclick="guardarCambios()" style="color: var(--gold); font-weight: bold;">LISTO</span>
+            <i class="fas fa-chevron-left" onclick="history.back()"></i>
+            <span style="font-weight: 900; letter-spacing: 2px;">PERFIL PROFESIONAL</span>
+            <i class="fas fa-sign-out-alt" onclick="logout()" style="color: #444;"></i>
         </div>
 
-        <div class="input-group"><label>Nombre Completo</label><input type="text" id="ed-nom" class="input-field"></div>
-        <div class="input-group"><label>Rol</label><input type="text" id="ed-rol" class="input-field" readonly style="opacity:0.5"></div>
-        <div id="box-empresa" class="input-group"><label>Nombre de Empresa / Taller</label><input type="text" id="ed-empresa" class="input-field"></div>
-        <div class="input-group"><label>RUC / CI (Opcional)</label><input type="text" id="ed-ruc" class="input-field"></div>
-        <div class="input-group"><label>Ubicación</label><input type="text" id="ed-ubi" class="input-field" placeholder="Ciudad / Dirección"></div>
-        <div class="input-group"><label>Teléfono Local</label><input type="tel" id="ed-tellocal" class="input-field"></div>
-        <div class="input-group"><label>Celular</label><input type="tel" id="ed-cel" class="input-field"></div>
-        
-        <div class="input-group pass-box">
-            <label>Nueva Contraseña (Opcional)</label>
-            <input type="password" id="ed-pass" class="input-field">
-            <i class="fas fa-eye" id="togglePass" onclick="togglePassword()"></i>
+        <div class="profile-card">
+            <img id="view-foto" src="" class="user-img">
+            <h2 id="view-nom" style="margin: 0;">---</h2>
+            <div id="view-rol" style="color: var(--gold); font-size: 0.7rem; font-weight: bold; margin-bottom: 15px;">ROL</div>
+            
+            <div style="text-align: left; font-size: 0.85rem; border-top: 1px solid #111; padding-top: 15px;">
+                <p><i class="fas fa-envelope" style="width: 25px; color: #444;"></i> <span id="view-email">---</span></p>
+                <p><i class="fas fa-phone" style="width: 25px; color: #444;"></i> <span id="view-tel">---</span></p>
+                <p><i class="fas fa-building" style="width: 25px; color: #444;"></i> <span id="view-empresa">---</span></p>
+            </div>
+
+            <button class="btn-action" onclick="abrirEditor()"><i class="fas fa-user-edit"></i> EDITAR MI INFORMACIÓN</button>
         </div>
-        
-        <div class="input-group"><label>URL Foto de Perfil</label><input type="text" id="ed-foto" class="input-field"></div>
+    </div>
+
+    <div id="editor-full">
+        <div class="header">
+            <i class="fas fa-times" onclick="cerrarEditor()"></i>
+            <span style="font-weight: bold;">CONFIGURACIÓN</span>
+            <span onclick="guardarTodo()" style="color: var(--gold); font-weight: bold;">GUARDAR</span>
+        </div>
+
+        <div class="input-group">
+            <label>CORREO ELECTRÓNICO (No editable)</label>
+            <input type="text" id="ed-email" class="field" readonly style="opacity: 0.4;">
+        </div>
+
+        <div class="input-group"><label>NOMBRE Y APELLIDO</label><input type="text" id="ed-nom" class="field"></div>
+        <div class="input-group"><label>EMPRESA / TALLER / TIENDA</label><input type="text" id="ed-empresa" class="field"></div>
+        <div class="input-group"><label>RUC / CÉDULA</label><input type="text" id="ed-ruc" class="field"></div>
+        <div class="input-group"><label>TELÉFONO FIJO</label><input type="tel" id="ed-fijo" class="field"></div>
+        <div class="input-group"><label>CELULAR DE CONTACTO</label><input type="tel" id="ed-cel" class="field"></div>
+
+        <div class="input-group">
+            <label>UBICACIÓN DEL NEGOCIO</label>
+            <button class="btn-action btn-outline" onclick="obtenerGPS()">
+                <i class="fas fa-map-marker-alt"></i> CAPTURAR MI UBICACIÓN ACTUAL
+            </button>
+            <div id="map-preview" class="map-container">
+                <span id="coord-text" style="color: #444; font-size: 0.7rem;">Sin coordenadas registradas</span>
+            </div>
+        </div>
+
+        <div class="input-group" style="margin-top: 30px; border-top: 1px solid #222; padding-top: 20px;">
+            <label>SEGURIDAD DE LA CUENTA</label>
+            <button class="btn-action btn-outline" onclick="irACambiarPass()">
+                <i class="fas fa-lock"></i> GESTIONAR CONTRASEÑA
+            </button>
+        </div>
     </div>
 
 <script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyAKPxG1osuR9hsj-PsmwJrzK-3W_XM1UyU",
-        databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com",
-    };
+    // Inicializar Firebase
+    const firebaseConfig = { apiKey: "AIzaSyAKPxG1osuR9hsj-PsmwJrzK-3W_XM1UyU", databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     let session = JSON.parse(localStorage.getItem('session_jadi'));
 
-    window.onload = function() {
-        if (session) cargarDatos();
-    };
+    window.onload = () => { if(session) actualizarVista(); };
 
-    function cargarDatos() {
-        document.getElementById('p-img').src = session.foto || 'https://via.placeholder.com/100';
-        document.getElementById('p-badge').innerText = session.rolNombre;
-        document.getElementById('p-nom').innerText = session.nombre;
-        document.getElementById('p-id').innerText = "ID: " + session.id_jadi;
-        document.getElementById('p-email').innerText = session.email;
-        document.getElementById('p-tel').innerText = session.telefono || 'No registrado';
-        document.getElementById('p-empresa').innerText = session.empresaNombre || 'JADI';
+    function actualizarVista() {
+        document.getElementById('view-foto').src = session.foto || '';
+        document.getElementById('view-nom').innerText = session.nombre;
+        document.getElementById('view-rol').innerText = session.rolNombre;
+        document.getElementById('view-email').innerText = session.email;
+        document.getElementById('view-tel').innerText = session.telefono;
+        document.getElementById('view-empresa').innerText = session.empresaNombre || 'JADI';
     }
 
     function abrirEditor() {
-        document.getElementById('pantalla-editar').style.display = 'block';
+        document.getElementById('editor-full').style.display = 'block';
+        document.getElementById('ed-email').value = session.email;
         document.getElementById('ed-nom').value = session.nombre;
-        document.getElementById('ed-rol').value = session.rolNombre;
         document.getElementById('ed-empresa').value = session.empresaNombre || '';
         document.getElementById('ed-ruc').value = session.ruc || '';
-        document.getElementById('ed-ubi').value = session.ubicacion || '';
-        document.getElementById('ed-tellocal').value = session.telLocal || '';
-        document.getElementById('ed-cel').value = session.telefono || '';
-        document.getElementById('ed-foto').value = session.foto || '';
+        document.getElementById('ed-fijo').value = session.telFijo || '';
+        document.getElementById('ed-cel').value = session.telefono;
+        if(session.coords) document.getElementById('coord-text').innerText = "Coordenadas: " + session.coords;
     }
 
-    function cerrarEditor() { document.getElementById('pantalla-editar').style.display = 'none'; }
+    function cerrarEditor() { document.getElementById('editor-full').style.display = 'none'; }
 
-    function togglePassword() {
-        const p = document.getElementById('ed-pass');
-        const icon = document.getElementById('togglePass');
-        if(p.type === "password") { p.type = "text"; icon.className = "fas fa-eye-slash"; }
-        else { p.type = "password"; icon.className = "fas fa-eye"; }
+    // --- FUNCIÓN GPS ---
+    function obtenerGPS() {
+        if (navigator.geolocation) {
+            document.getElementById('coord-text').innerText = "Buscando satélites...";
+            navigator.geolocation.getCurrentPosition((pos) => {
+                const coords = `${pos.coords.latitude}, ${pos.coords.longitude}`;
+                document.getElementById('coord-text').innerText = "Ubicación fijada: " + coords;
+                session.coords = coords; // Guardar temporal
+                // Aquí podrías abrir Google Maps en otra pestaña para confirmar
+                window.open(`https://www.google.com/maps?q=${coords}`, '_blank');
+            });
+        }
     }
 
-    async function guardarCambios() {
+    // --- FUNCIÓN CONTRASEÑA ---
+    function irACambiarPass() {
+        // Como es Gmail, el cambio de contraseña se gestiona enviando un correo de recuperación
+        const email = session.email;
+        firebase.auth().sendPasswordResetEmail(email).then(() => {
+            alert("¡Pilas! Te hemos enviado un link a " + email + " para que cambies tu clave de forma segura.");
+        }).catch(e => alert("Error: " + e.message));
+    }
+
+    async function guardarTodo() {
         const update = {
             nombre: document.getElementById('ed-nom').value,
             empresaNombre: document.getElementById('ed-empresa').value,
             ruc: document.getElementById('ed-ruc').value,
-            ubicacion: document.getElementById('ed-ubi').value,
-            telLocal: document.getElementById('ed-tellocal').value,
+            telFijo: document.getElementById('ed-fijo').value,
             telefono: document.getElementById('ed-cel').value,
-            foto: document.getElementById('ed-foto').value
+            coords: session.coords || ''
         };
-
-        const nuevaPass = document.getElementById('ed-pass').value;
-
-        try {
-            await db.ref('usuarios/' + session.uid).update(update);
-            
-            // Actualizar sesión local
-            session = {...session, ...update};
-            localStorage.setItem('session_jadi', JSON.stringify(session));
-            
-            alert("¡Fino! Perfil actualizado.");
-            cargarDatos();
-            cerrarEditor();
-        } catch (e) { alert("Error: " + e.message); }
+        await db.ref('usuarios/' + session.uid).update(update);
+        session = {...session, ...update};
+        localStorage.setItem('session_jadi', JSON.stringify(session));
+        actualizarVista();
+        cerrarEditor();
     }
+
+    function logout() { firebase.auth().signOut().then(() => { localStorage.clear(); window.location.href='index.html'; }); }
 </script>
 </body>
 </html>
