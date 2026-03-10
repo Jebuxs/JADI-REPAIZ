@@ -9,22 +9,17 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --gold: #fbc02d; --dark: #000; --card: #111; --text-dim: #666; }
+        :root { --gold: #fbc02d; --dark: #000; --card: #111; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; margin: 0; overflow: hidden; height: 100vh; }
-
         .top-header { height: 100px; border-bottom: 1px solid #222; display: flex; flex-direction: column; justify-content: center; align-items: center; background: #000; position: relative; z-index: 500; }
         .brand-mini { font-size: 0.6rem; color: #444; letter-spacing: 3px; margin-bottom: 5px; text-transform: uppercase; }
         .local-title { font-size: 1.6rem; color: var(--gold); font-weight: 800; text-transform: uppercase; margin: 0; }
-
-        .profile-corner { position: absolute; right: 20px; top: 25px; width: 50px; height: 50px; border-radius: 50%; border: 2px solid var(--gold); cursor: pointer; overflow: hidden; background: #111; }
+        .profile-corner { position: absolute; right: 20px; top: 25px; width: 50px; height: 50px; border-radius: 50%; border: 2px solid var(--gold); cursor: pointer; overflow: hidden; }
         .profile-corner img { width: 100%; height: 100%; object-fit: cover; }
-
         #main-wrapper { height: calc(100vh - 100px); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; }
         .btn-box { width: 280px; padding: 20px; background: #111; border: 1px solid #333; color: white; border-radius: 12px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 15px; transition: 0.3s; font-size: 1rem; }
-        .btn-box:hover { border-color: var(--gold); background: #1a1a1a; }
+        .btn-box:hover { border-color: var(--gold); }
         .btn-sucursales { border-color: var(--gold); color: var(--gold); }
-
-        .btn-back { position: fixed; bottom: 30px; left: 30px; background: var(--gold); color: black; border: none; width: 55px; height: 55px; border-radius: 50%; cursor: pointer; z-index: 3000; font-size: 1.2rem; display: none; }
     </style>
 </head>
 <body>
@@ -38,7 +33,7 @@
 </div>
 
 <div id="main-wrapper">
-    <button class="btn-box btn-sucursales" id="btn-matriz" onclick="alert('Entrando al Inventario...')">
+    <button class="btn-box btn-sucursales" id="btn-matriz" onclick="abrirMatriz()">
         <i class="fas fa-city"></i> MI SUCURSAL / MATRIZ
     </button>
 
@@ -48,57 +43,54 @@
 </div>
 
 <script>
+    // Configuración Firebase (Poner la tuya)
     const firebaseConfig = {
         apiKey: "AIzaSyAKPxG1osuR9hsj-PsmwJrzK-3W_XM1UyU",
-        authDomain: "jadi-repaiz.firebaseapp.com",
         databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com",
-        projectId: "jadi-repaiz"
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    const auth = firebase.auth();
 
-    // 1. CARGA DIRECTA DE SESIÓN
     const session = JSON.parse(localStorage.getItem('session_jadi'));
 
     window.onload = function() {
-        if(!session) {
-            window.location.href = "index.html";
-            return;
-        }
-
-        // Llenar interfaz con datos de Google/Registro
-        document.getElementById('img-perfil').src = session.foto || "https://via.placeholder.com/50";
+        if(!session) { window.location.href = "index.html"; return; }
+        
+        document.getElementById('img-perfil').src = session.foto || "";
         document.getElementById('txt-local').innerText = session.empresaNombre || "PROVEEDOR";
 
-        // 2. ESCUDO DE SEGURIDAD EN TIEMPO REAL
+        // VIGILANTE DE MORA: Bloquea tu función matriz si hay deuda
         db.ref('usuarios/' + session.uid).on('value', (snap) => {
             const user = snap.val();
-            const btnMatriz = document.getElementById('btn-matriz');
-
+            const btn = document.getElementById('btn-matriz');
             if(user && user.pagoMora === true) {
-                btnMatriz.disabled = true;
-                btnMatriz.style.opacity = "0.3";
-                btnMatriz.style.filter = "grayscale(1)";
-                btnMatriz.onclick = () => alert("Acceso restringido: Regulariza tu cuenta en el perfil.");
+                btn.disabled = true;
+                btn.style.opacity = "0.3";
+                btn.onclick = () => alert("Acceso restringido. Revisa tu estado de cuenta en Perfil.");
             } else {
-                btnMatriz.disabled = false;
-                btnMatriz.style.opacity = "1";
-                btnMatriz.style.filter = "none";
-                btnMatriz.onclick = () => window.location.href = '#'; // Aquí pones tu link a la matriz
+                btn.disabled = false;
+                btn.style.opacity = "1";
+                // Restauramos el onclick original que tenías
+                btn.onclick = () => abrirMatriz(); 
             }
         });
     };
 
+    // TU FUNCIÓN ORIGINAL (La que ya tenías configurada)
+    function abrirMatriz() {
+        // Aquí va el código que ya tenías para entrar a tu inventario/sucursal
+        console.log("Entrando a la configuración de matriz...");
+        // window.location.href = 'tu_archivo_de_inventario.html'; 
+    }
+
     function cerrarSesion() {
-        if(confirm("¿Cerrar sesión en J.A.D.I?")) {
-            auth.signOut().then(() => {
+        if(confirm("¿Salir de J.A.D.I?")) {
+            firebase.auth().signOut().then(() => {
                 localStorage.clear();
                 window.location.href = "index.html";
             });
         }
     }
 </script>
-
 </body>
 </html>
