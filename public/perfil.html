@@ -1,75 +1,141 @@
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perfil J.A.D.I</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-<style>
-    #mapa { 
-        width: 100%; 
-        height: 250px; 
-        border-radius: 15px; 
-        border: 1px solid #333; 
-        margin-top: 10px;
-        z-index: 1;
-    }
-    .btn-fijar {
-        background: var(--gold);
-        color: black;
-        border: none;
-        padding: 10px;
-        width: 100%;
-        border-radius: 8px;
-        font-weight: bold;
-        margin-top: 10px;
-        cursor: pointer;
-    }
-</style>
+    <style>
+        :root { --gold: #fbc02d; --dark: #000; --card: #0a0a0a; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; margin: 0; padding: 20px; }
+        
+        /* Contenedores */
+        .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+        .profile-card { background: var(--card); border: 1px solid #1a1a1a; border-radius: 20px; padding: 25px; text-align: center; }
+        .user-img { width: 90px; height: 90px; border-radius: 50%; border: 2px solid var(--gold); margin-bottom: 10px; object-fit: cover; }
+        
+        .btn-action { width: 100%; padding: 15px; background: var(--gold); color: black; border: none; border-radius: 12px; margin-top: 15px; cursor: pointer; font-weight: bold; font-size: 1rem; }
+        
+        /* Pantalla de Edición */
+        #editor-full { display: none; position: fixed; inset: 0; background: #000; z-index: 1000; padding: 20px; overflow-y: auto; }
+        .input-group { margin-bottom: 15px; text-align: left; }
+        .input-group label { display: block; font-size: 0.7rem; color: var(--gold); margin-bottom: 5px; text-transform: uppercase; }
+        .field { width: 100%; padding: 12px; background: #111; border: 1px solid #222; color: white; border-radius: 8px; box-sizing: border-box; }
+        
+        /* Mapa */
+        #mapa { width: 100%; height: 250px; border-radius: 12px; border: 1px solid #333; margin: 10px 0; background: #111; }
+    </style>
+</head>
+<body>
 
-<div class="input-group">
-    <label>UBICACIÓN DEL NEGOCIO (GPS)</label>
-    <div id="mapa"></div>
-    <button class="btn-fijar" onclick="confirmarUbicacion()">
-        <i class="fas fa-thumbtack"></i> FIJAR ESTA UBICACIÓN
-    </button>
-</div>
+    <div id="vista-principal">
+        <div class="header">
+            <i class="fas fa-chevron-left" onclick="window.location.href='proveedor.html'"></i>
+            <span style="font-weight: 900; letter-spacing: 2px;">PERFIL PROFESIONAL</span>
+            <div></div>
+        </div>
+
+        <div class="profile-card">
+            <img id="view-foto" src="" class="user-img">
+            <h2 id="view-nom">---</h2>
+            <div id="view-id" style="color: var(--gold); font-size: 0.8rem; margin-bottom: 15px;">ID: ---</div>
+            
+            <div style="text-align: left; border-top: 1px solid #111; padding-top: 15px;">
+                <p><i class="fas fa-envelope"></i> <span id="view-email">---</span></p>
+                <p><i class="fas fa-phone"></i> <span id="view-tel">---</span></p>
+            </div>
+
+            <button class="btn-action" onclick="abrirEditor()">EDITAR INFORMACIÓN</button>
+        </div>
+    </div>
+
+    <div id="editor-full">
+        <div class="header">
+            <i class="fas fa-times" onclick="cerrarEditor()"></i>
+            <span style="font-weight: bold;">CONFIGURACIÓN</span>
+            <span onclick="guardarTodo()" style="color: var(--gold); font-weight: bold; cursor: pointer;">LISTO</span>
+        </div>
+
+        <div class="input-group"><label>Nombre</label><input type="text" id="ed-nom" class="field"></div>
+        <div class="input-group"><label>Celular</label><input type="tel" id="ed-cel" class="field"></div>
+        <div class="input-group"><label>Empresa / Taller</label><input type="text" id="ed-empresa" class="field"></div>
+
+        <div class="input-group">
+            <label>Ubicación (Mueve el marcador)</label>
+            <div id="mapa"></div>
+            <p style="font-size: 0.6rem; color: #555;">Toca el mapa para fijar tu local.</p>
+        </div>
+
+        <button class="btn-action" style="background: #111; color: white; border: 1px solid #333;" onclick="window.location.href='cambiar_pass.html'">
+            <i class="fas fa-key"></i> CAMBIAR CONTRASEÑA
+        </button>
+    </div>
 
 <script>
+    // Tu Firebase Config
+    const firebaseConfig = { 
+        apiKey: "AIzaSyAKPxG1osuR9hsj-PsmwJrzK-3W_XM1UyU", 
+        databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com" 
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    let session = JSON.parse(localStorage.getItem('session_jadi'));
     let map, marker;
 
-    function inicializarMapa(lat, lon) {
-        // Si ya existe el mapa, solo movemos la vista
-        if (map) {
-            map.setView([lat, lon], 16);
-            marker.setLatLng([lat, lon]);
-            return;
-        }
+    window.onload = () => { if(session) cargarVista(); };
 
-        // Crear mapa centrado en la ubicación
-        map = L.map('mapa').setView([lat, lon], 16);
+    function cargarVista() {
+        document.getElementById('view-foto').src = session.foto || '';
+        document.getElementById('view-nom').innerText = session.nombre;
+        document.getElementById('view-id').innerText = "ID: " + session.id_jadi;
+        document.getElementById('view-email').innerText = session.email;
+        document.getElementById('view-tel').innerText = session.telefono;
+    }
 
-        // Estilo de mapa oscuro para que combine con JADI
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
-
-        // Marcador movible
-        marker = L.marker([lat, lon], {draggable: true}).addTo(map);
+    function abrirEditor() {
+        document.getElementById('editor-full').style.display = 'block';
+        document.getElementById('ed-nom').value = session.nombre;
+        document.getElementById('ed-cel').value = session.telefono;
+        document.getElementById('ed-empresa').value = session.empresaNombre || '';
         
-        // Al hacer clic en el mapa, mover el marcador
-        map.on('click', function(e) {
-            marker.setLatLng(e.latlng);
-        });
+        // Cargar Mapa
+        setTimeout(() => {
+            const lat = session.lat || -0.1807; // Quito por defecto
+            const lng = session.lng || -78.4678;
+            
+            if (!map) {
+                map = L.map('mapa').setView([lat, lng], 15);
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
+                marker = L.marker([lat, lng], {draggable: true}).addTo(map);
+                map.on('click', (e) => marker.setLatLng(e.latlng));
+            }
+        }, 300);
     }
 
-    function obtenerUbicacionActual() {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition((pos) => {
-                inicializarMapa(pos.coords.latitude, pos.coords.longitude);
-            });
-        }
-    }
+    function cerrarEditor() { document.getElementById('editor-full').style.display = 'none'; }
 
-    function confirmarUbicacion() {
+    async function guardarTodo() {
         const coords = marker.getLatLng();
-        session.coords = `${coords.lat},${coords.lng}`;
-        alert("Ubicación lista para guardar: " + session.coords);
-    }
+        const update = {
+            nombre: document.getElementById('ed-nom').value,
+            telefono: document.getElementById('ed-cel').value,
+            empresaNombre: document.getElementById('ed-empresa').value,
+            lat: coords.lat,
+            lng: coords.lng
+        };
 
-    // Llamar a obtenerUbicacionActual() cuando abras el editor
+        await db.ref('usuarios/' + session.uid).update(update);
+        session = {...session, ...update};
+        localStorage.setItem('session_jadi', JSON.stringify(session));
+        alert("¡Fino! Datos guardados.");
+        location.reload();
+    }
 </script>
+</body>
+</html>
