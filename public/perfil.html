@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Perfil - J.A.D.I</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --gold: #fbc02d; --dark: #000; --card: #0a0a0a; }
+        body { font-family: sans-serif; background: var(--dark); color: white; margin: 0; padding: 20px; }
+        .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 30px; }
+        .profile-card { background: var(--card); border: 1px solid #1a1a1a; border-radius: 20px; padding: 25px; text-align: center; }
+        .user-img { width: 100px; height: 100px; border-radius: 50%; border: 3px solid var(--gold); margin-bottom: 15px; }
+        .badge { display: inline-block; padding: 5px 15px; border-radius: 20px; background: #222; color: var(--gold); font-size: 0.7rem; font-weight: bold; margin-bottom: 10px; }
+        .data-row { display: flex; justify-content: space-between; padding: 15px 0; border-bottom: 1px solid #111; font-size: 0.9rem; }
+        .data-label { color: #555; }
+        .btn-pay { width: 100%; padding: 15px; background: #1a1a1a; color: white; border: 1px solid #333; border-radius: 12px; margin-top: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .status-alert { margin-top: 20px; padding: 15px; border-radius: 12px; font-size: 0.8rem; display: none; }
+        .btn-exit { color: #ff5252; background: none; border: none; cursor: pointer; margin-top: 30px; width: 100%; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <i class="fas fa-arrow-left" onclick="history.back()" style="cursor: pointer;"></i>
+        <div style="font-weight: 900; letter-spacing: 2px;">MI PERFIL</div>
+        <i class="fas fa-cog"></i>
+    </div>
+
+    <div class="profile-card">
+        <img id="p-img" src="" alt="Foto" class="user-img">
+        <div id="p-badge" class="badge">ROL</div>
+        <h2 id="p-nom" style="margin: 5px 0;">Nombre Usuario</h2>
+        <p id="p-id" style="color: #444; font-size: 0.8rem; margin-bottom: 20px;">ID: ---</p>
+
+        <div class="data-row">
+            <span class="data-label">Email</span>
+            <span id="p-email">---</span>
+        </div>
+        <div class="data-row">
+            <span class="data-label">Teléfono</span>
+            <span id="p-tel">---</span>
+        </div>
+        <div class="data-row">
+            <span class="data-label">Ecosistema</span>
+            <span id="p-empresa">---</span>
+        </div>
+
+        <div id="p-alerta" class="status-alert" style="background: rgba(255, 82, 82, 0.1); color: #ff5252; border: 1px solid #ff5252;">
+            <i class="fas fa-exclamation-triangle"></i> Tu cuenta presenta una mora. Funciones de inventario deshabilitadas.
+        </div>
+
+        <button class="btn-pay">
+            <i class="fas fa-credit-card"></i> Gestionar Pagos / Comisión
+        </button>
+
+        <button class="btn-exit" onclick="logout()">Cerrar Sesión</button>
+    </div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyAKPxG1osuR9hsj-PsmwJrzK-3W_XM1UyU",
+        databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com",
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // Cargar Datos del Usuario
+    const session = JSON.parse(localStorage.getItem('session_jadi'));
+
+    if (session) {
+        document.getElementById('p-img').src = session.foto || 'https://via.placeholder.com/100';
+        document.getElementById('p-badge').innerText = session.rolNombre;
+        document.getElementById('p-nom').innerText = session.nombre;
+        document.getElementById('p-id').innerText = "ID: " + session.id_jadi;
+        document.getElementById('p-email').innerText = session.email;
+        document.getElementById('p-tel').innerText = session.telefono || 'No registrado';
+        document.getElementById('p-empresa').innerText = session.empresaNombre || 'JADI';
+
+        // Escuchar cambios de estado en tiempo real (Para el botón de bloqueo)
+        db.ref('usuarios/' + session.uid).on('value', (snap) => {
+            const user = snap.val();
+            if (user && user.pagoMora === true) {
+                document.getElementById('p-alerta').style.display = 'block';
+            } else {
+                document.getElementById('p-alerta').style.display = 'none';
+            }
+        });
+    }
+
+    function logout() {
+        firebase.auth().signOut().then(() => {
+            localStorage.clear();
+            window.location.href = 'index.html';
+        });
+    }
+</script>
+</body>
+</html>
