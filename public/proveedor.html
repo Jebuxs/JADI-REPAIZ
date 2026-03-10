@@ -16,76 +16,35 @@
         .brand-mini { font-size: 0.6rem; color: #444; letter-spacing: 3px; margin-bottom: 5px; text-transform: uppercase; }
         .local-title { font-size: 1.6rem; color: var(--gold); font-weight: 800; text-transform: uppercase; margin: 0; }
 
-        .profile-corner { position: absolute; right: 20px; top: 25px; width: 50px; height: 50px; border-radius: 50%; border: 2px solid var(--gold); cursor: pointer; display: flex; align-items: center; justify-content: center; background: #111; overflow: hidden; transition: 0.3s; }
+        .profile-corner { position: absolute; right: 20px; top: 25px; width: 50px; height: 50px; border-radius: 50%; border: 2px solid var(--gold); cursor: pointer; overflow: hidden; background: #111; }
         .profile-corner img { width: 100%; height: 100%; object-fit: cover; }
 
         #main-wrapper { height: calc(100vh - 100px); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; }
-        .btn-box { width: 280px; padding: 20px; background: #111; border: 1px solid #333; color: white; border-radius: 12px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 15px; transition: 0.3s; }
-        .btn-box:hover { border-color: var(--gold); }
+        .btn-box { width: 280px; padding: 20px; background: #111; border: 1px solid #333; color: white; border-radius: 12px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 15px; transition: 0.3s; font-size: 1rem; }
+        .btn-box:hover { border-color: var(--gold); background: #1a1a1a; }
         .btn-sucursales { border-color: var(--gold); color: var(--gold); }
 
-        #pantalla-perfil, #pantalla-matriz { position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background: #000; z-index: 2000; display: none; flex-direction: column; }
-
-        .nav-perfil-horizontal { display: flex; gap: 10px; padding: 15px; background: #0a0a0a; border-bottom: 1px solid #222; overflow-x: auto; margin-top: 100px; }
-        .btn-nav-perfil { padding: 10px 20px; background: #111; border: 1px solid #333; color: var(--text-dim); border-radius: 20px; cursor: pointer; font-size: 0.7rem; font-weight: bold; text-transform: uppercase; white-space: nowrap; }
-        .btn-nav-perfil.active { border-color: var(--gold); color: var(--gold); }
-
-        .content-area { flex-grow: 1; padding: 30px; display: flex; flex-direction: column; align-items: center; overflow-y: auto; }
-        .card-form { background: #0d0d0d; border: 1px solid #222; border-radius: 15px; width: 100%; max-width: 450px; padding: 25px; }
-        .input-group { margin-bottom: 15px; text-align: left; }
-        .input-group label { display: block; font-size: 0.7rem; color: #555; margin-bottom: 5px; text-transform: uppercase; }
-        .input-field { width: 100%; padding: 12px; background: #000; border: 1px solid #333; color: white; border-radius: 8px; box-sizing: border-box; outline: none; }
-        
-        .status-badge { padding: 10px; border-radius: 8px; font-size: 0.8rem; text-align: center; margin-bottom: 20px; font-weight: bold; }
-        .btn-back { position: fixed; bottom: 30px; left: 30px; background: var(--gold); color: black; border: none; width: 55px; height: 55px; border-radius: 50%; cursor: pointer; z-index: 3000; font-size: 1.2rem; }
+        .btn-back { position: fixed; bottom: 30px; left: 30px; background: var(--gold); color: black; border: none; width: 55px; height: 55px; border-radius: 50%; cursor: pointer; z-index: 3000; font-size: 1.2rem; display: none; }
     </style>
 </head>
 <body>
 
-<div id="loader" style="display:none; position:fixed; inset:0; background:black; z-index:5000; align-items:center; justify-content:center; color:var(--gold);">CARGANDO JADI...</div>
-
 <div class="top-header">
     <div class="brand-mini">J.A.D.I REPAIZ</div>
     <h1 class="local-title" id="txt-local">PROVEEDOR</h1>
-    <div class="profile-corner" onclick="abrirPerfil()">
-        <img id="img-perfil" src="" alt="">
+    <div class="profile-corner" onclick="window.location.href='perfil.html'">
+        <img id="img-perfil" src="" alt="Foto">
     </div>
 </div>
 
 <div id="main-wrapper">
-    <button class="btn-box btn-sucursales" id="btn-matriz" onclick="abrirMatriz()">
+    <button class="btn-box btn-sucursales" id="btn-matriz" onclick="alert('Entrando al Inventario...')">
         <i class="fas fa-city"></i> MI SUCURSAL / MATRIZ
     </button>
+
     <button class="btn-box" style="color:#ff4444; border-color:#441111;" onclick="cerrarSesion()">
         <i class="fas fa-sign-out-alt"></i> SALIR DEL SISTEMA
     </button>
-</div>
-
-<div id="pantalla-perfil">
-    <div class="nav-perfil-horizontal">
-        <button class="btn-nav-perfil active" onclick="seccionPerfil(this, 'mi_cuenta')">Mi Cuenta</button>
-        <button class="btn-nav-perfil" onclick="seccionPerfil(this, 'local')">Datos Local</button>
-    </div>
-    <div class="content-area">
-        <div class="card-form">
-            <div id="status-pago" class="status-badge" style="background:rgba(0,255,0,0.1); color:#00ff00; border:1px solid #00ff00;">CUENTA ACTIVA</div>
-            <div id="body-perfil">
-                </div>
-        </div>
-    </div>
-    <button class="btn-back" onclick="regresar()"><i class="fas fa-arrow-left"></i></button>
-</div>
-
-<div id="pantalla-matriz">
-    <div class="nav-perfil-horizontal">
-        <button class="btn-nav-perfil active">INVENTARIO</button>
-        <button class="btn-nav-perfil">VENTA</button>
-    </div>
-    <div class="content-area">
-        <h1 style="color:var(--gold); font-size: 2rem;">MÓDULO OPERATIVO</h1>
-        <p>Aquí irá tu inventario real...</p>
-    </div>
-    <button class="btn-back" onclick="regresar()"><i class="fas fa-arrow-left"></i></button>
 </div>
 
 <script>
@@ -99,74 +58,37 @@
     const db = firebase.database();
     const auth = firebase.auth();
 
-    let session = JSON.parse(localStorage.getItem('session_jadi'));
+    // 1. CARGA DIRECTA DE SESIÓN
+    const session = JSON.parse(localStorage.getItem('session_jadi'));
 
     window.onload = function() {
-        if(!session) { window.location.href = "index.html"; return; }
-        
-        // Cargar datos estéticos
+        if(!session) {
+            window.location.href = "index.html";
+            return;
+        }
+
+        // Llenar interfaz con datos de Google/Registro
         document.getElementById('img-perfil').src = session.foto || "https://via.placeholder.com/50";
         document.getElementById('txt-local').innerText = session.empresaNombre || "PROVEEDOR";
 
-        // ESCUCHA DE SEGURIDAD (Mora/Bloqueo)
+        // 2. ESCUDO DE SEGURIDAD EN TIEMPO REAL
         db.ref('usuarios/' + session.uid).on('value', (snap) => {
             const user = snap.val();
             const btnMatriz = document.getElementById('btn-matriz');
-            const statusBadge = document.getElementById('status-pago');
 
             if(user && user.pagoMora === true) {
                 btnMatriz.disabled = true;
                 btnMatriz.style.opacity = "0.3";
                 btnMatriz.style.filter = "grayscale(1)";
-                statusBadge.innerHTML = "CUENTA SUSPENDIDA - PAGO PENDIENTE";
-                statusBadge.style.color = "#ff4444";
-                statusBadge.style.borderColor = "#ff4444";
-                statusBadge.style.background = "rgba(255,0,0,0.1)";
+                btnMatriz.onclick = () => alert("Acceso restringido: Regulariza tu cuenta en el perfil.");
             } else {
                 btnMatriz.disabled = false;
                 btnMatriz.style.opacity = "1";
                 btnMatriz.style.filter = "none";
-                statusBadge.innerHTML = "CUENTA ACTIVA";
-                statusBadge.style.color = "#00ff00";
-                statusBadge.style.borderColor = "#00ff00";
-                statusBadge.style.background = "rgba(0,255,0,0.1)";
+                btnMatriz.onclick = () => window.location.href = '#'; // Aquí pones tu link a la matriz
             }
         });
     };
-
-    function abrirPerfil() {
-        document.getElementById('pantalla-perfil').style.display = 'flex';
-        seccionPerfil(document.querySelector('.btn-nav-perfil'), 'mi_cuenta');
-    }
-
-    function abrirMatriz() {
-        document.getElementById('pantalla-matriz').style.display = 'flex';
-    }
-
-    function regresar() {
-        document.getElementById('pantalla-perfil').style.display = 'none';
-        document.getElementById('pantalla-matriz').style.display = 'none';
-    }
-
-    function seccionPerfil(btn, tipo) {
-        document.querySelectorAll('.btn-nav-perfil').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        const body = document.getElementById('body-perfil');
-
-        if(tipo === 'mi_cuenta') {
-            body.innerHTML = `
-                <div class="input-group"><label>Nombre</label><div class="input-field">${session.nombre}</div></div>
-                <div class="input-group"><label>ID JADI</label><div class="input-field" style="color:var(--gold)">${session.id_jadi}</div></div>
-                <div class="input-group"><label>Correo</label><div class="input-field">${session.email}</div></div>
-                <div class="input-group"><label>Teléfono</label><div class="input-field">${session.telefono}</div></div>
-            `;
-        } else if(tipo === 'local') {
-            body.innerHTML = `
-                <div class="input-group"><label>Nombre del Local</label><input type="text" class="input-field" value="${session.empresaNombre}"></div>
-                <button class="btn-action" onclick="alert('Actualizado local')">GUARDAR DATOS</button>
-            `;
-        }
-    }
 
     function cerrarSesion() {
         if(confirm("¿Cerrar sesión en J.A.D.I?")) {
