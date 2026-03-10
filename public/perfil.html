@@ -13,13 +13,19 @@
         body { font-family: sans-serif; background: var(--dark); color: white; margin: 0; padding: 20px; }
         .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 30px; }
         .profile-card { background: var(--card); border: 1px solid #1a1a1a; border-radius: 20px; padding: 25px; text-align: center; }
-        .user-img { width: 100px; height: 100px; border-radius: 50%; border: 3px solid var(--gold); margin-bottom: 15px; }
+        .user-img { width: 100px; height: 100px; border-radius: 50%; border: 3px solid var(--gold); margin-bottom: 15px; object-fit: cover; }
         .badge { display: inline-block; padding: 5px 15px; border-radius: 20px; background: #222; color: var(--gold); font-size: 0.7rem; font-weight: bold; margin-bottom: 10px; }
         .data-row { display: flex; justify-content: space-between; padding: 15px 0; border-bottom: 1px solid #111; font-size: 0.9rem; }
         .data-label { color: #555; }
-        .btn-pay { width: 100%; padding: 15px; background: #1a1a1a; color: white; border: 1px solid #333; border-radius: 12px; margin-top: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; }
-        .status-alert { margin-top: 20px; padding: 15px; border-radius: 12px; font-size: 0.8rem; display: none; }
-        .btn-exit { color: #ff5252; background: none; border: none; cursor: pointer; margin-top: 30px; width: 100%; }
+        .btn-edit { width: 100%; padding: 15px; background: var(--gold); color: black; border: none; border-radius: 12px; margin-top: 20px; cursor: pointer; font-weight: bold; font-size: 1rem; }
+        
+        /* Pantalla de Edición (Modal Full) */
+        #pantalla-editar { display: none; position: fixed; inset: 0; background: #000; z-index: 1000; padding: 20px; overflow-y: auto; }
+        .input-group { margin-bottom: 15px; text-align: left; }
+        .input-group label { display: block; font-size: 0.7rem; color: var(--gold); margin-bottom: 5px; text-transform: uppercase; }
+        .input-field { width: 100%; padding: 12px; background: #111; border: 1px solid #222; color: white; border-radius: 8px; box-sizing: border-box; }
+        .pass-box { position: relative; }
+        .pass-box i { position: absolute; right: 15px; top: 40px; color: #444; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -30,34 +36,41 @@
         <i class="fas fa-cog"></i>
     </div>
 
-    <div class="profile-card">
-        <img id="p-img" src="" alt="Foto" class="user-img">
+    <div id="vista-perfil" class="profile-card">
+        <img id="p-img" src="" class="user-img">
         <div id="p-badge" class="badge">ROL</div>
-        <h2 id="p-nom" style="margin: 5px 0;">Nombre Usuario</h2>
-        <p id="p-id" style="color: #444; font-size: 0.8rem; margin-bottom: 20px;">ID: ---</p>
+        <h2 id="p-nom">Cargando...</h2>
+        <p id="p-id" style="color: #444; font-size: 0.8rem;">ID: ---</p>
 
-        <div class="data-row">
-            <span class="data-label">Email</span>
-            <span id="p-email">---</span>
-        </div>
-        <div class="data-row">
-            <span class="data-label">Teléfono</span>
-            <span id="p-tel">---</span>
-        </div>
-        <div class="data-row">
-            <span class="data-label">Ecosistema</span>
-            <span id="p-empresa">---</span>
-        </div>
+        <div class="data-row"><span class="data-label">Email</span><span id="p-email">---</span></div>
+        <div class="data-row"><span class="data-label">Teléfono</span><span id="p-tel">---</span></div>
+        <div class="data-row"><span class="data-label">Empresa/Taller</span><span id="p-empresa">---</span></div>
 
-        <div id="p-alerta" class="status-alert" style="background: rgba(255, 82, 82, 0.1); color: #ff5252; border: 1px solid #ff5252;">
-            <i class="fas fa-exclamation-triangle"></i> Tu cuenta presenta una mora. Funciones de inventario deshabilitadas.
+        <button class="btn-edit" onclick="abrirEditor()"><i class="fas fa-edit"></i> EDITAR PERFIL</button>
+    </div>
+
+    <div id="pantalla-editar">
+        <div class="header">
+            <i class="fas fa-times" onclick="cerrarEditor()" style="cursor: pointer;"></i>
+            <div style="font-weight: 900; letter-spacing: 2px;">EDITAR DATOS</div>
+            <span onclick="guardarCambios()" style="color: var(--gold); font-weight: bold;">LISTO</span>
         </div>
 
-        <button class="btn-pay">
-            <i class="fas fa-credit-card"></i> Gestionar Pagos / Comisión
-        </button>
-
-        <button class="btn-exit" onclick="logout()">Cerrar Sesión</button>
+        <div class="input-group"><label>Nombre Completo</label><input type="text" id="ed-nom" class="input-field"></div>
+        <div class="input-group"><label>Rol</label><input type="text" id="ed-rol" class="input-field" readonly style="opacity:0.5"></div>
+        <div id="box-empresa" class="input-group"><label>Nombre de Empresa / Taller</label><input type="text" id="ed-empresa" class="input-field"></div>
+        <div class="input-group"><label>RUC / CI (Opcional)</label><input type="text" id="ed-ruc" class="input-field"></div>
+        <div class="input-group"><label>Ubicación</label><input type="text" id="ed-ubi" class="input-field" placeholder="Ciudad / Dirección"></div>
+        <div class="input-group"><label>Teléfono Local</label><input type="tel" id="ed-tellocal" class="input-field"></div>
+        <div class="input-group"><label>Celular</label><input type="tel" id="ed-cel" class="input-field"></div>
+        
+        <div class="input-group pass-box">
+            <label>Nueva Contraseña (Opcional)</label>
+            <input type="password" id="ed-pass" class="input-field">
+            <i class="fas fa-eye" id="togglePass" onclick="togglePassword()"></i>
+        </div>
+        
+        <div class="input-group"><label>URL Foto de Perfil</label><input type="text" id="ed-foto" class="input-field"></div>
     </div>
 
 <script>
@@ -67,11 +80,13 @@
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
+    let session = JSON.parse(localStorage.getItem('session_jadi'));
 
-    // Cargar Datos del Usuario
-    const session = JSON.parse(localStorage.getItem('session_jadi'));
+    window.onload = function() {
+        if (session) cargarDatos();
+    };
 
-    if (session) {
+    function cargarDatos() {
         document.getElementById('p-img').src = session.foto || 'https://via.placeholder.com/100';
         document.getElementById('p-badge').innerText = session.rolNombre;
         document.getElementById('p-nom').innerText = session.nombre;
@@ -79,23 +94,53 @@
         document.getElementById('p-email').innerText = session.email;
         document.getElementById('p-tel').innerText = session.telefono || 'No registrado';
         document.getElementById('p-empresa').innerText = session.empresaNombre || 'JADI';
-
-        // Escuchar cambios de estado en tiempo real (Para el botón de bloqueo)
-        db.ref('usuarios/' + session.uid).on('value', (snap) => {
-            const user = snap.val();
-            if (user && user.pagoMora === true) {
-                document.getElementById('p-alerta').style.display = 'block';
-            } else {
-                document.getElementById('p-alerta').style.display = 'none';
-            }
-        });
     }
 
-    function logout() {
-        firebase.auth().signOut().then(() => {
-            localStorage.clear();
-            window.location.href = 'index.html';
-        });
+    function abrirEditor() {
+        document.getElementById('pantalla-editar').style.display = 'block';
+        document.getElementById('ed-nom').value = session.nombre;
+        document.getElementById('ed-rol').value = session.rolNombre;
+        document.getElementById('ed-empresa').value = session.empresaNombre || '';
+        document.getElementById('ed-ruc').value = session.ruc || '';
+        document.getElementById('ed-ubi').value = session.ubicacion || '';
+        document.getElementById('ed-tellocal').value = session.telLocal || '';
+        document.getElementById('ed-cel').value = session.telefono || '';
+        document.getElementById('ed-foto').value = session.foto || '';
+    }
+
+    function cerrarEditor() { document.getElementById('pantalla-editar').style.display = 'none'; }
+
+    function togglePassword() {
+        const p = document.getElementById('ed-pass');
+        const icon = document.getElementById('togglePass');
+        if(p.type === "password") { p.type = "text"; icon.className = "fas fa-eye-slash"; }
+        else { p.type = "password"; icon.className = "fas fa-eye"; }
+    }
+
+    async function guardarCambios() {
+        const update = {
+            nombre: document.getElementById('ed-nom').value,
+            empresaNombre: document.getElementById('ed-empresa').value,
+            ruc: document.getElementById('ed-ruc').value,
+            ubicacion: document.getElementById('ed-ubi').value,
+            telLocal: document.getElementById('ed-tellocal').value,
+            telefono: document.getElementById('ed-cel').value,
+            foto: document.getElementById('ed-foto').value
+        };
+
+        const nuevaPass = document.getElementById('ed-pass').value;
+
+        try {
+            await db.ref('usuarios/' + session.uid).update(update);
+            
+            // Actualizar sesión local
+            session = {...session, ...update};
+            localStorage.setItem('session_jadi', JSON.stringify(session));
+            
+            alert("¡Fino! Perfil actualizado.");
+            cargarDatos();
+            cerrarEditor();
+        } catch (e) { alert("Error: " + e.message); }
     }
 </script>
 </body>
