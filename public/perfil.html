@@ -3,221 +3,136 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Perfil J.A.D.I - Gestión Profesional</title>
-    
+    <title>J.A.D.I - Ecosistema Profesional</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
     <style>
-        :root { --gold: #fbc02d; --dark: #000; --card: #0a0a0a; --field-bg: #111; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; margin: 0; padding: 20px; }
-        
-        .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
-        .profile-card { background: var(--card); border: 1px solid #1a1a1a; border-radius: 20px; padding: 25px; text-align: center; }
-        .user-img { width: 90px; height: 90px; border-radius: 50%; border: 2px solid var(--gold); margin-bottom: 10px; object-fit: cover; }
-        
-        .btn-action { width: 100%; padding: 15px; background: var(--gold); color: black; border: none; border-radius: 12px; margin-top: 15px; cursor: pointer; font-weight: bold; font-size: 1rem; }
-        
-        /* Pantalla de Edición */
-        #editor-full, #pantalla-clave { display: none; position: fixed; inset: 0; background: #000; z-index: 1000; padding: 20px; overflow-y: auto; }
-        .input-group { margin-bottom: 15px; text-align: left; }
-        .input-group label { display: block; font-size: 0.7rem; color: var(--gold); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; }
-        .field { width: 100%; padding: 12px; background: var(--field-bg); border: 1px solid #222; color: white; border-radius: 8px; box-sizing: border-box; outline: none; }
-        .field:focus { border-color: var(--gold); }
-        
-        /* Mapa con fondo blanco */
-        #mapa { width: 100%; height: 300px; border-radius: 12px; border: 2px solid #333; margin: 10px 0; background: white; z-index: 1; }
-        
-        .btn-gps { background: #fff; color: #000; border: 1px solid #ccc; padding: 10px; border-radius: 8px; width: 100%; margin-bottom: 10px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; }
-        
-        .pass-box { position: relative; }
-        .pass-box i { position: absolute; right: 15px; top: 38px; color: var(--gold); cursor: pointer; }
+        :root { --gold: #fbc02d; --dark: #000; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .card { width: 90%; max-width: 400px; padding: 30px; background: #0a0a0a; border-radius: 20px; border: 1px solid #1a1a1a; text-align: center; }
+        .brand { font-size: 2.5rem; font-weight: 900; color: var(--gold); letter-spacing: 5px; margin-bottom: 10px; }
+        .btn-google { background: white; color: black; border: none; padding: 15px; border-radius: 12px; width: 100%; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 20px; }
+        .roles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
+        .role-btn { padding: 15px; border: 1px solid #222; border-radius: 12px; background: #111; color: #555; cursor: pointer; font-size: 0.8rem; font-weight: bold; }
+        .role-btn.active { border-color: var(--gold); color: var(--gold); background: #1a1500; }
+        #pantalla-registro, #loader { display: none; }
     </style>
 </head>
 <body>
 
-    <div id="vista-principal">
-        <div class="header">
-            <i class="fas fa-chevron-left" onclick="history.back()" style="cursor:pointer;"></i>
-            <span style="font-weight: 900; letter-spacing: 2px;">MI PERFIL J.A.D.I</span>
-            <div></div>
-        </div>
-
-        <div class="profile-card">
-            <img id="view-foto" src="" class="user-img" alt="Perfil">
-            <h2 id="view-nom" style="margin: 5px 0;">---</h2>
-            <div id="view-id" style="color: var(--gold); font-size: 0.8rem; margin-bottom: 20px; font-weight: bold;">ID: ---</div>
-            
-            <div style="text-align: left; border-top: 1px solid #111; padding-top: 15px; font-size: 0.9rem;">
-                <p><i class="fas fa-envelope" style="width:25px; color: #444;"></i> <span id="view-email">---</span></p>
-                <p><i class="fas fa-phone" style="width:25px; color: #444;"></i> <span id="view-tel">---</span></p>
-                <p><i class="fas fa-store" style="width:25px; color: #444;"></i> <span id="view-empresa">---</span></p>
-            </div>
-
-            <button class="btn-action" onclick="abrirEditor()"><i class="fas fa-edit"></i> EDITAR MI INFORMACIÓN</button>
-        </div>
-    </div>
-
-    <div id="editor-full">
-        <div class="header">
-            <i class="fas fa-times" onclick="cerrarEditor()" style="cursor:pointer;"></i>
-            <span style="font-weight: bold;">CONFIGURACIÓN</span>
-            <span onclick="guardarTodo()" style="color: var(--gold); font-weight: bold; cursor: pointer;">LISTO</span>
-        </div>
-
-        <div class="input-group"><label>Correo (No editable)</label><input type="text" id="ed-email" class="field" readonly style="opacity:0.4;"></div>
-        <div class="input-group"><label>Nombres Completos</label><input type="text" id="ed-nom" class="field"></div>
-        <div class="input-group"><label>Celular</label><input type="tel" id="ed-cel" class="field"></div>
-        <div class="input-group"><label>Nombre del Negocio (Taller/Tienda)</label><input type="text" id="ed-empresa" class="field"></div>
-        <div class="input-group"><label>RUC o CI</label><input type="text" id="ed-ruc" class="field"></div>
-
-        <div class="input-group">
-            <label>Ubicación GPS (Fondo Blanco)</label>
-            <button class="btn-gps" onclick="centrarEnMiPosicion()">
-                <i class="fas fa-crosshairs"></i> UBICACIÓN EN TIEMPO REAL
-            </button>
-            <div id="mapa"></div>
-            <p style="font-size: 0.65rem; color: #555; text-align: center;">Mueve el marcador hasta la puerta de tu local.</p>
-        </div>
-
-        <button class="btn-action" style="background: #1a1a1a; color: white; border: 1px solid #333;" onclick="abrirPantallaClave()">
-            <i class="fas fa-key"></i> GESTIONAR CONTRASEÑA
+    <div class="card" id="pantalla-login">
+        <div class="brand">J.A.D.I</div>
+        <p style="font-size: 0.8rem; color: #666;">RESTAURACIÓN Y CUIDADO DE CALZADO</p>
+        <button class="btn-google" onclick="iniciarConGoogle()">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/action/google.svg" width="20">
+            ENTRAR CON GOOGLE
         </button>
-        <div style="height: 40px;"></div>
     </div>
 
-    <div id="pantalla-clave">
-        <div class="header">
-            <i class="fas fa-arrow-left" onclick="cerrarPantallaClave()" style="cursor:pointer;"></i>
-            <span style="font-weight: bold;">SEGURIDAD</span>
-            <div></div>
-        </div>
+    <div class="card" id="pantalla-registro">
+        <h3 style="color: var(--gold);">COMPLETAR REGISTRO</h3>
+        <p style="font-size: 0.8rem; color: #555;">Selecciona tu rol en el ecosistema</p>
         
-        <h3 style="color: var(--gold);">Cambiar Contraseña</h3>
-        <p style="font-size: 0.8rem; color: #666;">Ingresa tu nueva clave para actualizar el acceso.</p>
-
-        <div class="input-group pass-box">
-            <label>Nueva Contraseña</label>
-            <input type="password" id="p1" class="field">
-            <i class="fas fa-eye" onclick="togglePass('p1')"></i>
-        </div>
-        <div class="input-group pass-box">
-            <label>Confirmar Nueva Contraseña</label>
-            <input type="password" id="p2" class="field">
-            <i class="fas fa-eye" onclick="togglePass('p2')"></i>
+        <div class="roles">
+            <button class="role-btn" onclick="setRol(this, 'ZAPATERO')">ZAPATERO</button>
+            <button class="role-btn" onclick="setRol(this, 'CLIENTE')">CLIENTE</button>
+            <button class="role-btn" onclick="setRol(this, 'TIENDA')">TIENDA</button>
+            <button class="role-btn" onclick="setRol(this, 'PROVEEDOR')">PROVEEDOR</button>
+            <button class="role-btn" onclick="setRol(this, 'MOTORIZADO')">MOTORIZADO</button>
         </div>
 
-        <button class="btn-action" onclick="procesarCambioClave()">ACTUALIZAR CLAVE</button>
+        <input type="tel" id="reg-tel" placeholder="Número de WhatsApp" style="width:100%; padding:15px; margin-top:20px; background:#000; border:1px solid #222; color:white; border-radius:12px; box-sizing:border-box;">
+        
+        <button class="btn-google" style="background: var(--gold);" onclick="finalizarRegistro()">FINALIZAR REGISTRO</button>
+    </div>
+
+    <div id="loader" style="text-align:center;">
+        <i class="fas fa-circle-notch fa-spin" style="font-size: 2rem; color: var(--gold);"></i>
     </div>
 
 <script>
-    // CONFIGURACIÓN FIREBASE
     const firebaseConfig = { 
         apiKey: "AIzaSyAKPxG1osuR9hsj-PsmwJrzK-3W_XM1UyU", 
         databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com" 
     };
     firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
     const db = firebase.database();
-    
-    let session = JSON.parse(localStorage.getItem('session_jadi'));
-    let map, marker;
 
-    window.onload = () => { if(session) cargarVistaIncial(); };
+    let tempUser = null;
+    let rolSeleccionado = null;
 
-    function cargarVistaIncial() {
-        document.getElementById('view-foto').src = session.foto || 'https://via.placeholder.com/90';
-        document.getElementById('view-nom').innerText = session.nombre;
-        document.getElementById('view-id').innerText = "ID JADI: " + (session.id_jadi || '---');
-        document.getElementById('view-email').innerText = session.email;
-        document.getElementById('view-tel').innerText = session.telefono || 'No registrado';
-        document.getElementById('view-empresa').innerText = session.empresaNombre || 'JADI REPAIZ';
+    function iniciarConGoogle() {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        auth.signInWithPopup(provider).then(res => {
+            tempUser = res.user;
+            db.ref('usuarios/' + tempUser.uid).once('value', snap => {
+                if (snap.exists()) {
+                    irAPanel(snap.val());
+                } else {
+                    document.getElementById('pantalla-login').style.display = 'none';
+                    document.getElementById('pantalla-registro').style.display = 'block';
+                }
+            });
+        });
     }
 
-    // --- LÓGICA DEL MAPA ---
-    function inicializarMapa(lat, lng) {
-        if (map) {
-            map.setView([lat, lng], 17);
-            marker.setLatLng([lat, lng]);
-            return;
-        }
-        // Mapa con estilo estándar (Blanco/Claro)
-        map = L.map('mapa').setView([lat, lng], 17);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-        marker = L.marker([lat, lng], {draggable: true}).addTo(map);
-        
-        map.on('click', (e) => marker.setLatLng(e.latlng));
+    function setRol(btn, rol) {
+        document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        rolSeleccionado = rol;
     }
 
-    function centrarEnMiPosicion() {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition((pos) => {
-                inicializarMapa(pos.coords.latitude, pos.coords.longitude);
-            }, () => alert("Error: Por favor activa el GPS."), {enableHighAccuracy: true});
-        }
-    }
+    async function finalizarRegistro() {
+        const tel = document.getElementById('reg-tel').value;
+        if (!rolSeleccionado || !tel) return alert("Selecciona rol y pon tu teléfono");
 
-    // --- NAVEGACIÓN ---
-    function abrirEditor() {
-        document.getElementById('editor-full').style.display = 'block';
-        document.getElementById('ed-email').value = session.email;
-        document.getElementById('ed-nom').value = session.nombre;
-        document.getElementById('ed-cel').value = session.telefono;
-        document.getElementById('ed-empresa').value = session.empresaNombre || '';
-        document.getElementById('ed-ruc').value = session.ruc || '';
-
-        setTimeout(() => {
-            if (session.lat && session.lng) inicializarMapa(session.lat, session.lng);
-            else centrarEnMiPosicion();
-        }, 400);
-    }
-
-    function cerrarEditor() { document.getElementById('editor-full').style.display = 'none'; }
-    function abrirPantallaClave() { document.getElementById('pantalla-clave').style.display = 'block'; }
-    function cerrarPantallaClave() { document.getElementById('pantalla-clave').style.display = 'none'; }
-
-    function togglePass(id) {
-        const x = document.getElementById(id);
-        x.type = x.type === "password" ? "text" : "password";
-    }
-
-    // --- GUARDADO ---
-    async function guardarTodo() {
-        const coords = marker.getLatLng();
-        const update = {
-            nombre: document.getElementById('ed-nom').value,
-            telefono: document.getElementById('ed-cel').value,
-            empresaNombre: document.getElementById('ed-empresa').value,
-            ruc: document.getElementById('ed-ruc').value,
-            lat: coords.lat,
-            lng: coords.lng
-        };
+        document.getElementById('pantalla-registro').style.display = 'none';
+        document.getElementById('loader').style.display = 'block';
 
         try {
-            await db.ref('usuarios/' + session.uid).update(update);
-            session = {...session, ...update};
-            localStorage.setItem('session_jadi', JSON.stringify(session));
-            alert("¡Éxito! Perfil actualizado.");
-            location.reload();
-        } catch (e) { alert("Error al guardar: " + e.message); }
+            const prefijo = generarPrefijo(rolSeleccionado);
+            const snapCount = await db.ref('contadores/' + rolSeleccionado).once('value');
+            let num = (snapCount.val() || 0) + 1;
+            await db.ref('contadores/' + rolSeleccionado).set(num);
+            
+            const idUnico = prefijo + num.toString().padStart(4, '0');
+
+            // AQUÍ ESTÁ EL CAMBIO: Limpiamos los nombres repetidos.
+            const nuevoUser = {
+                uid: tempUser.uid,
+                nombre: tempUser.displayName,
+                email: tempUser.email,
+                foto: tempUser.photoURL,
+                telefono: tel,
+                rolCodigo: rolSeleccionado.toLowerCase(), // Solo guardamos el código (ej: proveedor)
+                id_jadi: idUnico,
+                fecha_registro: new Date().toLocaleDateString()
+            };
+
+            await db.ref('usuarios/' + tempUser.uid).set(nuevoUser);
+            irAPanel(nuevoUser);
+        } catch (e) { alert("Error: " + e.message); }
     }
 
-    async function procesarCambioClave() {
-        const c1 = document.getElementById('p1').value;
-        const c2 = document.getElementById('p2').value;
-        if(c1 !== c2 || c1 === "") return alert("Las claves deben coincidir y no estar vacías.");
+    function generarPrefijo(rol) {
+        // Lógica de consonantes para el ID
+        const consonantes = rol.replace(/[AEIOU]/gi, '');
+        return consonantes.slice(0, 3).toUpperCase();
+    }
 
-        const user = firebase.auth().currentUser;
-        if(user) {
-            user.updatePassword(c1).then(() => {
-                alert("Contraseña actualizada.");
-                cerrarPantallaClave();
-            }).catch(() => alert("Por seguridad, cierra sesión y vuelve a entrar para cambiar tu clave."));
-        }
+    function irAPanel(data) {
+        localStorage.setItem('session_jadi', JSON.stringify(data));
+        const paginas = { 
+            'cliente': 'cliente.html', 
+            'zapatero': 'zapatero.html', 
+            'motorizado': 'motorizado.html',
+            'proveedor': 'proveedor.html',
+            'tienda': 'tienda.html'
+        };
+        window.location.href = paginas[data.rolCodigo] || 'cliente.html';
     }
 </script>
 </body>
