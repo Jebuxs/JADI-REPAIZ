@@ -3,10 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Perfil J.A.D.I</title>
+    <title>Perfil J.A.D.I - Gestión Profesional</title>
+    
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -14,45 +16,62 @@
     <style>
         :root { --gold: #fbc02d; --dark: #000; --card: #0a0a0a; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; margin: 0; padding: 20px; }
+        
         .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
         .profile-card { background: var(--card); border: 1px solid #1a1a1a; border-radius: 20px; padding: 25px; text-align: center; }
         .user-img { width: 90px; height: 90px; border-radius: 50%; border: 2px solid var(--gold); margin-bottom: 10px; object-fit: cover; }
+        
         .btn-action { width: 100%; padding: 15px; background: var(--gold); color: black; border: none; border-radius: 12px; margin-top: 15px; cursor: pointer; font-weight: bold; }
         
+        /* Pantallas */
         #editor-full, #pantalla-clave { display: none; position: fixed; inset: 0; background: #000; z-index: 1000; padding: 20px; overflow-y: auto; }
+        
         .input-group { margin-bottom: 15px; text-align: left; position: relative; }
         .input-group label { display: block; font-size: 0.7rem; color: var(--gold); margin-bottom: 5px; text-transform: uppercase; }
-        .field { width: 100%; padding: 12px; background: #111; border: 1px solid #222; color: white; border-radius: 8px; box-sizing: border-box; }
+        .field { width: 100%; padding: 12px; background: #111; border: 1px solid #222; color: white; border-radius: 8px; box-sizing: border-box; outline: none; }
         
-        /* NUEVO: Logo y Mapa */
+        /* Logo */
         .upload-box { border: 2px dashed #333; padding: 20px; text-align: center; border-radius: 12px; cursor: pointer; background: #050505; }
+        #logo-pre { width: 100%; max-height: 150px; object-fit: contain; display: none; margin-top: 10px; border-radius: 8px; }
+
+        /* Mapa */
         #mapa { width: 100%; height: 280px; border-radius: 12px; border: 2px solid #333; margin: 10px 0; background: white; }
-        .btn-gps { background: white; color: black; padding: 10px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; }
-        .btn-gps.congelado { background: #333; color: #777; }
+        .btn-gps { background: white; color: black; padding: 12px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .btn-gps.congelado { background: #1a1a1a; color: #555; border: 1px solid #333; }
+
         .pass-wrapper i { position: absolute; right: 15px; top: 35px; color: var(--gold); cursor: pointer; }
     </style>
 </head>
 <body>
 
     <div id="vista-principal">
-        <div class="header"><i class="fas fa-chevron-left" onclick="history.back()"></i> <span>PERFIL J.A.D.I</span> <div></div></div>
+        <div class="header">
+            <i class="fas fa-chevron-left" onclick="history.back()"></i>
+            <span style="font-weight: 900; letter-spacing: 2px;">PERFIL J.A.D.I</span>
+            <div></div>
+        </div>
         <div class="profile-card">
             <img id="view-foto" src="" class="user-img">
             <h2 id="view-nom">---</h2>
-            <div id="view-id" style="color: var(--gold);">ID: ---</div>
+            <div id="view-id" style="color: var(--gold); font-weight: bold;">ID: ---</div>
+            <p id="view-email" style="font-size: 0.8rem; color: #444;"></p>
             <button class="btn-action" onclick="abrirEditor()">EDITAR INFORMACIÓN</button>
         </div>
     </div>
 
     <div id="editor-full">
-        <div class="header"><i class="fas fa-times" onclick="cerrarEditor()"></i> <span>EDITAR</span> <span onclick="guardarTodo()" style="color: var(--gold);">GUARDAR</span></div>
-        
+        <div class="header">
+            <i class="fas fa-times" onclick="cerrarEditor()"></i>
+            <span style="font-weight: bold;">EDITAR PERFIL</span>
+            <span onclick="guardarTodo()" style="color: var(--gold); font-weight: bold; cursor: pointer;">GUARDAR</span>
+        </div>
+
         <div class="input-group">
-            <label>Logotipo del Local</label>
+            <label>Logotipo / Rótulo del Local</label>
             <div class="upload-box" onclick="document.getElementById('in-logo').click()">
-                <i class="fas fa-camera" id="icon-cam"></i>
-                <img id="logo-pre" style="width:100%; display:none; border-radius:8px;">
-                <input type="file" id="in-logo" hidden onchange="preLogo(this)">
+                <i class="fas fa-camera" id="icon-cam" style="font-size: 1.5rem; color: #222;"></i>
+                <img id="logo-pre">
+                <input type="file" id="in-logo" hidden accept="image/*" onchange="preLogo(this)">
             </div>
         </div>
 
@@ -60,45 +79,61 @@
         <div class="input-group"><label>Celular</label><input type="tel" id="ed-cel" class="field"></div>
 
         <div class="input-group">
-            <label>Ubicación GPS</label>
-            <button id="btn-gps-main" class="btn-gps" onclick="gestionarMapa()">
+            <label>Ubicación del Negocio</label>
+            <button id="btn-gps-main" class="btn-gps" onclick="controladorMapa()">
                 <i class="fas fa-crosshairs"></i> CAPTURAR UBICACIÓN
             </button>
             <div id="mapa"></div>
         </div>
 
-        <button class="btn-action" style="background:#111; color:white;" onclick="abrirSeguridad()">GESTIONAR CONTRASEÑA</button>
+        <button class="btn-action" style="background: #111; color: white; border: 1px solid #333;" onclick="abrirSeguridad()">
+            <i class="fas fa-lock"></i> GESTIONAR CONTRASEÑA
+        </button>
     </div>
 
     <div id="pantalla-clave">
-        <div class="header"><i class="fas fa-arrow-left" onclick="cerrarSeguridad()"></i> <span>SEGURIDAD</span> <div></div></div>
-        <div style="text-align:center; padding:20px;">
-            <div style="font-size:0.7rem; color:#555;">USUARIO:</div>
-            <div id="user-display" style="color:var(--gold); font-weight:bold; font-size:1.2rem;">---</div>
+        <div class="header">
+            <i class="fas fa-arrow-left" onclick="cerrarSeguridad()"></i>
+            <span style="font-weight: bold;">SEGURIDAD</span>
+            <div></div>
         </div>
-        <div id="box-clave-dinamica"></div>
-        <button class="btn-action" onclick="saveClave()">ACTUALIZAR</button>
+        <div style="text-align: center; padding: 20px;">
+            <div style="font-size: 0.7rem; color: #555;">USUARIO ASIGNADO</div>
+            <div id="user-id-display" style="font-size: 1.4rem; color: var(--gold); font-weight: bold;">---</div>
+        </div>
+
+        <div id="campos-dinamicos"></div>
+        <button class="btn-action" onclick="procesarCambioClave()">ACTUALIZAR ACCESO</button>
     </div>
 
 <script>
-    const firebaseConfig = { apiKey: "AIzaSyAKPxG1osuR9hsj-PsmwJrzK-3W_XM1UyU", databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com" };
+    const firebaseConfig = { 
+        apiKey: "AIzaSyAKPxG1osuR9hsj-PsmwJrzK-3W_XM1UyU", 
+        databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com" 
+    };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
+    
     let session = JSON.parse(localStorage.getItem('session_jadi'));
-    let map, marker, mapStatus = "libre";
+    let map, marker, estadoMapa = "libre";
 
-    window.onload = () => { if(session) {
-        document.getElementById('view-foto').src = session.foto || '';
-        document.getElementById('view-nom').innerText = session.nombre;
-        document.getElementById('view-id').innerText = "ID: " + session.id_jadi;
-    }};
+    window.onload = () => {
+        if(session) {
+            document.getElementById('view-foto').src = session.foto || '';
+            document.getElementById('view-nom').innerText = session.nombre;
+            document.getElementById('view-id').innerText = "ID: " + session.id_jadi;
+            document.getElementById('view-email').innerText = session.email;
+        }
+    };
 
+    // --- LOGICA LOGO ---
     function preLogo(input) {
         if (input.files && input.files[0]) {
             const reader = new FileReader();
             reader.onload = (e) => {
-                document.getElementById('logo-pre').src = e.target.result;
-                document.getElementById('logo-pre').style.display = 'block';
+                const img = document.getElementById('logo-pre');
+                img.src = e.target.result;
+                img.style.display = 'block';
                 document.getElementById('icon-cam').style.display = 'none';
                 session.tempLogo = e.target.result;
             };
@@ -106,9 +141,10 @@
         }
     }
 
-    function gestionarMapa() {
+    // --- LOGICA MAPA ---
+    function controladorMapa() {
         const btn = document.getElementById('btn-gps-main');
-        if (mapStatus === "libre") {
+        if (estadoMapa === "libre") {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition((pos) => {
                     const lat = pos.coords.latitude, lng = pos.coords.longitude;
@@ -116,60 +152,88 @@
                         map = L.map('mapa').setView([lat, lng], 17);
                         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
                         marker = L.marker([lat, lng], {draggable: true}).addTo(map);
-                    } else { map.setView([lat, lng], 17); marker.setLatLng([lat, lng]); }
+                    } else {
+                        map.setView([lat, lng], 17);
+                        marker.setLatLng([lat, lng]);
+                    }
                     btn.innerHTML = '<i class="fas fa-lock"></i> CONGELAR UBICACIÓN';
-                    mapStatus = "capturando";
-                }, null, {enableHighAccuracy:true});
+                    estadoMapa = "capturando";
+                }, null, {enableHighAccuracy: true});
             }
-        } else if (mapStatus === "capturando") {
-            map.dragging.disable(); marker.dragging.disable();
+        } else if (estadoMapa === "capturando") {
+            map.dragging.disable();
+            marker.dragging.disable();
             btn.className = "btn-gps congelado";
             btn.innerHTML = '<i class="fas fa-edit"></i> EDITAR UBICACIÓN';
-            mapStatus = "congelado";
+            estadoMapa = "congelado";
         } else {
-            map.dragging.enable(); marker.dragging.enable();
+            map.dragging.enable();
+            marker.dragging.enable();
             btn.className = "btn-gps";
             btn.innerHTML = '<i class="fas fa-lock"></i> CONGELAR UBICACIÓN';
-            mapStatus = "capturando";
+            estadoMapa = "capturando";
         }
     }
 
+    // --- SEGURIDAD DINAMICA ---
     function abrirSeguridad() {
         document.getElementById('editor-full').style.display = 'none';
         document.getElementById('pantalla-clave').style.display = 'block';
-        document.getElementById('user-display').innerText = session.id_jadi;
-        const box = document.getElementById('box-clave-dinamica');
-        box.innerHTML = "";
+        document.getElementById('user-id-display').innerText = session.id_jadi;
         
-        // Lógica Primera Vez vs Antigua
+        const container = document.getElementById('campos-dinamicos');
+        container.innerHTML = "";
+
         if (!session.claveConfigurada) {
-            box.innerHTML = `
-            <div class="input-group pass-wrapper"><label>Nueva Clave</label><input type="password" id="n1" class="field"><i class="fas fa-eye" onclick="togg('n1')"></i></div>
-            <div class="input-group pass-wrapper"><label>Confirmar Clave</label><input type="password" id="n2" class="field"><i class="fas fa-eye" onclick="togg('n2')"></i></div>`;
+            container.innerHTML = `
+                <div class="input-group pass-wrapper"><label>Nueva Contraseña</label><input type="password" id="n1" class="field"><i class="fas fa-eye" onclick="toggleV('n1')"></i></div>
+                <div class="input-group pass-wrapper"><label>Confirmar Contraseña</label><input type="password" id="n2" class="field"><i class="fas fa-eye" onclick="toggleV('n2')"></i></div>`;
         } else {
-            box.innerHTML = `
-            <div class="input-group pass-wrapper"><label>Clave Antigua</label><input type="password" id="a0" class="field"><i class="fas fa-eye" onclick="togg('a0')"></i></div>
-            <div class="input-group pass-wrapper"><label>Nueva Clave</label><input type="password" id="n1" class="field"><i class="fas fa-eye" onclick="togg('n1')"></i></div>
-            <div class="input-group pass-wrapper"><label>Confirmar Nueva</label><input type="password" id="n2" class="field"><i class="fas fa-eye" onclick="togg('n2')"></i></div>
-            <p onclick="forgot()" style="color:var(--gold); font-size:0.7rem; cursor:pointer;">¿Olvidaste tu clave antigua?</p>`;
+            container.innerHTML = `
+                <div class="input-group pass-wrapper"><label>Contraseña Antigua</label><input type="password" id="a0" class="field"><i class="fas fa-eye" onclick="toggleV('a0')"></i></div>
+                <div class="input-group pass-wrapper"><label>Nueva Contraseña</label><input type="password" id="n1" class="field"><i class="fas fa-eye" onclick="toggleV('n1')"></i></div>
+                <div class="input-group pass-wrapper"><label>Confirmar Nueva</label><input type="password" id="n2" class="field"><i class="fas fa-eye" onclick="toggleV('n2')"></i></div>
+                <p onclick="recuperar()" style="color:var(--gold); font-size:0.7rem; cursor:pointer; text-align:right;">¿Olvidaste tu contraseña antigua?</p>`;
         }
     }
 
-    function togg(id) { const x = document.getElementById(id); x.type = x.type === "password" ? "text" : "password"; }
-    function forgot() { firebase.auth().sendPasswordResetEmail(session.email).then(()=>alert("Link enviado.")); }
+    function toggleV(id) { const x = document.getElementById(id); x.type = x.type === "password" ? "text" : "password"; }
     
-    function abrirEditor() { document.getElementById('vista-principal').style.display='none'; document.getElementById('editor-full').style.display='block'; }
-    function cerrarEditor() { document.getElementById('editor-full').style.display='none'; document.getElementById('vista-principal').style.display='block'; }
-    function cerrarSeguridad() { document.getElementById('pantalla-clave').style.display='none'; document.getElementById('editor-full').style.display='block'; }
+    function recuperar() {
+        firebase.auth().sendPasswordResetEmail(session.email).then(() => alert("Te enviamos un link a " + session.email));
+    }
+
+    // --- NAVEGACION ---
+    function abrirEditor() {
+        document.getElementById('vista-principal').style.display = 'none';
+        document.getElementById('editor-full').style.display = 'block';
+        document.getElementById('ed-nom').value = session.nombre;
+        document.getElementById('ed-cel').value = session.telefono || '';
+        setTimeout(() => { if(!map) controladorMapa(); }, 500);
+    }
+
+    function cerrarEditor() { location.reload(); }
+    function cerrarSeguridad() { document.getElementById('pantalla-clave').style.display = 'none'; document.getElementById('editor-full').style.display = 'block'; }
 
     async function guardarTodo() {
-        const pos = marker.getLatLng();
-        const upd = { nombre: document.getElementById('ed-nom').value, telefono: document.getElementById('ed-cel').value, lat: pos.lat, lng: pos.lng, logo: session.tempLogo || '' };
+        const coords = marker.getLatLng();
+        const upd = {
+            nombre: document.getElementById('ed-nom').value,
+            telefono: document.getElementById('ed-cel').value,
+            lat: coords.lat,
+            lng: coords.lng,
+            logo: session.tempLogo || (session.logo || '')
+        };
         await db.ref('usuarios/' + session.uid).update(upd);
         session = {...session, ...upd};
         localStorage.setItem('session_jadi', JSON.stringify(session));
-        alert("¡Fino! Datos guardados.");
+        alert("¡Fino! Perfil actualizado.");
         location.reload();
+    }
+
+    async function procesarCambioClave() {
+        // Lógica de actualización en Firebase Auth aquí...
+        alert("Procesando actualización segura...");
     }
 </script>
 </body>
