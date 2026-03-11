@@ -3,145 +3,221 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>J.A.D.I - Ecosistema Profesional</title>
+    <title>Perfil J.A.D.I - Gestión Profesional</title>
+    
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
     <style>
-        :root { --gold: #fbc02d; --dark: #000; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .card { width: 90%; max-width: 400px; padding: 30px; background: #0a0a0a; border-radius: 20px; border: 1px solid #1a1a1a; text-align: center; }
-        .brand { font-size: 2.2rem; font-weight: 900; color: var(--gold); letter-spacing: 4px; margin-bottom: 5px; }
+        :root { --gold: #fbc02d; --dark: #000; --card: #0a0a0a; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; margin: 0; padding: 20px; }
         
-        /* Botón Google */
-        .btn-google { width: 100%; padding: 15px; background: white; color: black; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 20px; }
+        /* Contenedores */
+        #pantalla-perfil, #editor-full, #pantalla-clave { display: none; flex-direction: column; }
+        .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+        .profile-card { background: var(--card); border: 1px solid #1a1a1a; border-radius: 20px; padding: 25px; text-align: center; }
+        .user-img { width: 90px; height: 90px; border-radius: 50%; border: 2px solid var(--gold); margin-bottom: 10px; object-fit: cover; }
         
-        /* Secciones */
-        #selector-rol, #seccion-telefono { display: none; margin-top: 20px; text-align: left; }
+        /* Inputs y Botones */
+        .input-group { margin-bottom: 15px; text-align: left; position: relative; }
+        .input-group label { display: block; font-size: 0.7rem; color: var(--gold); margin-bottom: 5px; text-transform: uppercase; }
+        .field { width: 100%; padding: 12px; background: #111; border: 1px solid #222; color: white; border-radius: 8px; box-sizing: border-box; outline: none; }
+        .btn-action { width: 100%; padding: 15px; background: var(--gold); color: black; border: none; border-radius: 12px; margin-top: 15px; cursor: pointer; font-weight: bold; }
         
-        .rol-option { background: #111; padding: 15px; margin-bottom: 10px; border-radius: 12px; border: 1px solid #222; cursor: pointer; transition: 0.3s; display: flex; align-items: center; gap: 15px; }
-        .rol-option:hover { border-color: var(--gold); background: #1a1a1a; }
-        .rol-option i { color: var(--gold); width: 20px; text-align: center; }
-        
-        input { width: 100%; padding: 15px; background: #111; border: 1px solid #222; border-radius: 12px; color: white; font-size: 1rem; margin-top: 10px; box-sizing: border-box; outline: none; }
-        input:focus { border-color: var(--gold); }
+        /* Módulo de Logo */
+        .upload-box { border: 2px dashed #333; padding: 20px; text-align: center; border-radius: 12px; cursor: pointer; margin-bottom: 15px; background: #050505; }
+        .img-preview-logo { width: 100%; max-height: 120px; object-fit: contain; margin-top: 10px; display: none; border-radius: 8px; }
 
-        .btn-final { width: 100%; padding: 15px; background: var(--gold); color: black; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; margin-top: 20px; }
+        /* Mapa */
+        #mapa { width: 100%; height: 280px; border-radius: 12px; border: 2px solid #333; margin: 10px 0; background: white; }
+        .btn-gps { background: white; color: black; border: 1px solid #ccc; padding: 12px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .btn-gps.congelado { background: #1a1a1a; color: #555; border-color: #333; }
 
-        #loader { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:100; flex-direction:column; align-items:center; justify-content:center; }
+        /* Ojos de pollo (Password visibility) */
+        .pass-wrapper i { position: absolute; right: 15px; top: 35px; color: var(--gold); cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <div id="loader"><div style="color:var(--gold)">PROCESANDO...</div></div>
-
-    <div class="card">
-        <div class="brand">J.A.D.I</div>
-        
-        <div id="vista-login">
-            <div style="font-size: 0.7rem; color: #444; letter-spacing: 2px; margin-bottom: 20px;">ACCESO AL ECOSISTEMA</div>
-            <button class="btn-google" onclick="accesoGoogle()">
-                <i class="fab fa-google"></i> Continuar con Gmail
-            </button>
+    <div id="vista-perfil" style="display: block;">
+        <div class="header">
+            <i class="fas fa-chevron-left" onclick="history.back()"></i>
+            <span style="font-weight: 900; letter-spacing: 2px;">PERFIL J.A.D.I</span>
+            <div></div>
         </div>
-
-        <div id="selector-rol">
-            <p style="font-size: 0.9rem; color: var(--gold); margin-bottom: 15px;">¿Cuál es tu función?</p>
-            <div class="rol-option" onclick="seleccionarRol('CLIENTE')"> <i class="fas fa-user"></i> <span>CLIENTE</span> </div>
-            <div class="rol-option" onclick="seleccionarRol('ZAPATERO')"> <i class="fas fa-hammer"></i> <span>ZAPATERO</span> </div>
-            <div class="rol-option" onclick="seleccionarRol('TIENDA')"> <i class="fas fa-store"></i> <span>TIENDA</span> </div>
-            <div class="rol-option" onclick="seleccionarRol('PROVEEDOR')"> <i class="fas fa-box-open"></i> <span>PROVEEDOR</span> </div>
-            <div class="rol-option" onclick="seleccionarRol('MOTORIZADO')"> <i class="fas fa-motorcycle"></i> <span>MOTORIZADO</span> </div>
-        </div>
-
-        <div id="seccion-telefono">
-            <p style="font-size: 0.9rem; color: var(--gold);">Para terminar, ingresa tu teléfono:</p>
-            <input type="tel" id="user-tel" placeholder="Ej: 0987654321" maxlength="10">
-            <button class="btn-final" onclick="finalizarRegistro()">FINALIZAR REGISTRO</button>
+        <div class="profile-card">
+            <img id="view-foto" src="" class="user-img">
+            <h2 id="view-nom">---</h2>
+            <div id="view-id" style="color: var(--gold); font-size: 0.8rem; margin-bottom: 20px;">ID: ---</div>
+            <button class="btn-action" onclick="abrirEditor()">EDITAR INFORMACIÓN</button>
         </div>
     </div>
 
+    <div id="editor-full">
+        <div class="header">
+            <i class="fas fa-times" onclick="cerrarEditor()"></i>
+            <span style="font-weight: bold;">EDITAR PERFIL</span>
+            <span onclick="guardarTodo()" style="color: var(--gold); font-weight: bold; cursor: pointer;">GUARDAR</span>
+        </div>
+
+        <div class="input-group">
+            <label>Logotipo o Rótulo del Local</label>
+            <div class="upload-box" onclick="document.getElementById('input-logo').click()">
+                <i class="fas fa-store" id="icon-cam" style="font-size: 1.5rem; color: #333;"></i>
+                <img id="logo-preview" class="img-preview-logo">
+                <input type="file" id="input-logo" hidden accept="image/*" onchange="previsualizarLogo(this)">
+            </div>
+        </div>
+
+        <div class="input-group"><label>Nombre</label><input type="text" id="ed-nom" class="field"></div>
+        <div class="input-group"><label>Celular</label><input type="tel" id="ed-cel" class="field"></div>
+
+        <div class="input-group">
+            <label>Ubicación (GPS)</label>
+            <button id="btn-gps-main" class="btn-gps" onclick="controladorMapa()">
+                <i class="fas fa-crosshairs"></i> CAPTURAR UBICACIÓN
+            </button>
+            <div id="mapa"></div>
+        </div>
+
+        <button class="btn-action" style="background: #111; color: white; border: 1px solid #333;" onclick="abrirPantallaClave()">
+            <i class="fas fa-lock"></i> GESTIONAR CONTRASEÑA
+        </button>
+    </div>
+
+    <div id="pantalla-clave">
+        <div class="header">
+            <i class="fas fa-arrow-left" onclick="cerrarPantallaClave()"></i>
+            <span style="font-weight: bold;">SEGURIDAD</span>
+            <div></div>
+        </div>
+        <div class="profile-card" style="margin-bottom: 20px;">
+            <div style="font-size: 0.7rem; color: #555;">USUARIO ASIGNADO</div>
+            <div id="user-id-display" style="font-size: 1.2rem; color: var(--gold); font-weight: bold;">---</div>
+        </div>
+
+        <div id="contenedor-pass-dinamico">
+            </div>
+        <button class="btn-action" onclick="procesarClave()">ACTUALIZAR ACCESO</button>
+    </div>
+
 <script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyAKPxG1osuR9hsj-PsmwJrzK-3W_XM1UyU",
-        authDomain: "jadi-repaiz.firebaseapp.com",
-        databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com",
-        projectId: "jadi-repaiz"
-    };
-
+    const firebaseConfig = { apiKey: "AIzaSyAKPxG1osuR9hsj-PsmwJrzK-3W_XM1UyU", databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com" };
     firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
     const db = firebase.database();
+    let session = JSON.parse(localStorage.getItem('session_jadi'));
+    let map, marker, estadoMapa = "libre"; // libre, capturando, congelado
 
-    let tempUser = null;
-    let rolSeleccionado = "";
+    window.onload = () => { if(session) cargarVista(); };
 
-    async function accesoGoogle() {
-        const provider = new firebase.auth.GoogleAuthProvider();
-        document.getElementById('loader').style.display = 'flex';
-        try {
-            const result = await auth.signInWithPopup(provider);
-            tempUser = result.user;
-            const snap = await db.ref('usuarios/' + tempUser.uid).once('value');
-            if (snap.exists()) {
-                irAPanel(snap.val());
-            } else {
-                document.getElementById('vista-login').style.display = 'none';
-                document.getElementById('selector-rol').style.display = 'block';
-                document.getElementById('loader').style.display = 'none';
-            }
-        } catch (error) { alert("Error: " + error.message); document.getElementById('loader').style.display = 'none'; }
+    function cargarVista() {
+        document.getElementById('view-foto').src = session.foto || '';
+        document.getElementById('view-nom').innerText = session.nombre;
+        document.getElementById('view-id').innerText = "ID: " + session.id_jadi;
     }
 
-    function seleccionarRol(rol) {
-        rolSeleccionado = rol;
-        document.getElementById('selector-rol').style.display = 'none';
-        document.getElementById('seccion-telefono').style.display = 'block';
-    }
-
-    async function finalizarRegistro() {
-        const tel = document.getElementById('user-tel').value.trim();
-        if (tel.length < 7) return alert("Ingresa un número de teléfono válido");
-
-        document.getElementById('loader').style.display = 'flex';
-        try {
-            const prefijo = generarPrefijo(rolSeleccionado);
-            const snapCount = await db.ref('contadores/' + rolSeleccionado).once('value');
-            let num = (snapCount.val() || 0) + 1;
-            await db.ref('contadores/' + rolSeleccionado).set(num);
-            
-            const idUnico = prefijo + num.toString().padStart(4, '0');
-
-            const nuevoUser = {
-                uid: tempUser.uid,
-                nombre: tempUser.displayName,
-                email: tempUser.email,
-                telefono: tel,
-                rolCodigo: rolSeleccionado.toLowerCase(),
-                id_jadi: idUnico,
-                fecha_registro: new Date().toLocaleDateString()
+    // --- LOGO ---
+    function previsualizarLogo(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = document.getElementById('logo-preview');
+                img.src = e.target.result;
+                img.style.display = 'block';
+                document.getElementById('icon-cam').style.display = 'none';
+                session.tempLogo = e.target.result;
             };
-
-            await db.ref('usuarios/' + tempUser.uid).set(nuevoUser);
-            irAPanel(nuevoUser);
-        } catch (e) { alert("Error: " + e.message); }
+            reader.readAsDataURL(input.files[0]);
+        }
     }
 
-    function generarPrefijo(rol) {
-        const consonantes = rol.replace(/[AEIOU]/gi, '');
-        return consonantes.slice(0, 3).toUpperCase();
+    // --- MAPA INTELIGENTE ---
+    function controladorMapa() {
+        const btn = document.getElementById('btn-gps-main');
+        if (estadoMapa === "libre") {
+            centrarGPS();
+            btn.innerHTML = '<i class="fas fa-lock"></i> CONGELAR UBICACIÓN';
+            estadoMapa = "capturando";
+        } else if (estadoMapa === "capturando") {
+            map.dragging.disable();
+            marker.dragging.disable();
+            btn.className = "btn-gps congelado";
+            btn.innerHTML = '<i class="fas fa-edit"></i> EDITAR UBICACIÓN';
+            estadoMapa = "congelado";
+        } else {
+            map.dragging.enable();
+            marker.dragging.enable();
+            btn.className = "btn-gps";
+            btn.innerHTML = '<i class="fas fa-lock"></i> CONGELAR UBICACIÓN';
+            estadoMapa = "capturando";
+        }
     }
 
-    function irAPanel(data) {
-        localStorage.setItem('session_jadi', JSON.stringify(data));
-        const paginas = { 
-            'cliente': 'cliente.html', 'zapatero': 'zapatero.html', 
-            'motorizado': 'delivery.html', 'tienda': 'tienda.html', 'proveedor': 'proveedor.html' 
-        };
-        window.location.href = paginas[data.rolCodigo] || 'cliente.html';
+    function centrarGPS() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition((pos) => {
+                const lat = pos.coords.latitude, lng = pos.coords.longitude;
+                if (!map) {
+                    map = L.map('mapa').setView([lat, lng], 17);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+                    marker = L.marker([lat, lng], {draggable: true}).addTo(map);
+                } else {
+                    map.setView([lat, lng], 17);
+                    marker.setLatLng([lat, lng]);
+                }
+            }, null, {enableHighAccuracy: true});
+        }
     }
+
+    // --- SEGURIDAD ---
+    function abrirPantallaClave() {
+        document.getElementById('editor-full').style.display = 'none';
+        document.getElementById('pantalla-clave').style.display = 'flex';
+        document.getElementById('user-id-display').innerText = session.id_jadi;
+        
+        const container = document.getElementById('contenedor-pass-dinamico');
+        container.innerHTML = "";
+
+        // Si es primera vez (no tiene campo claveConfigurada)
+        if (!session.claveConfigurada) {
+            container.innerHTML = `
+                <div class="input-group pass-wrapper"><label>Nueva Contraseña</label><input type="password" id="n1" class="field"><i class="fas fa-eye" onclick="toggleP('n1')"></i></div>
+                <div class="input-group pass-wrapper"><label>Confirmar Contraseña</label><input type="password" id="n2" class="field"><i class="fas fa-eye" onclick="toggleP('n2')"></i></div>`;
+        } else {
+            container.innerHTML = `
+                <div class="input-group pass-wrapper"><label>Contraseña Antigua</label><input type="password" id="a0" class="field"><i class="fas fa-eye" onclick="toggleP('a0')"></i></div>
+                <div class="input-group pass-wrapper"><label>Nueva Contraseña</label><input type="password" id="n1" class="field"><i class="fas fa-eye" onclick="toggleP('n1')"></i></div>
+                <div class="input-group pass-wrapper"><label>Confirmar Nueva</label><input type="password" id="n2" class="field"><i class="fas fa-eye" onclick="toggleP('n2')"></i></div>
+                <p onclick="recuperar()" style="color:var(--gold); font-size:0.7rem; cursor:pointer; text-align:right;">¿Olvidaste tu contraseña?</p>`;
+        }
+    }
+
+    function toggleP(id) {
+        const x = document.getElementById(id);
+        x.type = x.type === "password" ? "text" : "password";
+    }
+
+    function recuperar() {
+        firebase.auth().sendPasswordResetEmail(session.email).then(() => alert("Link enviado a tu Gmail."));
+    }
+
+    async function guardarTodo() {
+        const c = marker.getLatLng();
+        const upd = { nombre: document.getElementById('ed-nom').value, telefono: document.getElementById('ed-cel').value, lat: c.lat, lng: c.lng, logo: session.tempLogo || '' };
+        await db.ref('usuarios/' + session.uid).update(upd);
+        session = {...session, ...upd};
+        localStorage.setItem('session_jadi', JSON.stringify(session));
+        location.reload();
+    }
+
+    function abrirEditor() { document.getElementById('vista-perfil').style.display = 'none'; document.getElementById('editor-full').style.display = 'block'; setTimeout(centrarGPS, 500); }
+    function cerrarEditor() { location.reload(); }
+    function cerrarPantallaClave() { document.getElementById('pantalla-clave').style.display = 'none'; document.getElementById('editor-full').style.display = 'block'; }
 </script>
 </body>
 </html>
-
