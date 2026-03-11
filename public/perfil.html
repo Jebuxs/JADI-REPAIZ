@@ -14,99 +14,109 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <style>
-        :root { --gold: #fbc02d; --dark: #000; --card: #0a0a0a; }
+        :root { --gold: #fbc02d; --dark: #000; --card: #0a0a0a; --field-bg: #111; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; margin: 0; padding: 20px; }
         
         .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
         .profile-card { background: var(--card); border: 1px solid #1a1a1a; border-radius: 20px; padding: 25px; text-align: center; }
         .user-img { width: 90px; height: 90px; border-radius: 50%; border: 2px solid var(--gold); margin-bottom: 10px; object-fit: cover; }
         
-        .btn-action { width: 100%; padding: 15px; background: var(--gold); color: black; border: none; border-radius: 12px; margin-top: 15px; cursor: pointer; font-weight: bold; }
+        .btn-action { width: 100%; padding: 15px; background: var(--gold); color: black; border: none; border-radius: 12px; margin-top: 15px; cursor: pointer; font-weight: bold; font-size: 1rem; }
         
-        /* Pantallas */
+        /* Pantalla de Edición */
         #editor-full, #pantalla-clave { display: none; position: fixed; inset: 0; background: #000; z-index: 1000; padding: 20px; overflow-y: auto; }
+        .input-group { margin-bottom: 15px; text-align: left; }
+        .input-group label { display: block; font-size: 0.7rem; color: var(--gold); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; }
+        .field { width: 100%; padding: 12px; background: var(--field-bg); border: 1px solid #222; color: white; border-radius: 8px; box-sizing: border-box; outline: none; }
+        .field:focus { border-color: var(--gold); }
         
-        .input-group { margin-bottom: 15px; text-align: left; position: relative; }
-        .input-group label { display: block; font-size: 0.7rem; color: var(--gold); margin-bottom: 5px; text-transform: uppercase; }
-        .field { width: 100%; padding: 12px; background: #111; border: 1px solid #222; color: white; border-radius: 8px; box-sizing: border-box; outline: none; }
+        /* Mapa con fondo blanco */
+        #mapa { width: 100%; height: 300px; border-radius: 12px; border: 2px solid #333; margin: 10px 0; background: white; z-index: 1; }
         
-        /* Logo */
-        .upload-box { border: 2px dashed #333; padding: 20px; text-align: center; border-radius: 12px; cursor: pointer; background: #050505; }
-        #logo-pre { width: 100%; max-height: 150px; object-fit: contain; display: none; margin-top: 10px; border-radius: 8px; }
-
-        /* Mapa */
-        #mapa { width: 100%; height: 280px; border-radius: 12px; border: 2px solid #333; margin: 10px 0; background: white; }
-        .btn-gps { background: white; color: black; padding: 12px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; }
-        .btn-gps.congelado { background: #1a1a1a; color: #555; border: 1px solid #333; }
-
-        .pass-wrapper i { position: absolute; right: 15px; top: 35px; color: var(--gold); cursor: pointer; }
+        .btn-gps { background: #fff; color: #000; border: 1px solid #ccc; padding: 10px; border-radius: 8px; width: 100%; margin-bottom: 10px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        
+        .pass-box { position: relative; }
+        .pass-box i { position: absolute; right: 15px; top: 38px; color: var(--gold); cursor: pointer; }
     </style>
 </head>
 <body>
 
     <div id="vista-principal">
         <div class="header">
-            <i class="fas fa-chevron-left" onclick="history.back()"></i>
-            <span style="font-weight: 900; letter-spacing: 2px;">PERFIL J.A.D.I</span>
+            <i class="fas fa-chevron-left" onclick="history.back()" style="cursor:pointer;"></i>
+            <span style="font-weight: 900; letter-spacing: 2px;">MI PERFIL J.A.D.I</span>
             <div></div>
         </div>
+
         <div class="profile-card">
-            <img id="view-foto" src="" class="user-img">
-            <h2 id="view-nom">---</h2>
-            <div id="view-id" style="color: var(--gold); font-weight: bold;">ID: ---</div>
-            <p id="view-email" style="font-size: 0.8rem; color: #444;"></p>
-            <button class="btn-action" onclick="abrirEditor()">EDITAR INFORMACIÓN</button>
+            <img id="view-foto" src="" class="user-img" alt="Perfil">
+            <h2 id="view-nom" style="margin: 5px 0;">---</h2>
+            <div id="view-id" style="color: var(--gold); font-size: 0.8rem; margin-bottom: 20px; font-weight: bold;">ID: ---</div>
+            
+            <div style="text-align: left; border-top: 1px solid #111; padding-top: 15px; font-size: 0.9rem;">
+                <p><i class="fas fa-envelope" style="width:25px; color: #444;"></i> <span id="view-email">---</span></p>
+                <p><i class="fas fa-phone" style="width:25px; color: #444;"></i> <span id="view-tel">---</span></p>
+                <p><i class="fas fa-store" style="width:25px; color: #444;"></i> <span id="view-empresa">---</span></p>
+            </div>
+
+            <button class="btn-action" onclick="abrirEditor()"><i class="fas fa-edit"></i> EDITAR MI INFORMACIÓN</button>
         </div>
     </div>
 
     <div id="editor-full">
         <div class="header">
-            <i class="fas fa-times" onclick="cerrarEditor()"></i>
-            <span style="font-weight: bold;">EDITAR PERFIL</span>
-            <span onclick="guardarTodo()" style="color: var(--gold); font-weight: bold; cursor: pointer;">GUARDAR</span>
+            <i class="fas fa-times" onclick="cerrarEditor()" style="cursor:pointer;"></i>
+            <span style="font-weight: bold;">CONFIGURACIÓN</span>
+            <span onclick="guardarTodo()" style="color: var(--gold); font-weight: bold; cursor: pointer;">LISTO</span>
         </div>
 
-        <div class="input-group">
-            <label>Logotipo / Rótulo del Local</label>
-            <div class="upload-box" onclick="document.getElementById('in-logo').click()">
-                <i class="fas fa-camera" id="icon-cam" style="font-size: 1.5rem; color: #222;"></i>
-                <img id="logo-pre">
-                <input type="file" id="in-logo" hidden accept="image/*" onchange="preLogo(this)">
-            </div>
-        </div>
-
-        <div class="input-group"><label>Nombre</label><input type="text" id="ed-nom" class="field"></div>
+        <div class="input-group"><label>Correo (No editable)</label><input type="text" id="ed-email" class="field" readonly style="opacity:0.4;"></div>
+        <div class="input-group"><label>Nombres Completos</label><input type="text" id="ed-nom" class="field"></div>
         <div class="input-group"><label>Celular</label><input type="tel" id="ed-cel" class="field"></div>
+        <div class="input-group"><label>Nombre del Negocio (Taller/Tienda)</label><input type="text" id="ed-empresa" class="field"></div>
+        <div class="input-group"><label>RUC o CI</label><input type="text" id="ed-ruc" class="field"></div>
 
         <div class="input-group">
-            <label>Ubicación del Negocio</label>
-            <button id="btn-gps-main" class="btn-gps" onclick="controladorMapa()">
-                <i class="fas fa-crosshairs"></i> CAPTURAR UBICACIÓN
+            <label>Ubicación GPS (Fondo Blanco)</label>
+            <button class="btn-gps" onclick="centrarEnMiPosicion()">
+                <i class="fas fa-crosshairs"></i> UBICACIÓN EN TIEMPO REAL
             </button>
             <div id="mapa"></div>
+            <p style="font-size: 0.65rem; color: #555; text-align: center;">Mueve el marcador hasta la puerta de tu local.</p>
         </div>
 
-        <button class="btn-action" style="background: #111; color: white; border: 1px solid #333;" onclick="abrirSeguridad()">
-            <i class="fas fa-lock"></i> GESTIONAR CONTRASEÑA
+        <button class="btn-action" style="background: #1a1a1a; color: white; border: 1px solid #333;" onclick="abrirPantallaClave()">
+            <i class="fas fa-key"></i> GESTIONAR CONTRASEÑA
         </button>
+        <div style="height: 40px;"></div>
     </div>
 
     <div id="pantalla-clave">
         <div class="header">
-            <i class="fas fa-arrow-left" onclick="cerrarSeguridad()"></i>
+            <i class="fas fa-arrow-left" onclick="cerrarPantallaClave()" style="cursor:pointer;"></i>
             <span style="font-weight: bold;">SEGURIDAD</span>
             <div></div>
         </div>
-        <div style="text-align: center; padding: 20px;">
-            <div style="font-size: 0.7rem; color: #555;">USUARIO ASIGNADO</div>
-            <div id="user-id-display" style="font-size: 1.4rem; color: var(--gold); font-weight: bold;">---</div>
+        
+        <h3 style="color: var(--gold);">Cambiar Contraseña</h3>
+        <p style="font-size: 0.8rem; color: #666;">Ingresa tu nueva clave para actualizar el acceso.</p>
+
+        <div class="input-group pass-box">
+            <label>Nueva Contraseña</label>
+            <input type="password" id="p1" class="field">
+            <i class="fas fa-eye" onclick="togglePass('p1')"></i>
+        </div>
+        <div class="input-group pass-box">
+            <label>Confirmar Nueva Contraseña</label>
+            <input type="password" id="p2" class="field">
+            <i class="fas fa-eye" onclick="togglePass('p2')"></i>
         </div>
 
-        <div id="campos-dinamicos"></div>
-        <button class="btn-action" onclick="procesarCambioClave()">ACTUALIZAR ACCESO</button>
+        <button class="btn-action" onclick="procesarCambioClave()">ACTUALIZAR CLAVE</button>
     </div>
 
 <script>
+    // CONFIGURACIÓN FIREBASE
     const firebaseConfig = { 
         apiKey: "AIzaSyAKPxG1osuR9hsj-PsmwJrzK-3W_XM1UyU", 
         databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com" 
@@ -115,125 +125,99 @@
     const db = firebase.database();
     
     let session = JSON.parse(localStorage.getItem('session_jadi'));
-    let map, marker, estadoMapa = "libre";
+    let map, marker;
 
-    window.onload = () => {
-        if(session) {
-            document.getElementById('view-foto').src = session.foto || '';
-            document.getElementById('view-nom').innerText = session.nombre;
-            document.getElementById('view-id').innerText = "ID: " + session.id_jadi;
-            document.getElementById('view-email').innerText = session.email;
-        }
-    };
+    window.onload = () => { if(session) cargarVistaIncial(); };
 
-    // --- LOGICA LOGO ---
-    function preLogo(input) {
-        if (input.files && input.files[0]) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const img = document.getElementById('logo-pre');
-                img.src = e.target.result;
-                img.style.display = 'block';
-                document.getElementById('icon-cam').style.display = 'none';
-                session.tempLogo = e.target.result;
-            };
-            reader.readAsDataURL(input.files[0]);
-        }
+    function cargarVistaIncial() {
+        document.getElementById('view-foto').src = session.foto || 'https://via.placeholder.com/90';
+        document.getElementById('view-nom').innerText = session.nombre;
+        document.getElementById('view-id').innerText = "ID JADI: " + (session.id_jadi || '---');
+        document.getElementById('view-email').innerText = session.email;
+        document.getElementById('view-tel').innerText = session.telefono || 'No registrado';
+        document.getElementById('view-empresa').innerText = session.empresaNombre || 'JADI REPAIZ';
     }
 
-    // --- LOGICA MAPA ---
-    function controladorMapa() {
-        const btn = document.getElementById('btn-gps-main');
-        if (estadoMapa === "libre") {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition((pos) => {
-                    const lat = pos.coords.latitude, lng = pos.coords.longitude;
-                    if (!map) {
-                        map = L.map('mapa').setView([lat, lng], 17);
-                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-                        marker = L.marker([lat, lng], {draggable: true}).addTo(map);
-                    } else {
-                        map.setView([lat, lng], 17);
-                        marker.setLatLng([lat, lng]);
-                    }
-                    btn.innerHTML = '<i class="fas fa-lock"></i> CONGELAR UBICACIÓN';
-                    estadoMapa = "capturando";
-                }, null, {enableHighAccuracy: true});
-            }
-        } else if (estadoMapa === "capturando") {
-            map.dragging.disable();
-            marker.dragging.disable();
-            btn.className = "btn-gps congelado";
-            btn.innerHTML = '<i class="fas fa-edit"></i> EDITAR UBICACIÓN';
-            estadoMapa = "congelado";
-        } else {
-            map.dragging.enable();
-            marker.dragging.enable();
-            btn.className = "btn-gps";
-            btn.innerHTML = '<i class="fas fa-lock"></i> CONGELAR UBICACIÓN';
-            estadoMapa = "capturando";
+    // --- LÓGICA DEL MAPA ---
+    function inicializarMapa(lat, lng) {
+        if (map) {
+            map.setView([lat, lng], 17);
+            marker.setLatLng([lat, lng]);
+            return;
         }
-    }
-
-    // --- SEGURIDAD DINAMICA ---
-    function abrirSeguridad() {
-        document.getElementById('editor-full').style.display = 'none';
-        document.getElementById('pantalla-clave').style.display = 'block';
-        document.getElementById('user-id-display').innerText = session.id_jadi;
+        // Mapa con estilo estándar (Blanco/Claro)
+        map = L.map('mapa').setView([lat, lng], 17);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        marker = L.marker([lat, lng], {draggable: true}).addTo(map);
         
-        const container = document.getElementById('campos-dinamicos');
-        container.innerHTML = "";
+        map.on('click', (e) => marker.setLatLng(e.latlng));
+    }
 
-        if (!session.claveConfigurada) {
-            container.innerHTML = `
-                <div class="input-group pass-wrapper"><label>Nueva Contraseña</label><input type="password" id="n1" class="field"><i class="fas fa-eye" onclick="toggleV('n1')"></i></div>
-                <div class="input-group pass-wrapper"><label>Confirmar Contraseña</label><input type="password" id="n2" class="field"><i class="fas fa-eye" onclick="toggleV('n2')"></i></div>`;
-        } else {
-            container.innerHTML = `
-                <div class="input-group pass-wrapper"><label>Contraseña Antigua</label><input type="password" id="a0" class="field"><i class="fas fa-eye" onclick="toggleV('a0')"></i></div>
-                <div class="input-group pass-wrapper"><label>Nueva Contraseña</label><input type="password" id="n1" class="field"><i class="fas fa-eye" onclick="toggleV('n1')"></i></div>
-                <div class="input-group pass-wrapper"><label>Confirmar Nueva</label><input type="password" id="n2" class="field"><i class="fas fa-eye" onclick="toggleV('n2')"></i></div>
-                <p onclick="recuperar()" style="color:var(--gold); font-size:0.7rem; cursor:pointer; text-align:right;">¿Olvidaste tu contraseña antigua?</p>`;
+    function centrarEnMiPosicion() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition((pos) => {
+                inicializarMapa(pos.coords.latitude, pos.coords.longitude);
+            }, () => alert("Error: Por favor activa el GPS."), {enableHighAccuracy: true});
         }
     }
 
-    function toggleV(id) { const x = document.getElementById(id); x.type = x.type === "password" ? "text" : "password"; }
-    
-    function recuperar() {
-        firebase.auth().sendPasswordResetEmail(session.email).then(() => alert("Te enviamos un link a " + session.email));
-    }
-
-    // --- NAVEGACION ---
+    // --- NAVEGACIÓN ---
     function abrirEditor() {
-        document.getElementById('vista-principal').style.display = 'none';
         document.getElementById('editor-full').style.display = 'block';
+        document.getElementById('ed-email').value = session.email;
         document.getElementById('ed-nom').value = session.nombre;
-        document.getElementById('ed-cel').value = session.telefono || '';
-        setTimeout(() => { if(!map) controladorMapa(); }, 500);
+        document.getElementById('ed-cel').value = session.telefono;
+        document.getElementById('ed-empresa').value = session.empresaNombre || '';
+        document.getElementById('ed-ruc').value = session.ruc || '';
+
+        setTimeout(() => {
+            if (session.lat && session.lng) inicializarMapa(session.lat, session.lng);
+            else centrarEnMiPosicion();
+        }, 400);
     }
 
-    function cerrarEditor() { location.reload(); }
-    function cerrarSeguridad() { document.getElementById('pantalla-clave').style.display = 'none'; document.getElementById('editor-full').style.display = 'block'; }
+    function cerrarEditor() { document.getElementById('editor-full').style.display = 'none'; }
+    function abrirPantallaClave() { document.getElementById('pantalla-clave').style.display = 'block'; }
+    function cerrarPantallaClave() { document.getElementById('pantalla-clave').style.display = 'none'; }
 
+    function togglePass(id) {
+        const x = document.getElementById(id);
+        x.type = x.type === "password" ? "text" : "password";
+    }
+
+    // --- GUARDADO ---
     async function guardarTodo() {
         const coords = marker.getLatLng();
-        const upd = {
+        const update = {
             nombre: document.getElementById('ed-nom').value,
             telefono: document.getElementById('ed-cel').value,
+            empresaNombre: document.getElementById('ed-empresa').value,
+            ruc: document.getElementById('ed-ruc').value,
             lat: coords.lat,
-            lng: coords.lng,
-            logo: session.tempLogo || (session.logo || '')
+            lng: coords.lng
         };
-        await db.ref('usuarios/' + session.uid).update(upd);
-        session = {...session, ...upd};
-        localStorage.setItem('session_jadi', JSON.stringify(session));
-        alert("¡Fino! Perfil actualizado.");
-        location.reload();
+
+        try {
+            await db.ref('usuarios/' + session.uid).update(update);
+            session = {...session, ...update};
+            localStorage.setItem('session_jadi', JSON.stringify(session));
+            alert("¡Éxito! Perfil actualizado.");
+            location.reload();
+        } catch (e) { alert("Error al guardar: " + e.message); }
     }
 
     async function procesarCambioClave() {
-        // Lógica de actualización en Firebase Auth aquí...
-        alert("Procesando actualización segura...");
+        const c1 = document.getElementById('p1').value;
+        const c2 = document.getElementById('p2').value;
+        if(c1 !== c2 || c1 === "") return alert("Las claves deben coincidir y no estar vacías.");
+
+        const user = firebase.auth().currentUser;
+        if(user) {
+            user.updatePassword(c1).then(() => {
+                alert("Contraseña actualizada.");
+                cerrarPantallaClave();
+            }).catch(() => alert("Por seguridad, cierra sesión y vuelve a entrar para cambiar tu clave."));
+        }
     }
 </script>
 </body>
