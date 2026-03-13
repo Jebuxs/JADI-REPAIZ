@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>J.A.D.I - Acceso</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <style>
+        :root { --gold: #fbc02d; --dark: #000; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; text-align: center; }
+        .card { width: 90%; max-width: 380px; padding: 30px; background: #0a0a0a; border-radius: 20px; border: 1px solid #222; }
+        .brand { font-size: 2.5rem; font-weight: 900; color: var(--gold); letter-spacing: 5px; margin-bottom: 5px; }
+        .btn-google { background: white; color: black; border: none; padding: 15px; border-radius: 12px; width: 100%; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 20px; font-size: 1rem; }
+        #seccion-registro, #loader { display: none; }
+        .roles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
+        .role-btn { padding: 15px; border: 1px solid #333; border-radius: 12px; background: #111; color: #888; cursor: pointer; font-weight: bold; }
+        .role-btn.active { border-color: var(--gold); color: var(--gold); background: #1a1500; }
+        input { width: 100%; padding: 15px; margin-top: 20px; background: #000; border: 1px solid #333; color: white; border-radius: 12px; box-sizing: border-box; text-align: center; }
+        .btn-final { background: var(--gold); color: black; border: none; padding: 15px; border-radius: 12px; width: 100%; font-weight: bold; margin-top: 20px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div class="card" id="vista-login">
+        <div class="brand">J.A.D.I</div>
+        <p style="color: #666; font-size: 0.8rem; letter-spacing: 2px;">RESTAURACIÓN Y CUIDADO</p>
+        <button class="btn-google" id="btn-auth">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/action/google.svg" width="20">
+            ENTRAR CON GOOGLE
+        </button>
+    </div>
+
+    <div class="card" id="seccion-registro">
+        <h3 style="color: var(--gold);">CONFIGURA TU PERFIL</h3>
+        <div class="roles">
+            <button class="role-btn" onclick="seleccionarRol(this, 'ZAPATERO')">ZAPATERO</button>
+            <button class="role-btn" onclick="seleccionarRol(this, 'CLIENTE')">CLIENTE</button>
+            <button class="role-btn" onclick="seleccionarRol(this, 'TIENDA')">TIENDA</button>
+            <button class="role-btn" onclick="seleccionarRol(this, 'MOTORIZADO')">MOTORIZADO</button>
+        </div>
+        <input type="tel" id="user-tel" placeholder="Tu WhatsApp">
+        <button class="btn-final" onclick="finalizarRegistro()">GUARDAR Y ENTRAR</button>
+    </div>
+
+    <div id="loader" style="position:fixed; inset:0; background:rgba(0,0,0,0.9); align-items:center; justify-content:center; flex-direction:column; z-index:100;">
+        <div style="width:40px; height:40px; border:4px solid #333; border-top-color:var(--gold); border-radius:50%; animation: spin 1s linear infinite;"></div>
+        <p style="color: var(--gold); margin-top: 15px;">CONECTANDO...</p>
+    </div>
+
+    <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
+
+<script>
+    // CONFIGURACIÓN COMPLETA
+    const firebaseConfig = { 
+        apiKey: "AIzaSyAKPxG1osuR9hsj-PsmwJrzK-3W_XM1UyU",
+        authDomain: "jadi-repaiz.firebaseapp.com",
+        databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com",
+        projectId: "jadi-repaiz"
+    };
+    firebase.initializeApp(firebaseConfig);
+
+    const auth = firebase.auth();
+    const db = firebase.database();
+    let tempUser = null;
+    let rolEscogido = null;
+
+    // AL CARGAR: Verificar si ya volvió de Google o si ya tiene sesión
+    window.onload = () => {
+        auth.getRedirectResult().then(result => {
+            if (result.user) {
+                manejarUsuario(result.user);
+            } else {
+                auth.onAuthStateChanged(user => {
+                    if (user) manejarUsuario(user);
+                    else document.getElementById('loader').style.display = 'none';
+                });
+            }
+        }).catch(e => {
+            alert("Error: " + e.message);
+            document.getElementById('loader').style.display = 'none';
+        });
+    };
+
+    // BOTÓN LOGIN
+    document.getElementById('btn-auth').onclick = () => {
+        document.getElementById('loader').style.display = 'flex';
+        const provider = new firebase.auth.GoogleAuthProvider();
+        auth.signInWithRedirect(provider);
+    };
+
+    function manejarUsuario(user) {
+        tempUser = user;
+        db.ref('usuarios/' + user.uid).once('value', snap => {
+            document.getElementById('loader').style.display = 'none';
+            if (snap.exists()) {
+                const d = snap.val();
+                localStorage.setItem('session_jadi', JSON.stringify(d));
+                window.location.href = d.rolCodigo + ".html";
+            } else {
+                document.getElementById('vista-login').style.display = 'none';
+                document.getElementById('seccion-registro').style.display = 'block';
+            }
+        });
+    }
+
+    function seleccionarRol(btn, rol) {
+        document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        rolEscogido = rol;
+    }
+
+    async function finalizarRegistro() {
+        const tel = document.getElementById('user-tel').value;
+        if (!rolEscogido || tel.length < 8) return alert("Elige rol y pon tu WhatsApp");
+
+        document.getElementById('loader').style.display = 'flex';
+        try {
+            const snap = await db.ref('contadores/' + rolEscogido).once('value');
+            let num = (snap.val() || 0) + 1;
+            await db.ref('contadores/' + rolEscogido).set(num);
+            
+            const idUnico = rolEscogido.slice(0,3).toUpperCase() + num.toString().padStart(4, '0');
+            const data = {
+                uid: tempUser.uid,
+                nombre: tempUser.displayName,
+                email: tempUser.email,
+                foto: tempUser.photoURL,
+                telefono: tel,
+                rolCodigo: rolEscogido.toLowerCase(),
+                id_jadi: idUnico
+            };
+
+            await db.ref('usuarios/' + tempUser.uid).set(data);
+            localStorage.setItem('session_jadi', JSON.stringify(data));
+            window.location.href = data.rolCodigo + ".html";
+        } catch (e) { alert(e.message); document.getElementById('loader').style.display = 'none'; }
+    }
+</script>
+</body>
+</html>
