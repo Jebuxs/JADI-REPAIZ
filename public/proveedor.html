@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>J.A.D.I - Panel Proveedor</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <style>
+        :root { --gold: #fbc02d; --dark: #000; --grey: #121212; }
+        body { background: var(--dark); color: #fff; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; }
+        
+        /* Navbar */
+        nav { background: var(--grey); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
+        .logo { color: var(--gold); font-weight: 900; letter-spacing: 3px; font-size: 1.5rem; }
+        .perfil-icon { width: 35px; height: 35px; border-radius: 50%; border: 1px solid var(--gold); cursor: pointer; }
+
+        /* Contenido */
+        .main-content { padding: 20px; max-width: 600px; margin: auto; }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 30px; }
+        .stat-card { background: var(--grey); padding: 20px; border-radius: 15px; text-align: center; border: 1px solid #222; }
+        .stat-card span { display: block; color: var(--gold); font-size: 1.5rem; font-weight: bold; }
+        .stat-card p { margin: 5px 0 0; font-size: 0.8rem; color: #777; }
+
+        /* Botón de Acción */
+        .btn-add { background: var(--gold); color: #000; border: none; padding: 18px; width: 100%; border-radius: 15px; font-weight: bold; font-size: 1rem; cursor: pointer; margin-bottom: 30px; display: flex; align-items: center; justify-content: center; gap: 10px; }
+
+        /* Lista de Productos */
+        .section-title { font-size: 1.1rem; color: var(--gold); margin-bottom: 15px; display: block; border-left: 4px solid var(--gold); padding-left: 10px; }
+        .product-item { background: var(--grey); padding: 15px; border-radius: 12px; margin-bottom: 10px; display: flex; align-items: center; gap: 15px; border: 1px solid #222; }
+        .product-img { width: 60px; height: 60px; background: #000; border-radius: 8px; object-fit: cover; }
+        .product-info h4 { margin: 0; font-size: 1rem; }
+        .product-info p { margin: 3px 0; font-size: 0.8rem; color: #888; }
+        .price { color: var(--gold); font-weight: bold; margin-left: auto; }
+
+        /* Footer Navegación */
+        .bottom-nav { position: fixed; bottom: 0; width: 100%; background: var(--grey); display: grid; grid-template-columns: 1fr 1fr 1fr; padding: 12px 0; border-top: 1px solid #333; text-align: center; }
+        .nav-item { color: #666; font-size: 0.7rem; text-decoration: none; cursor: pointer; }
+        .nav-item.active { color: var(--gold); }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="logo">J.A.D.I</div>
+        <img src="https://via.placeholder.com/50" class="perfil-icon" onclick="window.location.href='perfil.html'" id="user-img">
+    </nav>
+
+    <div class="main-content">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <span id="count-prods">0</span>
+                <p>Productos</p>
+            </div>
+            <div class="stat-card">
+                <span id="count-ventas">0</span>
+                <p>Ventas</p>
+            </div>
+        </div>
+
+        <button class="btn-add" onclick="alert('Módulo de carga en desarrollo...')">
+            <span>+</span> CARGAR NUEVO PRODUCTO
+        </button>
+
+        <span class="section-title">MIS PRODUCTOS</span>
+        <div id="lista-productos">
+            <p style="text-align:center; color:#444; margin-top:20px;">No tienes productos cargados todavía.</p>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <div class="nav-item active">INICIO</div>
+        <div class="nav-item">PEDIDOS</div>
+        <div class="nav-item" onclick="window.location.href='perfil.html'">PERFIL</div>
+    </div>
+
+<script>
+    const firebaseConfig = { 
+        apiKey: "AIzaSyAKPxG1osuR9hsj-PsmwJrzK-3W_XM1UyU",
+        authDomain: "jadi-repaiz.firebaseapp.com",
+        databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com",
+        projectId: "jadi-repaiz"
+    };
+    firebase.initializeApp(firebaseConfig);
+
+    const auth = firebase.auth();
+    const db = firebase.database();
+
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            cargarInfoProveedor(user.uid);
+            // Aquí llamaríamos a la función para listar productos
+        } else {
+            window.location.href = "index.html";
+        }
+    });
+
+    async function cargarInfoProveedor(uid) {
+        const snap = await db.ref('usuarios/' + uid).once('value');
+        const data = snap.val();
+        if(data && data.foto) {
+            document.getElementById('user-img').src = data.foto;
+        }
+    }
+</script>
+
+</body>
+</html>
