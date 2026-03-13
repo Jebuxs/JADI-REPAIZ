@@ -60,19 +60,34 @@
     let tempUser = null;
     let rolEscogido = null;
 
+    // Detectar el regreso del redireccionamiento de Google
+    auth.getRedirectResult().then((result) => {
+        if (result.user) {
+            verificarUsuario(result.user);
+        }
+    }).catch((error) => {
+        console.error("Error al redirigir:", error);
+    });
+
     function accesoGoogle() {
         const provider = new firebase.auth.GoogleAuthProvider();
-        auth.signInWithPopup(provider).then(res => {
-            tempUser = res.user;
-            db.ref('usuarios/' + tempUser.uid).once('value', snap => {
-                if (snap.exists()) {
-                    irAPanel(snap.val());
-                } else {
-                    document.getElementById('vista-login').style.display = 'none';
-                    document.getElementById('seccion-registro').style.display = 'block';
-                }
-            });
-        }).catch(err => alert("Error: " + err.message));
+        // Cambiado a Redirect para mejor compatibilidad con móviles
+        auth.signInWithRedirect(provider);
+    }
+
+    function verificarUsuario(user) {
+        tempUser = user;
+        document.getElementById('loader').style.display = 'block';
+        document.getElementById('vista-login').style.display = 'none';
+
+        db.ref('usuarios/' + user.uid).once('value', snap => {
+            document.getElementById('loader').style.display = 'none';
+            if (snap.exists()) {
+                irAPanel(snap.val());
+            } else {
+                document.getElementById('seccion-registro').style.display = 'block';
+            }
+        });
     }
 
     function seleccionarRol(btn, rol) {
