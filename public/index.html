@@ -3,44 +3,134 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>J.A.D.I - En Mantenimiento</title>
+    <title>J.A.D.I - Acceso</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        body {
-            background-color: #000;
-            color: #fbc02d;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            text-align: center;
-        }
-        .container {
-            border: 1px solid #222;
-            padding: 40px;
-            border-radius: 20px;
-        }
-        h1 {
-            font-size: 3rem;
-            letter-spacing: 8px;
-            margin: 0;
-        }
-        p {
-            color: #666;
-            margin-top: 10px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            font-size: 0.8rem;
-        }
+        :root { --gold: #fbc02d; --black: #000; }
+        body { background: var(--black); color: white; font-family: sans-serif; margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+        .card { width: 90%; max-width: 360px; padding: 30px; background: #0a0a0a; border-radius: 20px; border: 1px solid #222; text-align: center; }
+        .brand { font-size: 2.5rem; font-weight: bold; color: var(--gold); letter-spacing: 5px; margin-bottom: 20px; }
+        .btn-google { background: white; color: black; border: none; padding: 15px; border-radius: 12px; width: 100%; font-weight: bold; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        #seccion-registro, #loader { display: none; }
+        .grid-roles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
+        .role-btn { padding: 12px; border: 1px solid #333; border-radius: 10px; background: #111; color: #888; font-weight: bold; cursor: pointer; }
+        .role-btn.active { border-color: var(--gold); color: var(--gold); background: #1a1500; }
+        input { width: 100%; padding: 15px; margin-top: 15px; background: #000; border: 1px solid #333; color: white; border-radius: 10px; box-sizing: border-box; text-align: center; }
+        .btn-ready { background: var(--gold); color: black; border: none; padding: 15px; border-radius: 12px; width: 100%; font-weight: bold; margin-top: 20px; cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h1>J.A.D.I</h1>
-        <p>hola señores..</p>
+    <div class="card" id="vista-login">
+        <div class="brand">J.A.D.I</div>
+        <p style="color: #555; font-size: 0.8rem; letter-spacing: 2px;">RESTAURACIÓN PROFESIONAL</p>
+        <button class="btn-google" id="btn-entrar">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/action/google.svg" width="20">
+            ENTRAR CON GOOGLE
+        </button>
     </div>
 
+    <div class="card" id="seccion-registro">
+        <h3 style="color: var(--gold); margin-top: 0;">CASI LISTO</h3>
+        <p style="font-size: 0.8rem; color: #777;">Selecciona cómo vas a usar J.A.D.I</p>
+        <div class="grid-roles">
+            <button class="role-btn" onclick="setRole(this, 'ZAPATERO')">ZAPATERO</button>
+            <button class="role-btn" onclick="setRole(this, 'CLIENTE')">CLIENTE</button>
+            <button class="role-btn" onclick="setRole(this, 'TIENDA')">TIENDA</button>
+            <button class="role-btn" onclick="setRole(this, 'MOTORIZADO')">MOTORIZADO</button>
+        </div>
+        <input type="tel" id="user-phone" placeholder="WhatsApp (Ej: 0991234567)">
+        <button class="btn-ready" onclick="guardarYEntrar()">ENTRAR AL PANEL</button>
+    </div>
+
+    <div id="loader" style="position:fixed; inset:0; background:rgba(0,0,0,0.9); align-items:center; justify-content:center; flex-direction:column; z-index:100;">
+        <div style="width:30px; height:30px; border:3px solid #333; border-top-color:var(--gold); border-radius:50%; animation: spin 1s linear infinite;"></div>
+    </div>
+
+    <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
+
+<script>
+    // CONFIGURACIÓN (Asegúrate que coincida con tu consola de Firebase)
+    const firebaseConfig = { 
+        apiKey: "AIzaSyAKPxG1osuR9hsj-PsmwJrzK-3W_XM1UyU",
+        authDomain: "jadi-repaiz.firebaseapp.com",
+        databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com",
+        projectId: "jadi-repaiz"
+    };
+    firebase.initializeApp(firebaseConfig);
+
+    const auth = firebase.auth();
+    const db = firebase.database();
+    let currentUser = null;
+    let selectedRole = "";
+
+    // 1. Detectar el inicio de sesión
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            currentUser = user;
+            verificarUsuario(user.uid);
+        } else {
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('vista-login').style.display = 'block';
+        }
+    });
+
+    // 2. Botón entrar
+    document.getElementById('btn-entrar').onclick = () => {
+        document.getElementById('loader').style.display = 'flex';
+        const provider = new firebase.auth.GoogleAuthProvider();
+        auth.signInWithRedirect(provider);
+    };
+
+    function verificarUsuario(uid) {
+        document.getElementById('loader').style.display = 'flex';
+        db.ref('usuarios/' + uid).once('value', snap => {
+            document.getElementById('loader').style.display = 'none';
+            if (snap.exists()) {
+                const data = snap.val();
+                localStorage.setItem('session_jadi', JSON.stringify(data));
+                window.location.href = data.rolCodigo + ".html";
+            } else {
+                document.getElementById('vista-login').style.display = 'none';
+                document.getElementById('seccion-registro').style.display = 'block';
+            }
+        });
+    }
+
+    function setRole(btn, role) {
+        document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        selectedRole = role;
+    }
+
+    async function guardarYEntrar() {
+        const phone = document.getElementById('user-phone').value;
+        if (!selectedRole || phone.length < 8) return alert("Por favor selecciona tu función y pon tu WhatsApp.");
+
+        document.getElementById('loader').style.display = 'flex';
+        try {
+            // Contador para generar ID JADI
+            const sCount = await db.ref('contadores/' + selectedRole).once('value');
+            const num = (sCount.val() || 0) + 1;
+            await db.ref('contadores/' + selectedRole).set(num);
+
+            const userFinal = {
+                uid: currentUser.uid,
+                nombre: currentUser.displayName,
+                email: currentUser.email,
+                foto: currentUser.photoURL,
+                telefono: phone,
+                rolCodigo: selectedRole.toLowerCase(),
+                id_jadi: selectedRole.slice(0,3).toUpperCase() + num.toString().padStart(4, '0')
+            };
+
+            await db.ref('usuarios/' + currentUser.uid).set(userFinal);
+            localStorage.setItem('session_jadi', JSON.stringify(userFinal));
+            window.location.href = userFinal.rolCodigo + ".html";
+        } catch (e) { alert(e.message); document.getElementById('loader').style.display = 'none'; }
+    }
+</script>
 </body>
 </html>
