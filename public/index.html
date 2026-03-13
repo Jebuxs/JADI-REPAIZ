@@ -3,59 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>J.A.D.I - Acceso</title>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <title>J.A.D.I - Registro</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        :root { --gold: #fbc02d; --dark: #000; }
-        body { font-family: 'Segoe UI', Roboto, sans-serif; background: var(--dark); color: white; margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; text-align: center; }
-        .card { width: 90%; max-width: 380px; padding: 40px 25px; background: #0a0a0a; border-radius: 25px; border: 1px solid #222; box-shadow: 0 15px 35px rgba(0,0,0,0.7); }
-        .brand { font-size: 2.8rem; font-weight: 900; color: var(--gold); letter-spacing: 6px; margin-bottom: 5px; text-transform: uppercase; }
-        .tagline { font-size: 0.75rem; color: #666; letter-spacing: 2px; margin-bottom: 35px; }
-        .btn-google { background: white; color: black; border: none; padding: 16px; border-radius: 12px; width: 100%; font-weight: bold; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 12px; transition: 0.3s; }
-        .btn-google:active { transform: scale(0.97); }
+        body { background: #000; color: #fff; font-family: sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+        .card { width: 90%; max-width: 350px; padding: 30px; background: #0a0a0a; border-radius: 20px; border: 1px solid #222; text-align: center; }
+        h1 { color: #fbc02d; letter-spacing: 4px; }
+        .btn-google { background: #fff; color: #000; padding: 15px; border-radius: 10px; width: 100%; font-weight: bold; border: none; cursor: pointer; margin-top: 20px; }
         #seccion-registro, #loader { display: none; }
-        .roles-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
-        .btn-role { padding: 15px; background: #111; border: 1px solid #333; color: #888; border-radius: 12px; cursor: pointer; font-weight: bold; font-size: 0.85rem; }
-        .btn-role.active { border-color: var(--gold); color: var(--gold); background: #1a1500; }
-        input { width: 100%; padding: 16px; margin-top: 20px; background: #000; border: 1px solid #333; color: white; border-radius: 12px; box-sizing: border-box; text-align: center; font-size: 1rem; }
-        .btn-finish { background: var(--gold); color: black; border: none; padding: 18px; border-radius: 12px; width: 100%; font-weight: bold; margin-top: 25px; cursor: pointer; font-size: 1rem; }
+        .roles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
+        .btn-rol { background: #111; color: #888; padding: 12px; border: 1px solid #333; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .btn-rol.active { border-color: #fbc02d; color: #fbc02d; background: #1a1500; }
+        input { width: 100%; padding: 15px; margin: 15px 0; background: #000; color: #fff; border: 1px solid #333; border-radius: 10px; box-sizing: border-box; text-align: center; }
     </style>
 </head>
 <body>
 
     <div class="card" id="vista-login">
-        <div class="brand">J.A.D.I</div>
-        <div class="tagline">RESTAURACIÓN PROFESIONAL</div>
-        <button class="btn-google" id="btn-google-login">
-            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/action/google.svg" width="20" alt="G">
-            ENTRAR CON GOOGLE
-        </button>
+        <h1>J.A.D.I</h1>
+        <p style="color:#666; font-size:12px">RESTAURACIÓN PROFESIONAL</p>
+        <button class="btn-google" id="btn-login">ENTRAR CON GOOGLE</button>
     </div>
 
     <div class="card" id="seccion-registro">
-        <h2 style="color: var(--gold); margin: 0;">BIENVENIDO</h2>
-        <p style="color: #888; font-size: 0.9rem;">Selecciona tu perfil para continuar</p>
-        <div class="roles-grid">
-            <button class="btn-role" onclick="seleccionarRol(this, 'ZAPATERO')">ZAPATERO</button>
-            <button class="btn-role" onclick="seleccionarRol(this, 'CLIENTE')">CLIENTE</button>
-            <button class="btn-role" onclick="seleccionarRol(this, 'TIENDA')">TIENDA</button>
-            <button class="btn-role" onclick="seleccionarRol(this, 'MOTORIZADO')">MOTORIZADO</button>
+        <h2 style="color:#fbc02d">COMPLETAR PERFIL</h2>
+        <div class="roles">
+            <button class="btn-rol" onclick="selR('ZAPATERO', this)">ZAPATERO</button>
+            <button class="btn-rol" onclick="selR('CLIENTE', this)">CLIENTE</button>
+            <button class="btn-rol" onclick="selR('TIENDA', this)">TIENDA</button>
+            <button class="btn-rol" onclick="selR('MOTORIZADO', this)">MOTORIZADO</button>
         </div>
-        <input type="tel" id="user-phone" placeholder="WhatsApp (Ej: 0991234567)">
-        <button class="btn-finish" onclick="completarRegistro()">FINALIZAR REGISTRO</button>
+        <input type="tel" id="user-tel" placeholder="Tu WhatsApp">
+        <button class="btn-google" style="background:#fbc02d" onclick="crear()">FINALIZAR REGISTRO</button>
     </div>
 
-    <div id="loader" style="position:fixed; inset:0; background:rgba(0,0,0,0.9); display:flex; align-items:center; justify-content:center; flex-direction:column; z-index:1000;">
-        <div style="width:40px; height:40px; border:4px solid #222; border-top-color:var(--gold); border-radius:50%; animation: spin 1s linear infinite;"></div>
-        <p style="color: var(--gold); margin-top: 15px; font-weight: bold; letter-spacing: 2px;">CONECTANDO...</p>
+    <div id="loader" style="position:fixed; inset:0; background:rgba(0,0,0,0.9); display:none; align-items:center; justify-content:center; flex-direction:column; z-index:1000;">
+        <p style="color:#fbc02d; font-weight:bold;">CARGANDO J.A.D.I...</p>
     </div>
-
-    <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
 
 <script>
-    // CONFIGURACIÓN DE FIREBASE (Corregida con authDomain y projectId)
+    // Configuración con TODO lo necesario para evitar el error de authDomain
     const firebaseConfig = { 
         apiKey: "AIzaSyAKPxG1osuR9hsj-PsmwJrzK-3W_XM1UyU",
         authDomain: "jadi-repaiz.firebaseapp.com",
@@ -63,46 +52,36 @@
         projectId: "jadi-repaiz",
         storageBucket: "jadi-repaiz.appspot.com"
     };
-    
     firebase.initializeApp(firebaseConfig);
+
     const auth = firebase.auth();
     const db = firebase.database();
+    let uTmp = null;
+    let rTmp = "";
 
-    let tempUser = null;
-    let rolSeleccionado = "";
-
-    // ESCUCHADOR DE ESTADO: Detecta si el usuario vuelve de Google o ya tiene sesión
-    auth.getRedirectResult().then(result => {
-        if (result.user) {
-            verificarUsuarioExistente(result.user);
+    // 1. Detectar si el usuario ya inició sesión
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            uTmp = user;
+            verificarBD(user.uid);
         } else {
-            auth.onAuthStateChanged(user => {
-                if (user) verificarUsuarioExistente(user);
-                else document.getElementById('loader').style.display = 'none';
-            });
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('vista-login').style.display = 'block';
         }
-    }).catch(error => {
-        alert("Error de autenticación: " + error.message);
-        document.getElementById('loader').style.display = 'none';
     });
 
-    // ACCIÓN DEL BOTÓN PRINCIPAL
-    document.getElementById('btn-google-login').onclick = () => {
+    // 2. Botón de Google
+    document.getElementById('btn-login').onclick = () => {
         document.getElementById('loader').style.display = 'flex';
         const provider = new firebase.auth.GoogleAuthProvider();
         auth.signInWithRedirect(provider);
     };
 
-    function verificarUsuarioExistente(user) {
-        tempUser = user;
-        document.getElementById('loader').style.display = 'flex';
-        
-        db.ref('usuarios/' + user.uid).once('value', snapshot => {
+    function verificarBD(uid) {
+        db.ref('usuarios/' + uid).once('value', s => {
             document.getElementById('loader').style.display = 'none';
-            if (snapshot.exists()) {
-                const userData = snapshot.val();
-                localStorage.setItem('session_jadi', JSON.stringify(userData));
-                window.location.href = userData.rolCodigo + ".html";
+            if (s.exists()) {
+                window.location.href = s.val().rolCodigo + ".html";
             } else {
                 document.getElementById('vista-login').style.display = 'none';
                 document.getElementById('seccion-registro').style.display = 'block';
@@ -110,43 +89,32 @@
         });
     }
 
-    function seleccionarRol(boton, rol) {
-        document.querySelectorAll('.btn-role').forEach(b => b.classList.remove('active'));
-        boton.classList.add('active');
-        rolSeleccionado = rol;
+    function selR(r, b) {
+        rTmp = r;
+        document.querySelectorAll('.btn-rol').forEach(x => x.classList.remove('active'));
+        b.classList.add('active');
     }
 
-    async function completarRegistro() {
-        const telefono = document.getElementById('user-phone').value;
-        if (!rolSeleccionado || telefono.length < 8) {
-            return alert("Por favor selecciona un perfil y escribe tu WhatsApp correctamente.");
-        }
-
+    async function crear() {
+        const t = document.getElementById('user-tel').value;
+        if(!rTmp || t.length < 8) return alert("Selecciona tu rol y pon tu WhatsApp");
+        
         document.getElementById('loader').style.display = 'flex';
-        try {
-            // Generar ID único basado en contador
-            const snapshot = await db.ref('contadores/' + rolSeleccionado).once('value');
-            let total = (snapshot.val() || 0) + 1;
-            await db.ref('contadores/' + rolSeleccionado).set(total);
+        const s = await db.ref('contadores/' + rTmp).once('value');
+        const n = (s.val() || 0) + 1;
+        await db.ref('contadores/' + rTmp).set(n);
 
-            const userFinal = {
-                uid: tempUser.uid,
-                nombre: tempUser.displayName,
-                email: tempUser.email,
-                foto: tempUser.photoURL,
-                telefono: telefono,
-                rolCodigo: rolSeleccionado.toLowerCase(),
-                id_jadi: rolSeleccionado.slice(0,3).toUpperCase() + total.toString().padStart(4, '0'),
-                fechaRegistro: new Date().toISOString()
-            };
+        const data = {
+            uid: uTmp.uid,
+            nombre: uTmp.displayName,
+            email: uTmp.email,
+            telefono: t,
+            rolCodigo: rTmp.toLowerCase(),
+            id_jadi: rTmp.slice(0,3).toUpperCase() + n.toString().padStart(4, '0')
+        };
 
-            await db.ref('usuarios/' + tempUser.uid).set(userFinal);
-            localStorage.setItem('session_jadi', JSON.stringify(userFinal));
-            window.location.href = userFinal.rolCodigo + ".html";
-        } catch (err) {
-            alert("Error al guardar: " + err.message);
-            document.getElementById('loader').style.display = 'none';
-        }
+        await db.ref('usuarios/' + uTmp.uid).set(data);
+        window.location.href = data.rolCodigo + ".html";
     }
 </script>
 </body>
