@@ -12,24 +12,20 @@
         :root { --gold: #fbc02d; --dark: #000; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; margin: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100vh; }
         .card { width: 90%; max-width: 400px; padding: 30px; background: #0a0a0a; border-radius: 20px; border: 1px solid #1a1a1a; text-align: center; }
-        .brand { font-size: 2.2rem; font-weight: 900; color: var(--gold); letter-spacing: 4px; margin-bottom: 5px; }
-        .btn-google { width: 100%; padding: 15px; background: white; color: black; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 20px; }
-        #seccion-registro, #loader { display: none; margin-top: 20px; }
+        .brand { font-size: 2.5rem; font-weight: 900; color: var(--gold); letter-spacing: 5px; margin-bottom: 10px; }
+        .btn-google { background: white; color: black; border: none; padding: 15px; border-radius: 12px; width: 100%; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 20px; }
         .roles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
         .role-btn { padding: 15px; border: 1px solid #222; border-radius: 12px; background: #111; color: #555; cursor: pointer; font-size: 0.8rem; font-weight: bold; }
         .role-btn.active { border-color: var(--gold); color: var(--gold); background: #1a1500; }
-        input { width: 100%; padding: 15px; background: #111; border: 1px solid #222; border-radius: 12px; color: white; margin-top: 20px; box-sizing: border-box; }
-        .btn-final { width: 100%; padding: 15px; background: var(--gold); color: black; border: none; border-radius: 12px; font-weight: bold; margin-top: 20px; cursor: pointer; }
-        .btn-reset { position: fixed; top: 10px; background: #222; color: #555; border: none; padding: 8px; border-radius: 5px; font-size: 0.6rem; cursor: pointer; }
+        #seccion-registro, #loader { display: none; }
+        input { width: 100%; padding: 15px; margin-top: 20px; background: #000; border: 1px solid #222; color: white; border-radius: 12px; box-sizing: border-box; }
     </style>
 </head>
 <body>
 
-    <button class="btn-reset" onclick="localStorage.clear(); location.reload();">REINICIAR MEMORIA</button>
-
     <div class="card" id="vista-login">
         <div class="brand">J.A.D.I</div>
-        <p style="font-size: 0.8rem; color: #666;">RESTAURACIÓN DE CALZADO</p>
+        <p style="font-size: 0.8rem; color: #666;">RESTAURACIÓN Y CUIDADO DE CALZADO</p>
         <button class="btn-google" onclick="accesoGoogle()">
             <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/action/google.svg" width="20">
             ENTRAR CON GOOGLE
@@ -44,16 +40,18 @@
             <button class="role-btn" onclick="seleccionarRol(this, 'TIENDA')">TIENDA</button>
             <button class="role-btn" onclick="seleccionarRol(this, 'MOTORIZADO')">MOTORIZADO</button>
         </div>
-        <input type="tel" id="user-tel" placeholder="WhatsApp (Ej: 0987654321)">
-        <button class="btn-final" onclick="finalizarRegistro()">FINALIZAR REGISTRO</button>
+        <input type="tel" id="user-tel" placeholder="Número de WhatsApp">
+        <button class="btn-google" style="background: var(--gold);" onclick="finalizarRegistro()">FINALIZAR REGISTRO</button>
     </div>
 
-    <div id="loader" style="margin-top:20px;"><i class="fas fa-circle-notch fa-spin" style="color:var(--gold); font-size:2rem;"></i></div>
+    <div id="loader" style="margin-top: 20px;">
+        <i class="fas fa-circle-notch fa-spin" style="font-size: 2rem; color: var(--gold);"></i>
+    </div>
 
 <script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyAKPxG1osuR9hsj-PsmwJrzK-3W_XM1UyU",
-        databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com"
+    const firebaseConfig = { 
+        apiKey: "AIzaSyAKPxG1osuR9hsj-PsmwJrzK-3W_XM1UyU", 
+        databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com" 
     };
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
@@ -85,7 +83,7 @@
 
     async function finalizarRegistro() {
         const tel = document.getElementById('user-tel').value;
-        if (!rolEscogido || tel.length < 7) return alert("Selecciona rol y pon tu WhatsApp");
+        if (!rolEscogido || !tel) return alert("Selecciona un rol y pon tu WhatsApp");
 
         document.getElementById('seccion-registro').style.display = 'none';
         document.getElementById('loader').style.display = 'block';
@@ -98,7 +96,7 @@
             
             const idUnico = prefijo + num.toString().padStart(4, '0');
 
-            const datos = {
+            const datosUsuario = {
                 uid: tempUser.uid,
                 nombre: tempUser.displayName,
                 email: tempUser.email,
@@ -108,8 +106,8 @@
                 id_jadi: idUnico
             };
 
-            await db.ref('usuarios/' + tempUser.uid).set(datos);
-            irAPanel(datos);
+            await db.ref('usuarios/' + tempUser.uid).set(datosUsuario);
+            irAPanel(datosUsuario);
         } catch (e) { alert(e.message); }
     }
 
