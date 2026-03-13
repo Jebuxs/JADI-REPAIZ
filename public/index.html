@@ -10,8 +10,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root { --gold: #fbc02d; --dark: #000; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; margin: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100vh; }
-        .card { width: 90%; max-width: 400px; padding: 30px; background: #0a0a0a; border-radius: 20px; border: 1px solid #1a1a1a; text-align: center; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; margin: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100vh; text-align: center; }
+        .card { width: 90%; max-width: 400px; padding: 30px; background: #0a0a0a; border-radius: 20px; border: 1px solid #1a1a1a; }
         .brand { font-size: 2.5rem; font-weight: 900; color: var(--gold); letter-spacing: 5px; margin-bottom: 10px; }
         .btn-google { background: white; color: black; border: none; padding: 15px; border-radius: 12px; width: 100%; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 20px; }
         .roles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
@@ -19,33 +19,36 @@
         .role-btn.active { border-color: var(--gold); color: var(--gold); background: #1a1500; }
         #seccion-registro, #loader { display: none; }
         input { width: 100%; padding: 15px; margin-top: 20px; background: #000; border: 1px solid #222; color: white; border-radius: 12px; box-sizing: border-box; }
+        .btn-final { background: var(--gold); color: black; border: none; padding: 15px; border-radius: 12px; width: 100%; font-weight: bold; margin-top: 20px; cursor: pointer; }
     </style>
 </head>
 <body>
 
     <div class="card" id="vista-login">
         <div class="brand">J.A.D.I</div>
-        <p style="font-size: 0.8rem; color: #666;">RESTAURACIÓN Y CUIDADO DE CALZADO</p>
-        <button class="btn-google" onclick="accesoGoogle()">
+        <p style="font-size: 0.8rem; color: #666;">RESTAURACIÓN PROFESIONAL</p>
+        <button class="btn-google" onclick="iniciarGoogle()">
             <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/action/google.svg" width="20">
             ENTRAR CON GOOGLE
         </button>
     </div>
 
     <div class="card" id="seccion-registro">
-        <h3 style="color: var(--gold);">COMPLETAR REGISTRO</h3>
+        <h3 style="color: var(--gold);">REGISTRO NUEVO</h3>
+        <p style="font-size: 0.8rem;">Selecciona tu rol:</p>
         <div class="roles">
-            <button class="role-btn" onclick="seleccionarRol(this, 'ZAPATERO')">ZAPATERO</button>
-            <button class="role-btn" onclick="seleccionarRol(this, 'CLIENTE')">CLIENTE</button>
-            <button class="role-btn" onclick="seleccionarRol(this, 'TIENDA')">TIENDA</button>
-            <button class="role-btn" onclick="seleccionarRol(this, 'MOTORIZADO')">MOTORIZADO</button>
+            <button class="role-btn" onclick="setRol(this, 'ZAPATERO')">ZAPATERO</button>
+            <button class="role-btn" onclick="setRol(this, 'CLIENTE')">CLIENTE</button>
+            <button class="role-btn" onclick="setRol(this, 'TIENDA')">TIENDA</button>
+            <button class="role-btn" onclick="setRol(this, 'MOTORIZADO')">MOTORIZADO</button>
         </div>
-        <input type="tel" id="user-tel" placeholder="Número de WhatsApp">
-        <button class="btn-google" style="background: var(--gold);" onclick="finalizarRegistro()">FINALIZAR REGISTRO</button>
+        <input type="tel" id="user-tel" placeholder="WhatsApp (Ej: 0987654321)">
+        <button class="btn-final" onclick="guardarRegistro()">FINALIZAR REGISTRO</button>
     </div>
 
     <div id="loader" style="margin-top: 20px;">
         <i class="fas fa-circle-notch fa-spin" style="font-size: 2rem; color: var(--gold);"></i>
+        <p>Verificando...</p>
     </div>
 
 <script>
@@ -54,81 +57,79 @@
         databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com" 
     };
     firebase.initializeApp(firebaseConfig);
+
     const auth = firebase.auth();
     const db = firebase.database();
+    let userActual = null;
+    let rolSeleccionado = null;
 
-    let tempUser = null;
-    let rolEscogido = null;
-
-    // Detectar el regreso del redireccionamiento de Google
-    auth.getRedirectResult().then((result) => {
+    // 1. Detectar cuando Google nos regresa a la página
+    auth.getRedirectResult().then(result => {
         if (result.user) {
             verificarUsuario(result.user);
+        } else if (localStorage.getItem('session_jadi')) {
+            // Si ya hay sesión guardada, intentar ir al panel directamente
+            window.location.href = JSON.parse(localStorage.getItem('session_jadi')).rolCodigo + ".html";
         }
-    }).catch((error) => {
-        console.error("Error al redirigir:", error);
     });
 
-    function accesoGoogle() {
+    function iniciarGoogle() {
+        localStorage.clear(); // Limpiar basura vieja
         const provider = new firebase.auth.GoogleAuthProvider();
-        // Cambiado a Redirect para mejor compatibilidad con móviles
         auth.signInWithRedirect(provider);
     }
 
     function verificarUsuario(user) {
-        tempUser = user;
-        document.getElementById('loader').style.display = 'block';
+        userActual = user;
         document.getElementById('vista-login').style.display = 'none';
+        document.getElementById('loader').style.display = 'block';
 
         db.ref('usuarios/' + user.uid).once('value', snap => {
             document.getElementById('loader').style.display = 'none';
             if (snap.exists()) {
-                irAPanel(snap.val());
+                const datos = snap.val();
+                localStorage.setItem('session_jadi', JSON.stringify(datos));
+                window.location.href = datos.rolCodigo + ".html";
             } else {
                 document.getElementById('seccion-registro').style.display = 'block';
             }
         });
     }
 
-    function seleccionarRol(btn, rol) {
+    function setRol(btn, rol) {
         document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        rolEscogido = rol;
+        rolSeleccionado = rol;
     }
 
-    async function finalizarRegistro() {
+    async function guardarRegistro() {
         const tel = document.getElementById('user-tel').value;
-        if (!rolEscogido || !tel) return alert("Selecciona un rol y pon tu WhatsApp");
+        if (!rolSeleccionado || tel.length < 7) return alert("Completa los datos");
 
         document.getElementById('seccion-registro').style.display = 'none';
         document.getElementById('loader').style.display = 'block';
 
         try {
-            const prefijo = rolEscogido.slice(0,3).toUpperCase();
-            const snapCount = await db.ref('contadores/' + rolEscogido).once('value');
+            const snapCount = await db.ref('contadores/' + rolSeleccionado).once('value');
             let num = (snapCount.val() || 0) + 1;
-            await db.ref('contadores/' + rolEscogido).set(num);
+            await db.ref('contadores/' + rolSeleccionado).set(num);
             
-            const idUnico = prefijo + num.toString().padStart(4, '0');
+            const idUnico = rolSeleccionado.slice(0,3).toUpperCase() + num.toString().padStart(4, '0');
 
-            const datosUsuario = {
-                uid: tempUser.uid,
-                nombre: tempUser.displayName,
-                email: tempUser.email,
-                foto: tempUser.photoURL,
+            const nuevoUser = {
+                uid: userActual.uid,
+                nombre: userActual.displayName,
+                email: userActual.email,
+                foto: userActual.photoURL,
                 telefono: tel,
-                rolCodigo: rolEscogido.toLowerCase(),
+                rolCodigo: rolSeleccionado.toLowerCase(),
                 id_jadi: idUnico
             };
 
-            await db.ref('usuarios/' + tempUser.uid).set(datosUsuario);
-            irAPanel(datosUsuario);
-        } catch (e) { alert(e.message); }
-    }
-
-    function irAPanel(data) {
-        localStorage.setItem('session_jadi', JSON.stringify(data));
-        window.location.href = data.rolCodigo + ".html";
+            await db.ref('usuarios/' + userActual.uid).set(nuevoUser);
+            localStorage.setItem('session_jadi', JSON.stringify(nuevoUser));
+            window.location.href = nuevoUser.rolCodigo + ".html";
+        } catch (e) { alert("Error: " + e.message); }
     }
 </script>
 </body>
