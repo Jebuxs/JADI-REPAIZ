@@ -10,11 +10,12 @@
     <style>
         body { background: #000; color: #fff; font-family: sans-serif; margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; text-align: center; }
         .card { width: 85%; max-width: 350px; padding: 40px 20px; background: #0a0a0a; border-radius: 20px; border: 1px solid #222; }
-        h1 { color: #fbc02d; letter-spacing: 5px; margin-bottom: 30px; }
+        h1 { color: #fbc02d; font-size: 2.5rem; letter-spacing: 5px; margin-bottom: 30px; }
         .btn-google { background: #fff; color: #000; padding: 18px; border-radius: 12px; width: 100%; font-weight: bold; border: none; cursor: pointer; font-size: 1rem; }
         #registro, #loader { display: none; }
-        .btn-rol { background: #111; color: #888; padding: 12px; margin: 5px; border: 1px solid #333; border-radius: 8px; width: 45%; }
-        .active { border-color: #fbc02d; color: #fbc02d; }
+        .btn-rol { background: #111; color: #888; padding: 12px; margin: 5px; border: 1px solid #333; border-radius: 8px; width: 45%; font-weight: bold; }
+        .active { border-color: #fbc02d; color: #fbc02d; background: #1a1500; }
+        input { width: 100%; padding: 15px; margin: 15px 0; background: #000; color: #fff; border: 1px solid #333; border-radius: 10px; box-sizing: border-box; text-align: center; font-size: 1rem; }
     </style>
 </head>
 <body>
@@ -26,46 +27,45 @@
 
     <div class="card" id="registro">
         <h2 style="color:#fbc02d">REGISTRO</h2>
-        <button class="btn-rol" onclick="selR('ZAPATERO', this)">ZAPATERO</button>
-        <button class="btn-rol" onclick="selR('CLIENTE', this)">CLIENTE</button>
-        <input type="tel" id="tel" placeholder="WhatsApp" style="width:100%; padding:15px; margin:15px 0; background:#000; color:#fff; border:1px solid #333; border-radius:10px; box-sizing:border-box;">
-        <button class="btn-google" style="background:#fbc02d" onclick="crear()">FINALIZAR</button>
+        <div style="display: flex; flex-wrap: wrap; justify-content: center;">
+            <button class="btn-rol" onclick="selR('ZAPATERO', this)">ZAPATERO</button>
+            <button class="btn-rol" onclick="selR('CLIENTE', this)">CLIENTE</button>
+            <button class="btn-rol" onclick="selR('TIENDA', this)">TIENDA</button>
+            <button class="btn-rol" onclick="selR('DELIVERY', this)">DELIVERY</button>
+        </div>
+        <input type="tel" id="tel" placeholder="WhatsApp (Ej: 0987654321)">
+        <button class="btn-google" style="background:#fbc02d" onclick="crear()">FINALIZAR REGISTRO</button>
     </div>
 
-    <div id="loader" style="position:fixed; inset:0; background:rgba(0,0,0,0.8); display:none; align-items:center; justify-content:center;">
-        <p style="color:#fbc02d; font-weight:bold;">CARGANDO...</p>
+    <div id="loader" style="position:fixed; inset:0; background:rgba(0,0,0,0.9); display:none; align-items:center; justify-content:center; z-index: 1000;">
+        <p style="color:#fbc02d; font-weight:bold; font-size: 1.2rem;">CARGANDO...</p>
     </div>
 
 <script>
-    // 1. CONFIGURACIÓN
+    // CONFIGURACIÓN COMPLETA (Ahora con authDomain)
     const firebaseConfig = { 
-        apiKey: "AIzaSyAKPxG1osuR9hsj-PsmwJrzK-3W_XM1UyU", 
-        databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com" 
+        apiKey: "AIzaSyAKPxG1osuR9hsj-PsmwJrzK-3W_XM1UyU",
+        authDomain: "jadi-repaiz.firebaseapp.com", // ESTO FALTABA
+        databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com",
+        projectId: "jadi-repaiz",
+        storageBucket: "jadi-repaiz.appspot.com"
     };
     
-    try {
-        firebase.initializeApp(firebaseConfig);
-    } catch (e) {
-        alert("Error al conectar con Firebase: " + e.message);
-    }
+    firebase.initializeApp(firebaseConfig);
 
     const auth = firebase.auth();
     const db = firebase.database();
     let uTemp = null;
     let rTemp = "";
 
-    // 2. DETECTAR CLIC (Fuerza bruta)
+    // INICIAR SESIÓN
     document.getElementById('btn-entrar').onclick = function() {
-        try {
-            localStorage.clear();
-            const provider = new firebase.auth.GoogleAuthProvider();
-            auth.signInWithRedirect(provider);
-        } catch (err) {
-            alert("Error al intentar iniciar sesión: " + err.message);
-        }
+        localStorage.clear();
+        const provider = new firebase.auth.GoogleAuthProvider();
+        auth.signInWithRedirect(provider);
     };
 
-    // 3. RECIBIR DATOS AL VOLVER
+    // PROCESAR REGRESO
     auth.getRedirectResult().then(res => {
         if (res.user) {
             uTemp = res.user;
@@ -94,24 +94,30 @@
 
     async function crear() {
         const t = document.getElementById('tel').value;
-        if(!rTemp || t.length < 8) return alert("Selecciona rol y pon tu WhatsApp");
+        if(!rTemp || t.length < 8) return alert("Por favor selecciona tu rol y pon tu WhatsApp");
 
-        const s = await db.ref('contadores/' + rTemp).once('value');
-        const n = (s.val() || 0) + 1;
-        await db.ref('contadores/' + rTemp).set(n);
+        document.getElementById('loader').style.display = 'flex';
+        try {
+            const s = await db.ref('contadores/' + rTemp).once('value');
+            const n = (s.val() || 0) + 1;
+            await db.ref('contadores/' + rTemp).set(n);
 
-        const data = {
-            uid: uTemp.uid,
-            nombre: uTemp.displayName,
-            email: uTemp.email,
-            telefono: t,
-            rolCodigo: rTemp.toLowerCase(),
-            id_jadi: rTemp.slice(0,3).toUpperCase() + n.toString().padStart(4, '0')
-        };
+            const data = {
+                uid: uTemp.uid,
+                nombre: uTemp.displayName,
+                email: uTemp.email,
+                telefono: t,
+                rolCodigo: rTemp.toLowerCase(),
+                id_jadi: rTemp.slice(0,3).toUpperCase() + n.toString().padStart(4, '0')
+            };
 
-        await db.ref('usuarios/' + uTemp.uid).set(data);
-        localStorage.setItem('session_jadi', JSON.stringify(data));
-        window.location.href = data.rolCodigo + ".html";
+            await db.ref('usuarios/' + uTemp.uid).set(data);
+            localStorage.setItem('session_jadi', JSON.stringify(data));
+            window.location.href = data.rolCodigo + ".html";
+        } catch (error) {
+            alert("Error al guardar: " + error.message);
+            document.getElementById('loader').style.display = 'none';
+        }
     }
 </script>
 </body>
