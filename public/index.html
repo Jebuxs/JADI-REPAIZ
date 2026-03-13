@@ -8,125 +8,110 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        :root { --gold: #fbc02d; --dark: #000; }
-        body { font-family: sans-serif; background: var(--dark); color: white; margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
-        .card { width: 85%; max-width: 400px; padding: 40px 20px; background: #0a0a0a; border-radius: 20px; border: 1px solid #222; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .brand { font-size: 2.8rem; font-weight: bold; color: var(--gold); letter-spacing: 6px; margin: 0; }
-        .tagline { font-size: 0.7rem; color: #666; margin-bottom: 30px; text-transform: uppercase; letter-spacing: 2px; }
-        .btn-google { background: white; color: black; border: none; padding: 18px; border-radius: 12px; width: 100%; font-weight: bold; cursor: pointer; font-size: 1rem; text-transform: uppercase; display: block; }
-        #seccion-registro, #loader { display: none; }
-        .role-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0; }
-        .btn-role { padding: 15px; background: #111; border: 1px solid #333; color: #888; border-radius: 10px; font-weight: bold; cursor: pointer; }
-        .btn-role.active { border-color: var(--gold); color: var(--gold); background: #1a1500; }
-        input { width: 100%; padding: 15px; margin-top: 15px; background: #000; border: 1px solid #333; color: white; border-radius: 10px; box-sizing: border-box; text-align: center; }
-        .btn-finish { background: var(--gold); color: black; border: none; padding: 18px; border-radius: 12px; width: 100%; font-weight: bold; margin-top: 20px; cursor: pointer; }
+        body { background: #000; color: #fff; font-family: sans-serif; margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; text-align: center; }
+        .card { width: 85%; max-width: 350px; padding: 40px 20px; background: #0a0a0a; border-radius: 20px; border: 1px solid #222; }
+        h1 { color: #fbc02d; letter-spacing: 5px; margin-bottom: 30px; }
+        .btn-google { background: #fff; color: #000; padding: 18px; border-radius: 12px; width: 100%; font-weight: bold; border: none; cursor: pointer; font-size: 1rem; }
+        #registro, #loader { display: none; }
+        .btn-rol { background: #111; color: #888; padding: 12px; margin: 5px; border: 1px solid #333; border-radius: 8px; width: 45%; }
+        .active { border-color: #fbc02d; color: #fbc02d; }
     </style>
 </head>
 <body>
 
-    <div class="card" id="vista-login">
-        <h1 class="brand">J.A.D.I</h1>
-        <p class="tagline">Restauración Profesional</p>
-        <button class="btn-google" id="main-login-btn">
-            ENTRAR CON GOOGLE
-        </button>
+    <div class="card" id="login-screen">
+        <h1>J.A.D.I</h1>
+        <button class="btn-google" id="btn-entrar">ENTRAR CON GOOGLE</button>
     </div>
 
-    <div class="card" id="seccion-registro">
-        <h2 style="color: var(--gold); margin: 0;">REGISTRO</h2>
-        <p style="font-size: 0.8rem; color: #888;">Elige tu perfil para continuar</p>
-        <div class="role-grid">
-            <button class="btn-role" onclick="setRole(this, 'ZAPATERO')">ZAPATERO</button>
-            <button class="btn-role" onclick="setRole(this, 'CLIENTE')">CLIENTE</button>
-            <button class="btn-role" onclick="setRole(this, 'TIENDA')">TIENDA</button>
-            <button class="btn-role" onclick="setRole(this, 'DELIVERY')">DELIVERY</button>
-        </div>
-        <input type="tel" id="user-phone" placeholder="WhatsApp (Ej: 0987654321)">
-        <button class="btn-finish" onclick="saveUser()">FINALIZAR REGISTRO</button>
+    <div class="card" id="registro">
+        <h2 style="color:#fbc02d">REGISTRO</h2>
+        <button class="btn-rol" onclick="selR('ZAPATERO', this)">ZAPATERO</button>
+        <button class="btn-rol" onclick="selR('CLIENTE', this)">CLIENTE</button>
+        <input type="tel" id="tel" placeholder="WhatsApp" style="width:100%; padding:15px; margin:15px 0; background:#000; color:#fff; border:1px solid #333; border-radius:10px; box-sizing:border-box;">
+        <button class="btn-google" style="background:#fbc02d" onclick="crear()">FINALIZAR</button>
     </div>
 
-    <div id="loader" style="position:fixed; background:rgba(0,0,0,0.8); inset:0; align-items:center; justify-content:center; flex-direction:column;">
-        <div style="width:40px; height:40px; border:4px solid #333; border-top-color:var(--gold); border-radius:50%; animation: spin 1s linear infinite;"></div>
-        <p style="margin-top:15px; color:var(--gold); font-weight:bold;">CARGANDO...</p>
+    <div id="loader" style="position:fixed; inset:0; background:rgba(0,0,0,0.8); display:none; align-items:center; justify-content:center;">
+        <p style="color:#fbc02d; font-weight:bold;">CARGANDO...</p>
     </div>
-
-    <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
 
 <script>
-    // Configuración Base
+    // 1. CONFIGURACIÓN
     const firebaseConfig = { 
         apiKey: "AIzaSyAKPxG1osuR9hsj-PsmwJrzK-3W_XM1UyU", 
         databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com" 
     };
-    firebase.initializeApp(firebaseConfig);
+    
+    try {
+        firebase.initializeApp(firebaseConfig);
+    } catch (e) {
+        alert("Error al conectar con Firebase: " + e.message);
+    }
 
     const auth = firebase.auth();
     const db = firebase.database();
-    let tempUser = null;
-    let selectedRole = "";
+    let uTemp = null;
+    let rTemp = "";
 
-    // Lógica de Inicio de Sesión
-    document.getElementById('main-login-btn').addEventListener('click', () => {
-        localStorage.clear();
-        const provider = new firebase.auth.GoogleAuthProvider();
-        auth.signInWithRedirect(provider);
+    // 2. DETECTAR CLIC (Fuerza bruta)
+    document.getElementById('btn-entrar').onclick = function() {
+        try {
+            localStorage.clear();
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithRedirect(provider);
+        } catch (err) {
+            alert("Error al intentar iniciar sesión: " + err.message);
+        }
+    };
+
+    // 3. RECIBIR DATOS AL VOLVER
+    auth.getRedirectResult().then(res => {
+        if (res.user) {
+            uTemp = res.user;
+            document.getElementById('loader').style.display = 'flex';
+            db.ref('usuarios/' + res.user.uid).once('value', s => {
+                document.getElementById('loader').style.display = 'none';
+                if (s.exists()) {
+                    const d = s.val();
+                    localStorage.setItem('session_jadi', JSON.stringify(d));
+                    window.location.href = d.rolCodigo + ".html";
+                } else {
+                    document.getElementById('login-screen').style.display = 'none';
+                    document.getElementById('registro').style.display = 'block';
+                }
+            });
+        }
+    }).catch(e => {
+        alert("Error de Firebase: " + e.message);
     });
 
-    // Manejar el regreso de Google
-    auth.getRedirectResult().then(result => {
-        if (result.user) {
-            tempUser = result.user;
-            checkUser(result.user.uid);
-        }
-    }).catch(err => alert("Error de acceso: " + err.message));
-
-    function checkUser(uid) {
-        document.getElementById('loader').style.display = 'flex';
-        db.ref('usuarios/' + uid).once('value', snap => {
-            document.getElementById('loader').style.display = 'none';
-            if (snap.exists()) {
-                const data = snap.val();
-                localStorage.setItem('session_jadi', JSON.stringify(data));
-                window.location.href = data.rolCodigo + ".html";
-            } else {
-                document.getElementById('vista-login').style.display = 'none';
-                document.getElementById('seccion-registro').style.display = 'block';
-            }
-        });
+    function selR(r, b) {
+        rTemp = r;
+        document.querySelectorAll('.btn-rol').forEach(x => x.classList.remove('active'));
+        b.classList.add('active');
     }
 
-    function setRole(btn, role) {
-        document.querySelectorAll('.btn-role').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        selectedRole = role;
-    }
+    async function crear() {
+        const t = document.getElementById('tel').value;
+        if(!rTemp || t.length < 8) return alert("Selecciona rol y pon tu WhatsApp");
 
-    async function saveUser() {
-        const phone = document.getElementById('user-phone').value;
-        if (!selectedRole || phone.length < 7) return alert("Completa los datos correctamente");
+        const s = await db.ref('contadores/' + rTemp).once('value');
+        const n = (s.val() || 0) + 1;
+        await db.ref('contadores/' + rTemp).set(n);
 
-        document.getElementById('loader').style.display = 'flex';
-        try {
-            const snap = await db.ref('contadores/' + selectedRole).once('value');
-            const count = (snap.val() || 0) + 1;
-            await db.ref('contadores/' + selectedRole).set(count);
+        const data = {
+            uid: uTemp.uid,
+            nombre: uTemp.displayName,
+            email: uTemp.email,
+            telefono: t,
+            rolCodigo: rTemp.toLowerCase(),
+            id_jadi: rTemp.slice(0,3).toUpperCase() + n.toString().padStart(4, '0')
+        };
 
-            const userData = {
-                uid: tempUser.uid,
-                nombre: tempUser.displayName,
-                email: tempUser.email,
-                telefono: phone,
-                rolCodigo: selectedRole.toLowerCase(),
-                id_jadi: selectedRole.slice(0,3).toUpperCase() + count.toString().padStart(4, '0')
-            };
-
-            await db.ref('usuarios/' + tempUser.uid).set(userData);
-            localStorage.setItem('session_jadi', JSON.stringify(userData));
-            window.location.href = userData.rolCodigo + ".html";
-        } catch (e) {
-            alert("Error al guardar: " + e.message);
-            document.getElementById('loader').style.display = 'none';
-        }
+        await db.ref('usuarios/' + uTemp.uid).set(data);
+        localStorage.setItem('session_jadi', JSON.stringify(data));
+        window.location.href = data.rolCodigo + ".html";
     }
 </script>
 </body>
