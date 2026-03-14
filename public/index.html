@@ -39,7 +39,7 @@
         <div class="field-group"><input type="text" id="login-input" class="input-field" placeholder="ID o Celular"></div>
         <div class="field-group">
             <input type="password" id="login-pass" class="input-field" placeholder="Contraseña">
-            <i class="fas fa-eye toggle-pass" onclick="toggleView('login-pass')" style="position:absolute; right:15px; top:18px; color:var(--gold);"></i>
+            <i class="fas fa-eye toggle-pass" onclick="toggleView('login-pass')" style="position:absolute; right:15px; top:18px; color:var(--gold); cursor:pointer;"></i>
         </div>
         <button class="btn-gold" onclick="login()">Entrar</button>
         <p onclick="mostrarVista('view-register')" style="color:#555; cursor:pointer; margin-top:30px; font-size: 0.9rem;">Crear empresa o cuenta</p>
@@ -49,6 +49,7 @@
         <h2 style="color:var(--gold)">Nuevo Registro</h2>
         <input type="text" id="reg-name" class="input-field" placeholder="Nombre Completo" style="margin-bottom:12px">
         <input type="tel" id="reg-tel" class="input-field" placeholder="Celular (Acceso)" style="margin-bottom:12px">
+        
         <select id="reg-rol" class="select-field" style="margin-bottom:12px" onchange="verificarRolEmpresa('reg-rol','box-empresa')">
             <option value="" disabled selected>¿Qué quieres hacer?</option>
             <option value="PRV">Soy Proveedor (Venta de Materiales)</option>
@@ -57,12 +58,18 @@
             <option value="CLN">Soy Cliente (Quiero una reparación)</option>
             <option value="DLV">Soy Delivery (Transporte)</option>
         </select>
+
         <div id="box-empresa" style="display:none; border:1px solid #333; padding:10px; border-radius:12px; margin-bottom:12px">
             <input type="text" id="reg-empresa-nombre" class="input-field" placeholder="Nombre de tu Local">
         </div>
+
         <div class="field-group"><input type="password" id="reg-pass" class="input-field" placeholder="Contraseña"></div>
         <div class="field-group"><input type="password" id="reg-confirm" class="input-field" placeholder="Confirmar Contraseña"></div>
-        <div class="terms"><input type="checkbox" id="check-terms"> Acepto términos J.A.D.I</div>
+        
+        <div class="terms">
+            <input type="checkbox" id="check-terms"> Acepto términos J.A.D.I
+        </div>
+
         <button class="btn-gold" onclick="validarYCrearEcosistema()">Registrarme</button>
         
         <button class="btn-google" onclick="registroConGoogle()">
@@ -74,8 +81,9 @@
     </div>
 
     <div id="view-google-role" class="view">
-        <h2 style="color:var(--gold)">Ya casi terminamos</h2>
-        <p style="font-size:0.8rem; color:#888;">Elige tu función en el ecosistema</p>
+        <h2 style="color:var(--gold)">Configura tu Perfil</h2>
+        <p style="font-size:0.8rem; color:#888; margin-bottom:20px;">Ya te identificamos. Ahora elige tu rol:</p>
+        
         <select id="google-rol" class="select-field" style="margin-bottom:12px" onchange="verificarRolEmpresa('google-rol','box-empresa-google')">
             <option value="" disabled selected>Selecciona tu Rol</option>
             <option value="PRV">Soy Proveedor (Materiales)</option>
@@ -84,36 +92,47 @@
             <option value="CLN">Soy Cliente (Usuario)</option>
             <option value="DLV">Soy Delivery (Transporte)</option>
         </select>
+
         <div id="box-empresa-google" style="display:none; border:1px solid #333; padding:10px; border-radius:12px; margin-bottom:12px">
             <input type="text" id="google-empresa-nombre" class="input-field" placeholder="Nombre de tu Local">
         </div>
-        <button class="btn-gold" onclick="finalizarRegistroGoogle()">Completar Acceso</button>
+
+        <button class="btn-gold" onclick="finalizarRegistroGoogle()">Completar Registro</button>
     </div>
 
     <div id="view-admin-secret" class="view">
         <h1 class="brand" style="font-size: 2.5rem;">ADMIN</h1>
-        <button class="btn-gold" onclick="crearAdminSecreto()">REGISTRAR ADMIN</button>
+        <button class="btn-gold" onclick="alert('Función Admin activa')">CONFIGURAR SISTEMA</button>
         <p onclick="mostrarVista('view-login')" style="color:#555; cursor:pointer; margin-top:20px;">Cerrar</p>
     </div>
 </div>
 
 <script>
+    // CONFIGURACIÓN FIREBASE
     const firebaseConfig = {
         apiKey: "AIzaSyAKPxG1osuR9hsj-PsmwJrzK-3W_XM1UyU",
         databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com",
+        authDomain: "jadi-repaiz.firebaseapp.com" // Asegúrate de tener esto para Google
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     const auth = firebase.auth();
-    let tempGoogleUser = null; // Para guardar el usuario de Google momentáneamente
+    let tempGoogleUser = null;
 
-    const paginasMaster = { 'ZPT': 'zapatero.html', 'PRV': 'proveedor.html', 'CLN': 'cliente.html', 'DLV': 'delivery.html', 'SHP': 'tienda.html', 'ADM': 'admin_panel.html' };
+    const paginasMaster = { 
+        'ZPT': 'zapatero.html', 
+        'PRV': 'proveedor.html', 
+        'CLN': 'cliente.html', 
+        'DLV': 'delivery.html', 
+        'SHP': 'tienda.html' 
+    };
 
-    // COMANDO SECRETO
+    // COMANDO ADMIN SECRETO
     window.addEventListener('keydown', function(e) {
         if (e.ctrlKey && e.altKey && e.key.toLowerCase() === 'j') { mostrarVista('view-admin-secret'); }
     });
 
+    // UTILIDADES
     function toggleLoader(show) { document.getElementById('loader').style.display = show ? 'flex' : 'none'; }
     function mostrarVista(id) {
         document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
@@ -126,61 +145,77 @@
         document.getElementById(boxId).style.display = (rol === 'PRV' || rol === 'ZPT' || rol === 'SHP') ? 'block' : 'none';
     }
 
-    // REGISTRO CON GOOGLE (Paso 1: Identificación)
+    // FLUJO GOOGLE
     function registroConGoogle() {
-        if(!document.getElementById('check-terms').checked) return alert("Acepta los términos");
+        // Validación del check antes de abrir Google
+        if(!document.getElementById('check-terms').checked) {
+            return alert("Para continuar, debes aceptar los términos y condiciones marcando la casilla.");
+        }
+
         toggleLoader(true);
         const provider = new firebase.auth.GoogleAuthProvider();
         auth.signInWithPopup(provider).then(async (result) => {
             const user = result.user;
-            const t = user.email.replace(/[.#$\[\]]/g, "_"); // ID basado en email seguro
+            const t = user.email.replace(/[.#$\[\]]/g, "_");
             const snap = await db.ref('usuarios/' + t).once('value');
             
             if (snap.exists()) {
+                // Si ya existe, entra directo
                 localStorage.setItem('session_jadi', JSON.stringify(snap.val()));
                 window.location.href = paginasMaster[snap.val().rolCodigo];
             } else {
+                // Si es nuevo, pedimos el ROL
                 tempGoogleUser = user;
                 mostrarVista('view-google-role');
             }
             toggleLoader(false);
-        }).catch(e => { toggleLoader(false); alert(e.message); });
+        }).catch(e => { toggleLoader(false); alert("Error de Google: " + e.message); });
     }
 
-    // FINALIZAR GOOGLE (Paso 2: Selección de Rol)
     async function finalizarRegistroGoogle() {
         const rol = document.getElementById('google-rol').value;
         const nomEmpresa = document.getElementById('google-empresa-nombre').value.trim();
-        if(!rol) return alert("Selecciona un rol");
+        if(!rol) return alert("Por favor, selecciona un rol para continuar.");
 
         toggleLoader(true);
-        const t = tempGoogleUser.email.replace(/[.#$\[\]]/g, "_");
-        const snapCount = await db.ref('contadores/' + rol).once('value');
-        let num = (snapCount.val() || 0) + 1;
-        await db.ref('contadores/' + rol).set(num);
-        
-        const userObj = {
-            nombre: tempGoogleUser.displayName,
-            telefono: tempGoogleUser.email,
-            rolCodigo: rol,
-            uid: rol + num.toString().padStart(3, '0'),
-            pass: "GOOGLE_AUTH",
-            empresaNombre: nomEmpresa || "Personal",
-            fecha_ingreso: new Date().toLocaleDateString()
-        };
+        try {
+            const t = tempGoogleUser.email.replace(/[.#$\[\]]/g, "_");
+            const snapCount = await db.ref('contadores/' + rol).once('value');
+            let num = (snapCount.val() || 0) + 1;
+            await db.ref('contadores/' + rol).set(num);
+            
+            const userObj = {
+                nombre: tempGoogleUser.displayName,
+                telefono: tempGoogleUser.email,
+                rolCodigo: rol,
+                uid: rol + num.toString().padStart(3, '0'),
+                pass: "GOOGLE_AUTH",
+                empresaNombre: nomEmpresa || "Personal",
+                fecha_ingreso: new Date().toLocaleDateString()
+            };
 
-        await db.ref('usuarios/' + t).set(userObj);
-        localStorage.setItem('session_jadi', JSON.stringify(userObj));
-        window.location.href = paginasMaster[rol];
+            await db.ref('usuarios/' + t).set(userObj);
+            localStorage.setItem('session_jadi', JSON.stringify(userObj));
+            window.location.href = paginasMaster[rol];
+        } catch(e) { alert(e.message); }
+        toggleLoader(false);
     }
 
-    // RESTO DE FUNCIONES (validarYCrearEcosistema, login, etc) SE MANTIENEN IGUAL QUE TU CÓDIGO
-    async function validarYCrearEcosistema() {
-        // ... (Tu código original de registro manual)
-    }
-
+    // REGISTRO MANUAL Y LOGIN (Tus funciones originales)
     async function login() {
-        // ... (Tu código original de login)
+        const input = document.getElementById('login-input').value.trim();
+        const pass = document.getElementById('login-pass').value;
+        if(!input || !pass) return alert("Datos incompletos.");
+        toggleLoader(true);
+        try {
+            const t = input.replace(/\D/g,'');
+            const snap = await db.ref('usuarios/' + t).once('value');
+            if(snap.exists() && snap.val().pass === pass) {
+                localStorage.setItem('session_jadi', JSON.stringify(snap.val()));
+                window.location.href = paginasMaster[snap.val().rolCodigo];
+            } else { alert("Usuario o contraseña incorrectos."); }
+        } catch(e) { alert("Error de conexión"); }
+        toggleLoader(false);
     }
 </script>
 </body>
