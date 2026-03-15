@@ -277,6 +277,34 @@
         toggleLoader(false);
         mostrarVista('view-login');
     }
+    // AL PRECIONAR EL BOTON REGISTRO CON GOOGLE async function registroConGoogle() {
+  async function registroConGoogle() {
+    toggleLoader(true);
+    try {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        const result = await auth.signInWithPopup(provider);
+        const user = result.user;
+        const t = user.email.replace(/[.#$\[\]]/g, "_");
+        
+        const snap = await db.ref('usuarios/' + t).once('value');
+        
+        if (snap.exists()) {
+            // Si ya existe, entra de una
+            localStorage.setItem('session_jadi', JSON.stringify(snap.val()));
+            window.location.href = paginasMaster[snap.val().rolCodigo];
+        } else {
+            // Si es nuevo, guardamos el usuario y mostramos la nueva pantalla
+            tempGoogleUser = user; 
+            mostrarVista('view-google-setup');
+        }
+    } catch (error) {
+        alert("Error: " + error.message);
+    } finally {
+        toggleLoader(false);
+    }
+}
+    //FINALIZA
+}
 }
 </script>
 </body>
