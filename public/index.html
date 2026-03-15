@@ -11,10 +11,10 @@
     
     <style>
         :root { --gold: #fbc02d; --dark: #000; --input-bg: #111; }
-        body { font-family: -apple-system, sans-serif; background: var(--dark); color: white; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow: hidden; }
-        .container { width: 90%; max-width: 380px; text-align: center; padding: 20px; position: relative; }
+        body { font-family: -apple-system, sans-serif; background: var(--dark); color: white; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .container { width: 90%; max-width: 380px; text-align: center; padding: 20px; }
         
-        #loader { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center; flex-direction: column; }
+        #loader { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center; flex-direction: column; }
         .spinner { width: 40px; height: 40px; border: 4px solid #333; border-top: 4px solid var(--gold); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
@@ -22,23 +22,195 @@
         .sub-brand { color: var(--gold); font-size: 0.8rem; letter-spacing: 5px; margin-top: -10px; text-transform: uppercase; margin-bottom: 30px; }
         
         .input-field, .select-field { width: 100%; padding: 16px; border: 1px solid #222; border-radius: 12px; background: var(--input-bg); color: white; font-size: 1rem; box-sizing: border-box; outline: none; margin-bottom: 12px; }
-        .btn-gold { width: 100%; padding: 15px; background: var(--gold); color: #000; border: none; border-radius: 25px; font-size: 1.1rem; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .btn-gold { width: 100%; padding: 15px; background: var(--gold); color: #000; border: none; border-radius: 25px; font-size: 1.1rem; font-weight: bold; cursor: pointer; margin-top: 10px; width: 100%; }
         
         .view { display: none; }
         .active { display: block; animation: fadeIn 0.4s; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         
-        .link-text { color: #555; cursor: pointer; margin-top: 20px; font-size: 0.9rem; transition: 0.3s; }
-        .link-text:hover { color: var(--gold); }
-        .terms { font-size: 0.7rem; color: #666; margin: 15px 0; }
-        
+        .link-text { color: #555; cursor: pointer; margin-top: 20px; font-size: 0.9rem; display: block; }
         .btn-google { width: 100%; padding: 12px; background: white; color: #444; border-radius: 25px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 15px; display: flex; align-items: center; justify-content: center; gap: 10px; border:none; }
     </style>
 </head>
 <body>
 
-<div id="loader"><div class="spinner"></div><p style="color:var(--gold); margin-top:10px;">Procesando...</p></div>
+<div id="loader"><div class="spinner"></div><p style="color:var(--gold); margin-top:10px;">Cargando...</p></div>
 
 <div class="container">
     
-    <div
+    <div id="view-login" class="view active">
+        <h1 class="brand">J.A.D.I</h1>
+        <div class="sub-brand">REPAIZ</div>
+        <input type="text" id="login-input" class="input-field" placeholder="ID, Celular o Correo">
+        <input type="password" id="login-pass" class="input-field" placeholder="Contraseña">
+        <button class="btn-gold" onclick="login()">Entrar</button>
+        <span class="link-text" onclick="mostrarVista('view-register')">Crear empresa o cuenta</span>
+    </div>
+
+    <div id="view-register" class="view">
+        <h2 style="color:var(--gold)">Nuevo Registro</h2>
+        <input type="text" id="reg-name" class="input-field" placeholder="Nombre Completo">
+        <input type="email" id="reg-email" class="input-field" placeholder="Correo">
+        <input type="tel" id="reg-tel" class="input-field" placeholder="Celular">
+        <select id="reg-rol" class="select-field" onchange="verificarRolEmpresa('reg-rol','box-empresa')">
+            <option value="" disabled selected>Selecciona tu Rol</option>
+            <option value="PRV">Proveedor</option>
+            <option value="ZPT">Maestro Zapatero</option>
+            <option value="SHP">Tienda</option>
+            <option value="CLN">Cliente</option>
+            <option value="DLV">Delivery</option>
+        </select>
+        <div id="box-empresa" style="display:none;"><input type="text" id="reg-empresa-nombre" class="input-field" placeholder="Nombre del Local"></div>
+        <input type="password" id="reg-pass" class="input-field" placeholder="Contraseña">
+        <input type="password" id="reg-confirm" class="input-field" placeholder="Confirmar Contraseña">
+        <button class="btn-gold" onclick="validarYCrearEcosistema()">Registrarme</button>
+        <button class="btn-google" onclick="registroConGoogle()">
+            <img src="https://www.google.com/images/branding/product/2x/googleg_32dp.png" alt="G" style="width:20px;"> Google
+        </button>
+        <span class="link-text" onclick="mostrarVista('view-login')">Volver</span>
+    </div>
+
+    <div id="view-google-setup" class="view">
+        <h2 style="color:var(--gold)">Completa tu perfil</h2>
+        <select id="google-rol" class="select-field" onchange="verificarRolEmpresa('google-rol','box-empresa-google')">
+            <option value="" disabled selected>Tu Rol</option>
+            <option value="PRV">Proveedor</option>
+            <option value="ZPT">Zapatero</option>
+            <option value="SHP">Tienda</option>
+            <option value="CLN">Cliente</option>
+            <option value="DLV">Delivery</option>
+        </select>
+        <div id="box-empresa-google" style="display:none;"><input type="text" id="google-empresa-nombre" class="input-field" placeholder="Nombre Local"></div>
+        <button class="btn-gold" onclick="finalizarRegistroGoogle()">Finalizar</button>
+    </div>
+
+    <div id="view-admin-secret" class="view">
+        <h2 style="color:var(--gold)">ADMIN</h2>
+        <input type="text" id="adm-name" class="input-field" placeholder="Nombre">
+        <input type="tel" id="adm-tel" class="input-field" placeholder="Celular">
+        <input type="password" id="adm-pass" class="input-field" placeholder="Clave">
+        <button class="btn-gold" onclick="crearAdminSecreto()">CREAR ADMIN</button>
+        <span class="link-text" onclick="mostrarVista('view-login')">Cerrar</span>
+    </div>
+
+</div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyAKPxG1osuR9hsj-PsmwJrzK-3W_XM1UyU",
+        authDomain: "jadi-repaiz.firebaseapp.com",
+        databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com",
+    };
+
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const auth = firebase.auth();
+    let tempGoogleUser = null;
+
+    const paginasMaster = { 'ZPT': 'zapatero.html', 'PRV': 'proveedor.html', 'CLN': 'cliente.html', 'DLV': 'delivery.html', 'SHP': 'tienda.html', 'ADM': 'admin_panel.html' };
+
+    // Comando Secreto
+    document.addEventListener('keydown', (e) => {
+        if (e.ctrlKey && e.altKey && e.key.toLowerCase() === 'j') mostrarVista('view-admin-secret');
+    });
+
+    function mostrarVista(id) {
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        const target = document.getElementById(id);
+        if(target) target.classList.add('active');
+    }
+
+    function toggleLoader(s) { document.getElementById('loader').style.display = s ? 'flex' : 'none'; }
+
+    function verificarRolEmpresa(s, b) {
+        const r = document.getElementById(s).value;
+        document.getElementById(b).style.display = (['PRV','ZPT','SHP'].includes(r)) ? 'block' : 'none';
+    }
+
+    async function login() {
+        const input = document.getElementById('login-input').value.trim();
+        const pass = document.getElementById('login-pass').value;
+        if(!input || !pass) return alert("Completa los datos");
+
+        toggleLoader(true);
+        try {
+            const snap = await db.ref('usuarios').once('value');
+            let uFound = null;
+            snap.forEach(c => {
+                const u = c.val();
+                if(u.uid === input || u.email === input || u.telefono === input) uFound = u;
+            });
+
+            if(uFound && (uFound.pass === pass || uFound.pass === "G_AUTH")) {
+                localStorage.setItem('session_jadi', JSON.stringify(uFound));
+                window.location.href = paginasMaster[uFound.rolCodigo] || 'index.html';
+            } else alert("Datos incorrectos");
+        } catch(e) { alert("Error"); } finally { toggleLoader(false); }
+    }
+
+    async function validarYCrearEcosistema() {
+        const n = document.getElementById('reg-name').value;
+        const em = document.getElementById('reg-email').value;
+        const t = document.getElementById('reg-tel').value;
+        const r = document.getElementById('reg-rol').value;
+        const p = document.getElementById('reg-pass').value;
+
+        if(!n || !em || !r || !p) return alert("Faltan datos");
+
+        toggleLoader(true);
+        try {
+            const snapC = await db.ref('contadores/' + r).once('value');
+            let num = (snapC.val() || 0) + 1;
+            const nuevoUID = r + num.toString().padStart(3,'0');
+            const obj = { nombre: n, email: em, telefono: t, rolCodigo: r, uid: nuevoUID, pass: p, empresaNombre: document.getElementById('reg-empresa-nombre').value || "Personal" };
+
+            await db.ref('usuarios/' + nuevoUID).set(obj);
+            await db.ref('contadores/' + r).set(num);
+            localStorage.setItem('session_jadi', JSON.stringify(obj));
+            window.location.href = paginasMaster[r];
+        } catch(e) { alert(e.message); } finally { toggleLoader(false); }
+    }
+
+    async function registroConGoogle() {
+        toggleLoader(true);
+        try {
+            const res = await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
+            tempGoogleUser = res.user;
+            const snap = await db.ref('usuarios').once('value');
+            let ex = null;
+            snap.forEach(c => { if(c.val().email === tempGoogleUser.email) ex = c.val(); });
+
+            if(ex) {
+                localStorage.setItem('session_jadi', JSON.stringify(ex));
+                window.location.href = paginasMaster[ex.rolCodigo];
+            } else mostrarVista('view-google-setup');
+        } catch(e) { alert(e.message); } finally { toggleLoader(false); }
+    }
+
+    async function finalizarRegistroGoogle() {
+        const r = document.getElementById('google-rol').value;
+        if(!r) return alert("Selecciona rol");
+        toggleLoader(true);
+        try {
+            const snapC = await db.ref('contadores/' + r).once('value');
+            let num = (snapC.val() || 0) + 1;
+            const nUID = r + num.toString().padStart(3,'0');
+            const obj = { nombre: tempGoogleUser.displayName, email: tempGoogleUser.email, rolCodigo: r, uid: nUID, pass: "G_AUTH", empresaNombre: document.getElementById('google-empresa-nombre').value || "Personal" };
+            await db.ref('usuarios/' + nUID).set(obj);
+            await db.ref('contadores/' + r).set(num);
+            localStorage.setItem('session_jadi', JSON.stringify(obj));
+            window.location.href = paginasMaster[r];
+        } catch(e) { alert(e.message); } finally { toggleLoader(false); }
+    }
+
+    async function crearAdminSecreto() {
+        const t = document.getElementById('adm-tel').value;
+        const nUID = "ADM" + t.slice(-3);
+        const obj = { nombre: document.getElementById('adm-name').value, email: "admin@jadi.com", telefono: t, rolCodigo: 'ADM', uid: nUID, pass: document.getElementById('adm-pass').value };
+        await db.ref('usuarios/' + nUID).set(obj);
+        alert("Admin creado: " + nUID);
+        mostrarVista('view-login');
+    }
+</script>
+</body>
+</html>
