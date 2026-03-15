@@ -55,7 +55,7 @@
 
     <div class="container">
         <div class="welcome">
-            <h2 id="txt-saludo">Hola, Zapatero</h2>
+            <h2 id="txt-saludo">Hola, Maestro</h2>
             <p>Gestión del Hospital del Calzado</p>
         </div>
 
@@ -84,10 +84,10 @@
 
         <div class="notif-box">
             <p style="color: var(--gold); font-size: 0.8rem; margin: 0;">SISTEMA LISTO</p>
-            <p style="font-size: 0.7rem; color: #888;">No tienes reparaciones pendientes por ahora.</p>
+            <p id="txt-info-empresa" style="font-size: 0.7rem; color: #888;">Cargando datos del taller...</p>
         </div>
         
-        <button onclick="firebase.auth().signOut()" style="margin-top:40px; width:100%; background:none; border:none; color:#333; font-size:0.7rem;">CERRAR SESIÓN</button>
+        <button onclick="auth.signOut().then(() => window.location.href='index.html')" style="margin-top:40px; width:100%; background:none; border:none; color:#333; font-size:0.7rem; cursor:pointer;">CERRAR SESIÓN</button>
     </div>
 
     <div class="bottom-nav">
@@ -108,26 +108,42 @@
     const auth = firebase.auth();
     const db = firebase.database();
 
-    // GUARDIA DE SEGURIDAD (Anti-Bucle en PC)
-    auth.onAuthStateChanged(user => {
+    // GUARDIA DE SEGURIDAD CORREGIDA
+    auth.onAuthStateChanged(async (user) => {
         if (user) {
-            db.ref('usuarios/' + user.uid).once('value', s => {
-                const data = s.val();
-                // Verificamos que el usuario exista y tenga el rol correcto
-                if (data && data.rolCodigo === 'zapatero') {
-                    document.getElementById('bloqueo-seguridad').style.display = 'none';
-                    document.getElementById('txt-id').innerText = "ID: " + data.id_jadi;
-                    document.getElementById('txt-saludo').innerText = "Hola, " + (data.nombre_local || data.nombre);
-                } else {
-                    // Si el rol es diferente (ej. proveedor), lo regresamos al inicio
+            // Buscamos al usuario por su email formateado (como lo registramos antes)
+            const emailKey = user.email ? user.email.replace(/[.#$\[\]]/g, "_") : null;
+            
+            // Si no tiene email, probamos con el teléfono si existe en los datos de auth
+            const telKey = user.phoneNumber ? user.phoneNumber.replace(/\D/g,'') : null;
+            
+            const buscarKey = emailKey || telKey;
+
+            if (buscarKey) {
+                db.ref('usuarios/' + buscarKey).once('value', s => {
+                    const data = s.val();
+                    
+                    // VALIDACIÓN DE ROL (Cambiado 'zapatero' por 'ZPT')
+                    if (data && data.rolCodigo === 'ZPT') {
+                        document.getElementById('bloqueo-seguridad').style.display = 'none';
+                        document.getElementById('txt-id').innerText = "ID: " + (data.uid || "S/N");
+                        document.getElementById('txt-saludo').innerText = "Hola, " + data.nombre;
+                        document.getElementById('txt-info-empresa').innerText = "Taller: " + (data.empresaNombre || "Local JADI");
+                        
+                        // Guardamos sesión local por si acaso
+                        localStorage.setItem('session_jadi', JSON.stringify(data));
+                    } else {
+                        console.log("Rol incorrecto o datos inexistentes");
+                        window.location.href = "index.html";
+                    }
+                }).catch(e => {
+                    console.error("Error en DB:", e);
                     window.location.href = "index.html";
-                }
-            }).catch(e => {
-                console.error("Error en DB:", e);
+                });
+            } else {
                 window.location.href = "index.html";
-            });
+            }
         } else {
-            // Si no hay sesión, al inicio
             window.location.href = "index.html";
         }
     });
