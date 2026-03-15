@@ -253,26 +253,6 @@
         toggleLoader(false);
         mostrarVista('view-login');
     }
-    async function registroConGoogle() {
-    if(!document.getElementById('check-terms').checked) return alert("Acepta los términos J.A.D.I");
-    
-    toggleLoader(true);
-    const provider = new firebase.auth.GoogleAuthProvider();
-    auth.signInWithPopup(provider).then(async (result) => {
-        const user = result.user;
-        const t = user.email.replace(/[.#$\[\]]/g, "_");
-        const snap = await db.ref('usuarios/' + t).once('value');
-        
-        if (snap.exists()) {
-            localStorage.setItem('session_jadi', JSON.stringify(snap.val()));
-            window.location.href = paginasMaster[snap.val().rolCodigo];
-        } else {
-            // Si es nuevo, lo mandamos a que elija su rol manual o definimos uno
-            alert("Cuenta vinculada: " + user.email + ". Ahora elige tu rol y completa el registro.");
-            mostrarVista('view-register'); 
-        }
-        toggleLoader(false);
-    }).catch(e => { toggleLoader(false); alert("Error: " + e.message); });
 }
 </script>
 </body>
