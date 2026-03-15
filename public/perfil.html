@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Módulo de Prueba - J.A.D.I</title>
+    <title>Info Usuario - J.A.D.I</title>
     <style>
         body {
             background-color: #000;
@@ -18,36 +18,45 @@
             text-align: center;
         }
 
-        .mensaje-box {
-            border: 2px solid #FFD700;
-            padding: 40px;
-            border-radius: 20px;
+        .info-box {
+            border: 1px solid #FFD700;
+            padding: 30px;
+            border-radius: 15px;
             background: #0a0a0a;
-            box-shadow: 0 0 20px rgba(255, 215, 0, 0.2);
+            width: 320px;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.1);
         }
 
-        h1 {
+        h1 { color: #FFD700; font-size: 1.5rem; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 10px; }
+
+        .dato-group {
+            text-align: left;
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-size: 0.7rem;
             color: #FFD700;
-            font-size: 3rem;
-            margin: 0;
-            letter-spacing: 2px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
-        p {
-            color: #888;
-            margin-top: 10px;
-            font-size: 1.2rem;
+        .valor {
+            font-size: 1rem;
+            color: #fff;
+            word-break: break-all;
         }
 
         .btn-regresar {
-            margin-top: 30px;
+            margin-top: 20px;
             display: inline-block;
             color: #FFD700;
             text-decoration: none;
-            font-weight: bold;
+            font-size: 0.9rem;
             border: 1px solid #FFD700;
-            padding: 10px 20px;
-            border-radius: 8px;
+            padding: 8px 20px;
+            border-radius: 5px;
             transition: 0.3s;
         }
 
@@ -59,12 +68,44 @@
 </head>
 <body>
 
-    <div class="mensaje-box">
-        <h1>¡Hola!</h1>
-        <p>Aquí estoy.</p>
+    <div class="info-box">
+        <h1>Datos de Sesión</h1>
+
+        <div class="dato-group">
+            <label>Nombre del Usuario</label>
+            <div id="info-nombre" class="valor">Cargando...</div>
+        </div>
+
+        <div class="dato-group">
+            <label>Correo Electrónico</label>
+            <div id="info-correo" class="valor">Cargando...</div>
+        </div>
+
+        <div class="dato-group">
+            <label>ID Único (UID)</label>
+            <div id="info-uid" class="valor" style="font-family: monospace; color: #fbc02d;">Cargando...</div>
+        </div>
         
         <a href="javascript:history.back()" class="btn-regresar">← VOLVER</a>
     </div>
+
+    <script>
+        // Función para cargar los datos desde la sesión local
+        window.onload = function() {
+            // Buscamos la sesión que guardamos en los pasos anteriores
+            const session = JSON.parse(localStorage.getItem('session_jadi'));
+
+            if (session) {
+                document.getElementById('info-nombre').innerText = session.nombre || "No registrado";
+                document.getElementById('info-correo').innerText = session.email || "No registrado";
+                document.getElementById('info-uid').innerText = session.uid || "No generado";
+            } else {
+                document.getElementById('info-nombre').innerText = "Sin sesión";
+                document.getElementById('info-correo').innerText = "Inicie sesión";
+                document.getElementById('info-uid').innerText = "---";
+            }
+        };
+    </script>
 
 </body>
 </html>
