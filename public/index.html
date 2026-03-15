@@ -92,6 +92,30 @@
         <button class="btn-gold" onclick="crearAdminSecreto()">REGISTRAR ADMIN</button>
         <p onclick="mostrarVista('view-login')" style="color:#555; cursor:pointer; margin-top:20px;">Cerrar</p>
     </div>
+    //LISTADO DE ROLES ALPRECIONAR REGISTRAR CON GOOGLE
+    <div id="view-google-setup" class="view">
+    <h2 style="color:var(--gold)">Ya casi estás dentro</h2>
+    <p style="font-size:0.9rem; color:#888;">Para finalizar, dinos quién eres:</p>
+    
+    <select id="google-rol" class="select-field" style="margin-bottom:12px" onchange="const r=this.value; document.getElementById('box-empresa-google').style.display=(r==='PRV'||r==='ZPT'||r==='SHP')?'block':'none';">
+        <option value="" disabled selected>Selecciona tu Rol</option>
+        <option value="PRV">Soy Proveedor (Materiales)</option>
+        <option value="ZPT">Maestro Zapatero (Taller)</option>
+        <option value="SHP">Soy Tienda (Venta de Calzado)</option>
+        <option value="CLN">Soy Cliente (Usuario)</option>
+        <option value="DLV">Soy Delivery (Transporte)</option>
+    </select>
+
+    <div id="box-empresa-google" style="display:none; border:1px solid #333; padding:10px; border-radius:12px; margin-bottom:12px">
+        <input type="text" id="google-empresa-nombre" class="input-field" placeholder="Nombre de tu Local">
+    </div>
+
+    <div class="terms" style="margin-top:20px;">
+        <input type="checkbox" id="check-terms-google"> Acepto términos y condiciones J.A.D.I
+    </div>
+
+    <button class="btn-gold" onclick="finalizarRegistroGoogle()">Continuar</button>
+</div>
 </div>
 
 <script>
