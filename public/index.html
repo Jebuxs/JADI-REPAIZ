@@ -14,7 +14,6 @@
         body { font-family: -apple-system, sans-serif; background: var(--dark); color: white; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow: hidden; }
         .container { width: 90%; max-width: 380px; text-align: center; padding: 20px; position: relative; }
         
-        /* Loader */
         #loader { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center; flex-direction: column; }
         .spinner { width: 40px; height: 40px; border: 4px solid #333; border-top: 4px solid var(--gold); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -52,13 +51,14 @@
     <div id="view-register" class="view">
         <h2 style="color:var(--gold)">Nuevo Registro</h2>
         <input type="text" id="reg-name" class="input-field" placeholder="Nombre Completo">
-        <input type="tel" id="reg-tel" class="input-field" placeholder="Celular (Acceso)">
+        <input type="email" id="reg-email" class="input-field" placeholder="Correo Electrónico">
+        <input type="tel" id="reg-tel" class="input-field" placeholder="Celular">
         <select id="reg-rol" class="select-field" onchange="verificarRolEmpresa('reg-rol','box-empresa')">
             <option value="" disabled selected>¿Qué quieres hacer?</option>
-            <option value="PRV">Soy Proveedor (Venta de Materiales)</option>
+            <option value="PRV">Soy Proveedor (Materiales)</option>
             <option value="ZPT">Soy Maestro Zapatero (Taller)</option>
-            <option value="SHP">Soy Tienda (Venta de calzado)</option>
-            <option value="CLN">Soy Cliente (Quiero una reparación)</option>
+            <option value="SHP">Soy Tienda (Venta calzado)</option>
+            <option value="CLN">Soy Cliente (Reparación)</option>
             <option value="DLV">Soy Delivery (Transporte)</option>
         </select>
         
@@ -69,22 +69,13 @@
         <input type="password" id="reg-pass" class="input-field" placeholder="Contraseña">
         <input type="password" id="reg-confirm" class="input-field" placeholder="Confirmar Contraseña">
         
-        <div class="terms">
-            <input type="checkbox" id="check-terms"> Acepto términos J.A.D.I
-        </div>
-        
+        <div class="terms"><input type="checkbox" id="check-terms"> Acepto términos J.A.D.I</div>
         <button class="btn-gold" onclick="validarYCrearEcosistema()">Registrarme</button>
-        
-        <button onclick="registroConGoogle()" style="width: 100%; padding: 12px; background: white; color: #444; border: 1px solid #ddd; border-radius: 25px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 15px; display: flex; align-items: center; justify-content: center; gap: 10px; border:none;">
-            <img src="https://www.google.com/images/branding/product/2x/googleg_32dp.png" alt="G" style="width:20px;">
-            Registrarme con Google
-        </button>
         <p class="link-text" onclick="mostrarVista('view-login')">Volver al inicio</p>
     </div>
 
     <div id="view-google-setup" class="view">
         <h2 style="color:var(--gold)">Ya casi estás dentro</h2>
-        <p style="font-size:0.9rem; color:#888;">Selecciona tu rol para terminar:</p>
         <select id="google-rol" class="select-field" onchange="verificarRolEmpresa('google-rol','box-empresa-google')">
             <option value="" disabled selected>Selecciona tu Rol</option>
             <option value="PRV">Soy Proveedor</option>
@@ -96,17 +87,7 @@
         <div id="box-empresa-google" style="display:none; border:1px solid #333; padding:10px; border-radius:12px; margin-bottom:12px">
             <input type="text" id="google-empresa-nombre" class="input-field" placeholder="Nombre de tu Local" style="margin-bottom:0">
         </div>
-        <div class="terms"><input type="checkbox" id="check-terms-google"> Acepto términos J.A.D.I</div>
         <button class="btn-gold" onclick="finalizarRegistroGoogle()">Continuar</button>
-    </div>
-
-    <div id="view-admin-secret" class="view">
-        <h1 class="brand" style="font-size: 2.5rem;">ADMIN</h1>
-        <input type="text" id="adm-name" class="input-field" placeholder="Nombre Admin">
-        <input type="tel" id="adm-tel" class="input-field" placeholder="Celular Maestro">
-        <input type="password" id="adm-pass" class="input-field" placeholder="Contraseña">
-        <button class="btn-gold" onclick="crearAdminSecreto()">REGISTRAR ADMIN</button>
-        <p class="link-text" onclick="mostrarVista('view-login')">Cerrar</p>
     </div>
 
 </div>
@@ -123,24 +104,8 @@
     const auth = firebase.auth();
     let tempGoogleUser = null;
 
-    const paginasMaster = { 
-        'ZPT': 'zapatero.html', 
-        'PRV': 'proveedor.html', 
-        'CLN': 'cliente.html', 
-        'DLV': 'delivery.html', 
-        'SHP': 'tienda.html', 
-        'ADM': 'admin_panel.html' 
-    };
+    const paginasMaster = { 'ZPT': 'zapatero.html', 'PRV': 'proveedor.html', 'CLN': 'cliente.html', 'DLV': 'delivery.html', 'SHP': 'tienda.html', 'ADM': 'admin_panel.html' };
 
-    // --- COMANDO SECRETO INVISIBLE ---
-    document.addEventListener('keydown', function(e) {
-        if (e.ctrlKey && e.altKey && e.key.toLowerCase() === 'j') {
-            e.preventDefault();
-            mostrarVista('view-admin-secret');
-        }
-    });
-
-    // --- NAVEGACIÓN ---
     function mostrarVista(id) {
         document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
         document.getElementById(id).classList.add('active');
@@ -153,14 +118,7 @@
         document.getElementById(boxId).style.display = (['PRV','ZPT','SHP'].includes(rol)) ? 'block' : 'none';
     }
 
-    function obtenerCCC(nombre) {
-        if(!nombre) return "JDI";
-        const limpio = nombre.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
-        const cons = limpio.replace(/[AEIOU\s]/g, "");
-        return (cons.substring(0, 3) || "JDI").padEnd(3, 'X');
-    }
-
-    // --- LOGIN ---
+    // --- LOGIN MEJORADO ---
     async function login() {
         const input = document.getElementById('login-input').value.trim();
         const pass = document.getElementById('login-pass').value;
@@ -168,31 +126,72 @@
 
         toggleLoader(true);
         try {
-            const esCorreo = input.includes('@');
-            const t = esCorreo ? input.replace(/[.#$\[\]]/g, "_") : input.replace(/\D/g,'');
-            const snap = await db.ref('usuarios/' + t).once('value');
-            
-            if(snap.exists()) {
-                const u = snap.val();
-                if(u.pass === pass || u.pass === "G_AUTH") {
-                    localStorage.setItem('session_jadi', JSON.stringify(u));
-                    window.location.href = paginasMaster[u.rolCodigo] || 'index.html';
+            // Buscamos en toda la colección de usuarios para ver quién coincide con el ID, Correo o Celular
+            const snap = await db.ref('usuarios').once('value');
+            let usuarioEncontrado = null;
+
+            snap.forEach(child => {
+                const u = child.val();
+                if(u.uid === input || u.email === input || u.telefono === input) {
+                    usuarioEncontrado = u;
+                }
+            });
+
+            if(usuarioEncontrado) {
+                if(usuarioEncontrado.pass === pass || usuarioEncontrado.pass === "G_AUTH") {
+                    localStorage.setItem('session_jadi', JSON.stringify(usuarioEncontrado));
+                    window.location.href = paginasMaster[usuarioEncontrado.rolCodigo] || 'index.html';
                 } else alert("Contraseña incorrecta");
             } else alert("Usuario no encontrado");
-        } catch(e) { alert("Error de red"); } finally { toggleLoader(false); }
+        } catch(e) { alert("Error de conexión"); } finally { toggleLoader(false); }
     }
 
-    // --- GOOGLE ---
+    // --- REGISTRO MANUAL (USANDO UID COMO LLAVE) ---
+    async function validarYCrearEcosistema() {
+        const n = document.getElementById('reg-name').value.trim();
+        const em = document.getElementById('reg-email').value.trim();
+        const t = document.getElementById('reg-tel').value.replace(/\D/g,'');
+        const r = document.getElementById('reg-rol').value;
+        const p = document.getElementById('reg-pass').value;
+
+        if(!n || !em || !r || !p) return alert("Completa los campos");
+        if(p !== document.getElementById('reg-confirm').value) return alert("Claves no coinciden");
+
+        toggleLoader(true);
+        try {
+            const snapC = await db.ref('contadores/' + r).once('value');
+            let num = (snapC.val() || 0) + 1;
+            const nuevoUID = r + num.toString().padStart(3,'0');
+
+            const obj = { 
+                nombre: n, email: em, telefono: t, rolCodigo: r, uid: nuevoUID, 
+                pass: p, empresaNombre: document.getElementById('reg-empresa-nombre').value || "Personal", 
+                fecha_ingreso: new Date().toLocaleDateString() 
+            };
+
+            // GUARDAMOS USANDO EL UID COMO NOMBRE DE CARPETA
+            await db.ref('usuarios/' + nuevoUID).set(obj);
+            await db.ref('contadores/' + r).set(num);
+
+            localStorage.setItem('session_jadi', JSON.stringify(obj));
+            window.location.href = paginasMaster[r];
+        } catch(e) { alert(e.message); } finally { toggleLoader(false); }
+    }
+
+    // --- GOOGLE MEJORADO ---
     async function registroConGoogle() {
         toggleLoader(true);
         try {
             const res = await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
             tempGoogleUser = res.user;
-            const t = tempGoogleUser.email.replace(/[.#$\[\]]/g, "_");
-            const snap = await db.ref('usuarios/' + t).once('value');
-            if (snap.exists()) {
-                localStorage.setItem('session_jadi', JSON.stringify(snap.val()));
-                window.location.href = paginasMaster[snap.val().rolCodigo];
+            
+            const snap = await db.ref('usuarios').once('value');
+            let existente = null;
+            snap.forEach(c => { if(c.val().email === tempGoogleUser.email) existente = c.val(); });
+
+            if (existente) {
+                localStorage.setItem('session_jadi', JSON.stringify(existente));
+                window.location.href = paginasMaster[existente.rolCodigo];
             } else mostrarVista('view-google-setup');
         } catch (e) { alert(e.message); } finally { toggleLoader(false); }
     }
@@ -200,59 +199,26 @@
     async function finalizarRegistroGoogle() {
         const r = document.getElementById('google-rol').value;
         const nom = document.getElementById('google-empresa-nombre').value.trim();
-        if(!r || !document.getElementById('check-terms-google').checked) return alert("Faltan datos");
+        if(!r) return alert("Selecciona un rol");
 
         toggleLoader(true);
         try {
-            const t = tempGoogleUser.email.replace(/[.#$\[\]]/g, "_");
             const snapC = await db.ref('contadores/' + r).once('value');
             let num = (snapC.val() || 0) + 1;
-            await db.ref('contadores/' + r).set(num);
+            const nuevoUID = r + num.toString().padStart(3,'0');
 
             const obj = { 
-                nombre: tempGoogleUser.displayName, telefono: tempGoogleUser.email, 
-                rolCodigo: r, uid: r+num.toString().padStart(3,'0'), pass: "G_AUTH",
+                nombre: tempGoogleUser.displayName, email: tempGoogleUser.email, 
+                rolCodigo: r, uid: nuevoUID, pass: "G_AUTH",
                 empresaNombre: nom || "Personal", fecha_ingreso: new Date().toLocaleDateString()
             };
-            await db.ref('usuarios/' + t).set(obj);
-            localStorage.setItem('session_jadi', JSON.stringify(obj));
-            window.location.href = paginasMaster[r];
-        } catch(e) { alert(e.message); } finally { toggleLoader(false); }
-    }
-
-    // --- MANUAL ---
-    async function validarYCrearEcosistema() {
-        const n = document.getElementById('reg-name').value.trim();
-        const t = document.getElementById('reg-tel').value.replace(/\D/g,'');
-        const r = document.getElementById('reg-rol').value;
-        const p = document.getElementById('reg-pass').value;
-        if(!n || !t || !r || !p || p !== document.getElementById('reg-confirm').value) return alert("Verifica los datos");
-        if(!document.getElementById('check-terms').checked) return alert("Acepta términos");
-
-        toggleLoader(true);
-        try {
-            const snapC = await db.ref('contadores/' + r).once('value');
-            let num = (snapC.val() || 0) + 1;
+            
+            await db.ref('usuarios/' + nuevoUID).set(obj);
             await db.ref('contadores/' + r).set(num);
 
-            const obj = { 
-                nombre: n, telefono: t, rolCodigo: r, uid: r+num.toString().padStart(3,'0'), 
-                pass: p, empresaNombre: document.getElementById('reg-empresa-nombre').value || "Personal", 
-                fecha_ingreso: new Date().toLocaleDateString() 
-            };
-            await db.ref('usuarios/' + t).set(obj);
             localStorage.setItem('session_jadi', JSON.stringify(obj));
             window.location.href = paginasMaster[r];
         } catch(e) { alert(e.message); } finally { toggleLoader(false); }
-    }
-
-    async function crearAdminSecreto() {
-        const t = document.getElementById('adm-tel').value.replace(/\D/g,'');
-        await db.ref('usuarios/' + t).set({ 
-            nombre: document.getElementById('adm-name').value, telefono: t, 
-            rolCodigo: 'ADM', pass: document.getElementById('adm-pass').value, uid: "ADM"+t.slice(-3) 
-        });
-        alert("Admin Listo"); mostrarVista('view-login');
     }
 </script>
 </body>
