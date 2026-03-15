@@ -2,149 +2,106 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Módulo Zapatero - J.A.D.I REPAIZ</title>
+    <title>Módulo Zapatero - J.A.D.I</title>
     <style>
-        body {
-            background-color: #000;
-            color: white;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 0;
+        body { background-color: #000; color: white; font-family: sans-serif; margin: 0; }
+        
+        /* HEADER: J.A.D.I + REPAIZ y el Círculo de Perfil */
+        .header {
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 10px 20px; 
+            border-bottom: 1px solid #FFD700;
+        }
+        .logo-container { line-height: 1; }
+        .logo-container h1 { color: #FFD700; margin: 0; font-size: 24px; letter-spacing: 2px; }
+        .logo-container span { color: #FFF; font-size: 10px; letter-spacing: 1px; }
+        
+        .profile-circle {
+            width: 40px; height: 40px; 
+            border-radius: 50%; border: 1px solid #FFD700; 
+            background-color: #333; display: flex; align-items: center; justify-content: center;
+            text-decoration: none; color: white;
         }
 
-        /* --- 1. HEADER: LOGO Y PERFIL --- */
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px 40px;
-            background-color: #111;
-            border-bottom: 2px solid #FFD700;
-        }
+        /* CUERPO Y BIENVENIDA */
+        .main-content { padding: 20px; max-width: 800px; margin: auto; }
+        .welcome-title { color: #FFD700; border-left: 4px solid #FFD700; padding-left: 15px; margin-bottom: 5px; }
+        .personal-label { color: #555; font-size: 14px; margin-left: 20px; }
+        .login-id { color: #FFD700; font-size: 12px; margin-left: 20px; margin-top: 5px; }
 
-        .logo-group {
-            text-align: left;
+        /* LOS 4 BOTONES ORIGINALES */
+        .grid-container { 
+            display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 30px; 
         }
-
-        .logo-group h1 {
-            margin: 0;
-            font-size: 3rem; /* Más visible */
-            color: #FFD700;
-            letter-spacing: 4px;
-            font-weight: 900;
-            line-height: 0.8;
+        .card { 
+            background-color: #1a1a1a; padding: 20px; border-radius: 15px; text-align: center; 
+            cursor: pointer; transition: 0.3s;
         }
+        .card:hover { background-color: #252525; }
+        .card img, .card .icon { font-size: 30px; margin-bottom: 10px; display: block; margin: auto; }
+        .card h3 { margin: 10px 0 5px 0; font-size: 16px; }
+        .card p { color: #666; font-size: 12px; margin: 0; }
 
-        .logo-group span {
-            font-size: 1rem;
-            color: #FFF;
-            letter-spacing: 2px;
-            text-transform: uppercase;
+        /* BARRA SISTEMA ACTIVO */
+        .status-bar { 
+            background-color: #1a1400; color: #FFD700; border: 1px solid #332b00;
+            padding: 15px; border-radius: 10px; text-align: center; margin-top: 20px;
         }
+        .status-bar small { color: #666; display: block; }
 
-        .profile-btn {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            border: 2px solid #FFD700;
-            background-color: #222;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: transform 0.3s;
-            overflow: hidden;
-        }
-
-        .profile-btn:hover {
-            transform: scale(1.1);
-            background-color: #333;
-        }
-
-        /* --- 2. BIENVENIDA Y LOGIN --- */
-        .welcome-section {
-            padding: 30px 40px;
-        }
-
-        .welcome-section h2 {
-            color: #FFD700;
-            margin: 0 0 10px 0;
-            font-size: 1.8rem;
-        }
-
-        .user-info-box {
-            margin-top: 15px;
-        }
-
-        .label-personal {
-            color: #888;
-            font-size: 0.9rem;
-            display: block;
-            margin-bottom: 8px;
-        }
-
-        .login-badge {
-            display: inline-block;
-            background: #222;
-            padding: 8px 15px;
-            border-radius: 5px;
-            border: 1px solid #444;
-            font-family: 'Courier New', Courier, monospace;
-        }
-
-        .login-badge strong {
-            color: #FFD700;
-        }
-
-        /* --- BOTÓN CERRAR SESIÓN --- */
-        .logout-container {
-            padding: 0 40px;
-        }
-
-        .btn-logout {
-            color: #ff4d4d;
-            text-decoration: none;
-            font-weight: bold;
-            font-size: 0.9rem;
-        }
-
-        .btn-logout:hover {
-            text-decoration: underline;
+        .btn-logout { 
+            display: block; text-align: center; color: #444; text-decoration: none; 
+            margin-top: 30px; font-size: 14px; 
         }
     </style>
 </head>
 <body>
 
-    <header>
-        <div class="logo-group">
+    <div class="header">
+        <div class="logo-container">
             <h1>J.A.D.I</h1>
             <span>REPAIZ</span>
         </div>
+        <a href="perfil.html" class="profile-circle">👤</a>
+    </div>
 
-        <a href="perfil.html" title="Ir a mi perfil">
-            <div class="profile-btn">
-                <span style="font-size: 1.8rem;">👤</span>
+    <div class="main-content">
+        <h2 class="welcome-title">Bienvenido, Maestro Jesus Eduardo Villa Orozco</h2>
+        <div class="personal-label">Personal</div>
+        <div class="login-id">Usuario Login: ZPT001</div>
+
+        <div class="grid-container">
+            <div class="card">
+                <div class="icon">👤</div>
+                <h3>PERFIL</h3>
+                <p>Configurar local</p>
             </div>
-        </a>
-    </header>
-
-    <main>
-        <section class="welcome-section">
-            <h2>Bienvenido, Maestro Jesus Eduardo Villa Orozco</h2>
-            
-            <div class="user-info-box">
-                <span class="label-personal">Personal</span>
-                <div class="login-badge">
-                    <strong>Usuario Login:</strong> ZPT-2026-X
-                </div>
+            <div class="card">
+                <div class="icon">📦</div>
+                <h3>INVENTARIO</h3>
+                <p>Suelas y tintes</p>
             </div>
-        </section>
-
-        <div class="logout-container">
-            <a href="index.html" class="btn-logout">Cerrar Sesión</a>
+            <div class="card">
+                <div class="icon">👥</div>
+                <h3>CLIENTES</h3>
+                <p>Registro QR</p>
+            </div>
+            <div class="card">
+                <div class="icon">🛠️</div>
+                <h3>TRABAJOS</h3>
+                <p>Nuevos pedidos</p>
+            </div>
         </div>
-    </main>
+
+        <div class="status-bar">
+            <strong>SISTEMA ACTIVO</strong>
+            <small>Listo para recibir órdenes del Hospital del Calzado.</small>
+        </div>
+
+        <a href="index.html" class="btn-logout">CERRAR SESIÓN MAESTRO</a>
+    </div>
 
 </body>
 </html>
