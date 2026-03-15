@@ -9,82 +9,45 @@
     
     <style>
         body { 
-            background-color: #000; 
-            color: white; 
-            font-family: sans-serif; 
-            margin: 0; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center; 
-            height: 100vh; 
+            background-color: #000; color: white; font-family: sans-serif; 
+            margin: 0; display: flex; flex-direction: column; 
+            align-items: center; justify-content: center; height: 100vh; 
         }
-
-        /* Estilo de la flecha atrás */
         .back-nav {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: #FFD700;
-            text-decoration: none;
-            font-weight: bold;
+            position: absolute; top: 20px; left: 20px; cursor: pointer;
+            color: #FFD700; text-decoration: none; font-weight: bold;
         }
-
         .container {
-            text-align: center;
-            border: 1px solid #333;
-            padding: 40px;
-            border-radius: 20px;
-            background: #0a0a0a;
+            text-align: center; border: 1px solid #333; padding: 40px;
+            border-radius: 20px; background: #0a0a0a; width: 300px;
         }
-
-        h1 { color: #FFD700; margin-bottom: 10px; }
-        
+        h1 { color: #FFD700; font-size: 22px; }
         .input-edit {
-            background: #111;
-            border: 1px solid #333;
-            color: white;
-            padding: 10px;
-            border-radius: 8px;
-            width: 100%;
-            margin-top: 20px;
-            box-sizing: border-box;
+            background: #111; border: 1px solid #333; color: white;
+            padding: 12px; border-radius: 8px; width: 100%;
+            margin-top: 20px; box-sizing: border-box; outline: none;
         }
-
+        .input-edit:focus { border-color: #FFD700; }
         .btn-save {
-            background: #FFD700;
-            color: black;
-            border: none;
-            padding: 12px 30px;
-            border-radius: 8px;
-            margin-top: 20px;
-            font-weight: bold;
-            cursor: pointer;
+            background: #FFD700; color: black; border: none;
+            padding: 12px 30px; border-radius: 8px; margin-top: 20px;
+            font-weight: bold; cursor: pointer; width: 100%;
         }
-
-        .btn-save:hover { background: #e6c300; }
     </style>
 </head>
 <body>
 
-    <a href="javascript:history.back()" class="back-nav">
-        <span style="font-size: 24px;">←</span> ATRÁS
-    </a>
+    <a href="javascript:history.back()" class="back-nav"> ← ATRÁS </a>
 
     <div class="container">
         <h1>Editar Perfil</h1>
-        <p style="color: #666;">Actualiza la información de tu cuenta J.A.D.I</p>
+        <p style="color: #666; font-size: 12px;">Usuario: <span id="user-email">...</span></p>
 
-        <input type="text" id="nombre-edit" class="input-edit" placeholder="Tu nombre completo">
+        <input type="text" id="nombre-edit" class="input-edit" placeholder="Nombre completo">
         <button class="btn-save" onclick="actualizarDatos()">GUARDAR CAMBIOS</button>
     </div>
 
     <script>
-        // Configuración de tu Firebase
         const firebaseConfig = { 
             apiKey: "AIzaSyAKPxG1osuR9hsj-PsmwJrzK-3W_XM1UyU", 
             databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com" 
@@ -92,36 +55,42 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // Recuperar la sesión actual
+        // 1. LEER SESIÓN ACTUAL
         let session = JSON.parse(localStorage.getItem('session_jadi'));
 
-        // Cargar el nombre actual si existe
-        if(session && session.nombre) {
-            document.getElementById('nombre-edit').value = session.nombre;
+        if(session) {
+            document.getElementById('nombre-edit').value = session.nombre || "";
+            document.getElementById('user-email').innerText = session.email || "No detectado";
+        } else {
+            alert("No hay sesión activa. Regresando...");
+            window.location.href = "index.html";
         }
 
         async function actualizarDatos() {
             const nuevoNombre = document.getElementById('nombre-edit').value;
 
+            // VALIDACIÓN CRÍTICA: Si no hay UID, no hacemos nada para evitar duplicados
             if (!session || !session.uid) {
-                alert("Error: Sesión no encontrada.");
+                alert("Error de seguridad: No se detectó tu ID único.");
                 return;
             }
 
             try {
-                // LA CLAVE: .update() sobre el UID existente para NO crear uno nuevo
-                await db.ref('usuarios/' + session.uid).update({
+                // RUTA EXACTA: usuarios/ EL_UID_DEL_USUARIO_LOGUEADO
+                // Usamos .update para que solo modifique el campo 'nombre' del usuario actual
+                await db.ref('usuarios').child(session.uid).update({
                     nombre: nuevoNombre
                 });
 
-                // Actualizar la sesión local para que el cambio se vea de inmediato
+                // Actualizar la memoria local para que los otros módulos vean el cambio
                 session.nombre = nuevoNombre;
                 localStorage.setItem('session_jadi', JSON.stringify(session));
 
-                alert("Perfil actualizado. Volviendo...");
-                history.back(); // Retorna automáticamente al módulo anterior
+                alert("Información actualizada con éxito.");
+                history.back(); 
 
             } catch (error) {
+                console.error(error);
                 alert("Error al editar: " + error.message);
             }
         }
