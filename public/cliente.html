@@ -3,229 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GasSolución | Cliente</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-</head>
-<body class="bg-slate-50 min-h-screen font-sans text-slate-900">
+    <title>Gestión de Clientes - Taller Master</title>
+    <link rel="stylesheet" href="style.css"> </head>
+<body>
+    <div class="container">
+        <nav class="sidebar">
+            <h2>👞 Taller Master</h2>
+            <ul>
+                <li><a href="index.html">🏠 Inicio</a></li>
+                <li><a href="zapatero.html">🔨 Zapateros</a></li>
+                <li><a href="cliente.html" class="active">👤 Clientes</a></li>
+                <li><a href="proveedor.html">📦 Proveedores</a></li>
+                <li><a href="pedido.html">📝 Pedidos</a></li>
+            </ul>
+        </nav>
 
-    <div id="app" class="max-w-md mx-auto bg-white min-h-screen shadow-2xl flex flex-col relative">
-        
-        <div class="p-6 pb-2 flex justify-between items-center">
-            <div>
-                <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Solicitar Servicio</p>
-                <h1 id="u-nombre" class="text-3xl font-black tracking-tighter text-slate-900">Cargando...</h1>
-            </div>
-            <button onclick="cerrarSesion()" class="bg-slate-100 p-3 rounded-2xl text-[10px] font-bold uppercase tracking-widest text-slate-500">Salir</button>
-        </div>
+        <main class="content">
+            <header>
+                <h1>Gestión de Clientes</h1>
+                <p>Registro y consulta de base de datos de clientes.</p>
+            </header>
 
-        <div class="px-6 mb-4">
-            <div id="map" class="h-48 rounded-[2.5rem] shadow-inner border-4 border-slate-50 overflow-hidden z-0"></div>
-        </div>
+            <section class="form-section">
+                <h3>➕ Registrar Nuevo Cliente</h3>
+                <form id="form-cliente">
+                    <div class="form-group">
+                        <label for="nombre">Nombre Completo:</label>
+                        <input type="text" id="nombre" name="nombre" placeholder="Ej. Juan Pérez" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="telefono">Teléfono / WhatsApp:</label>
+                        <input type="tel" id="telefono" name="telefono" placeholder="0987654321">
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Correo Electrónico:</label>
+                        <input type="email" id="email" name="email" placeholder="juan@correo.com">
+                    </div>
+                    <button type="submit" class="btn-save">Guardar Cliente</button>
+                </form>
+            </section>
 
-        <div class="px-6 space-y-4 pb-32">
-            
-            <div class="bg-slate-50 p-5 rounded-[2rem] border border-slate-100">
-                <div class="flex items-center gap-3 mb-4">
-                    <input type="checkbox" id="check-dom" class="w-6 h-6 rounded-lg accent-red-600">
-                    <label for="check-dom" class="font-black uppercase text-xs tracking-widest text-slate-400">Gas Doméstico</label>
+            <hr>
+
+            <section class="list-section">
+                <h3>📋 Clientes Registrados</h3>
+                <div class="search-bar">
+                    <input type="text" id="search-cliente" placeholder="Buscar por nombre o teléfono...">
                 </div>
-                <div class="grid grid-cols-3 gap-3">
-                    <div class="text-center">
-                        <p class="text-[9px] font-bold text-yellow-600 mb-1">AMARILLO</p>
-                        <input type="number" id="cd-ama" value="0" onfocus="if(this.value=='0')this.value=''" class="w-full bg-white border-2 border-slate-200 rounded-xl p-2 text-center font-bold">
-                    </div>
-                    <div class="text-center">
-                        <p class="text-[9px] font-bold text-blue-600 mb-1">AZUL</p>
-                        <input type="number" id="cd-azu" value="0" onfocus="if(this.value=='0')this.value=''" class="w-full bg-white border-2 border-slate-200 rounded-xl p-2 text-center font-bold">
-                    </div>
-                    <div class="text-center">
-                        <p class="text-[9px] font-bold text-orange-600 mb-1">NARANJA</p>
-                        <input type="number" id="cd-nar" value="0" onfocus="if(this.value=='0')this.value=''" class="w-full bg-white border-2 border-slate-200 rounded-xl p-2 text-center font-bold">
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-slate-50 p-5 rounded-[2rem] border border-slate-100">
-                <div class="flex items-center gap-3 mb-4">
-                    <input type="checkbox" id="check-ind" class="w-6 h-6 rounded-lg accent-red-600">
-                    <label for="check-ind" class="font-black uppercase text-xs tracking-widest text-slate-400">Gas Industrial</label>
-                </div>
-                <div class="grid grid-cols-3 gap-3">
-                    <div class="text-center">
-                        <p class="text-[9px] font-bold text-yellow-600 mb-1">AMARILLO</p>
-                        <input type="number" id="ci-ama" value="0" onfocus="if(this.value=='0')this.value=''" class="w-full bg-white border-2 border-slate-200 rounded-xl p-2 text-center font-bold">
-                    </div>
-                    <div class="text-center">
-                        <p class="text-[9px] font-bold text-blue-600 mb-1">AZUL</p>
-                        <input type="number" id="ci-azu" value="0" onfocus="if(this.value=='0')this.value=''" class="w-full bg-white border-2 border-slate-200 rounded-xl p-2 text-center font-bold">
-                    </div>
-                    <div class="text-center">
-                        <p class="text-[9px] font-bold text-orange-600 mb-1">NARANJA</p>
-                        <input type="number" id="ci-nar" value="0" onfocus="if(this.value=='0')this.value=''" class="w-full bg-white border-2 border-slate-200 rounded-xl p-2 text-center font-bold">
-                    </div>
-                </div>
-            </div>
-
-            <div class="flex justify-between items-center bg-red-50 p-5 rounded-[2rem] border border-red-100">
-                <span class="font-black text-red-600 text-xs uppercase tracking-widest">💰 Propina sugerida</span>
-                <input type="number" id="f-propina" value="0" onfocus="if(this.value=='0')this.value=''" class="w-20 bg-white border-2 border-red-200 rounded-xl p-2 text-center font-black text-red-600">
-            </div>
-
-        </div>
-
-        <div class="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-white via-white to-transparent z-10">
-            <button id="btn-main" onclick="realizarPedido()" class="w-full p-6 rounded-[2rem] font-black text-xl bg-red-600 text-white shadow-2xl shadow-red-200 hover:scale-[1.02] active:scale-95 transition-all">
-                PEDIR GAS AHORA
-            </button>
-        </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Teléfono</th>
+                            <th>Email</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-clientes">
+                        <tr>
+                            <td>101</td>
+                            <td>María García</td>
+                            <td>0991234455</td>
+                            <td>m.garcia@mail.com</td>
+                            <td>
+                                <button class="btn-edit">Editar</button>
+                                <button class="btn-delete">Eliminar</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+        </main>
     </div>
-
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, query, where, onSnapshot, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyDWGkvNQHt7URcoP2risWMBfYtdV1Un7Sk",
-            authDomain: "gassolucion.firebaseapp.com",
-            projectId: "gassolucion",
-            storageBucket: "gassolucion.firebasestorage.app",
-            messagingSenderId: "948928136223",
-            appId: "1:948928136223:web:06bb3d6bf8054c1be0c12a"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-
-        let map, marker;
-        let userGlobal = null;
-
-        // --- INICIO DE SESIÓN ---
-        onAuthStateChanged(auth, (user) => {
-            if (!user) {
-                window.location.href = "index.html";
-            } else {
-                userGlobal = user;
-                document.getElementById('u-nombre').innerText = user.displayName.split(' ')[0];
-                initMap();
-                escucharPedidos();
-            }
-        });
-
-        // --- MAPA ---
-        function initMap() {
-            if (map) return;
-            map = L.map('map').setView([-0.1807, -78.4678], 15);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-            
-            marker = L.marker([-0.1807, -78.4678], {draggable: true}).addTo(map);
-
-            navigator.geolocation.getCurrentPosition(p => {
-                const coords = [p.coords.latitude, p.coords.longitude];
-                map.setView(coords, 16);
-                marker.setLatLng(coords);
-            });
-        }
-
-        // --- LÓGICA DE PEDIDOS ---
-        window.realizarPedido = async function() {
-            const btn = document.getElementById('btn-main');
-            const pos = marker.getLatLng();
-            
-            btn.disabled = true;
-            btn.innerText = "LOCALIZANDO...";
-
-            // 1. Obtener dirección automática
-            let calle = "Ubicación GPS";
-            let sector = "Llano Chico";
-            try {
-                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${pos.lat}&lon=${pos.lng}`);
-                const data = await res.json();
-                const p = data.display_name.split(',');
-                calle = (p[0] || "") + (p[1] ? " y " + p[1] : "");
-                sector = data.address.suburb || data.address.neighbourhood || "Sector Local";
-            } catch (e) { console.error(e); }
-
-            const pedido = {
-                uidC: userGlobal.uid,
-                nombre: userGlobal.displayName,
-                lat: pos.lat,
-                lng: pos.lng,
-                direccion: calle,
-                sector: sector,
-                propina: document.getElementById('f-propina').value || 0,
-                estado: 'pendiente',
-                fecha: new Date().toISOString(),
-                items: []
-            };
-
-            // Recopilar items
-            const config = [
-                {id: 'cd-ama', t: 'Doméstico', c: 'Amarillo', chk: 'check-dom'},
-                {id: 'cd-azu', t: 'Doméstico', c: 'Azul', chk: 'check-dom'},
-                {id: 'cd-nar', t: 'Doméstico', c: 'Naranja', chk: 'check-dom'},
-                {id: 'ci-ama', t: 'Industrial', c: 'Amarillo', chk: 'check-ind'},
-                {id: 'ci-azu', t: 'Industrial', c: 'Azul', chk: 'check-ind'},
-                {id: 'ci-nar', t: 'Industrial', c: 'Naranja', chk: 'check-ind'}
-            ];
-
-            config.forEach(item => {
-                const cant = parseInt(document.getElementById(item.id).value);
-                if (cant > 0 && document.getElementById(item.chk).checked) {
-                    pedido.items.push({ n: cant, t: item.t, c: item.c });
-                }
-            });
-
-            if (pedido.items.length === 0) {
-                alert("Selecciona al menos un tanque y marca la casilla correspondiente.");
-                btn.disabled = false;
-                btn.innerText = "PEDIR GAS AHORA";
-                return;
-            }
-
-            try {
-                await addDoc(collection(db, "pedidos"), pedido);
-                alert("¡Pedido enviado!");
-            } catch (e) {
-                alert("Error: " + e.message);
-                btn.disabled = false;
-            }
-        };
-
-        function escucharPedidos() {
-            const q = query(collection(db, "pedidos"), where("uidC", "==", auth.currentUser.uid));
-            onSnapshot(q, snap => {
-                const btn = document.getElementById('btn-main');
-                if (!snap.empty) {
-                    const ped = snap.docs[0];
-                    const estado = ped.data().estado;
-                    if (estado === 'pendiente') {
-                        btn.innerText = "ANULAR SOLICITUD";
-                        btn.className = "w-full p-6 rounded-[2.5rem] font-black text-xl bg-slate-900 text-white shadow-xl";
-                        btn.onclick = () => anularPedido(ped.id);
-                    } else {
-                        btn.innerText = "REPARTIDOR EN CAMINO";
-                        btn.className = "w-full p-6 rounded-[2.5rem] font-black text-xl bg-green-600 text-white shadow-xl animate-pulse";
-                        btn.onclick = null;
-                    }
-                } else {
-                    btn.innerText = "PEDIR GAS AHORA";
-                    btn.className = "w-full p-6 rounded-[2.5rem] font-black text-xl bg-red-600 text-white shadow-2xl";
-                    btn.onclick = realizarPedido;
-                }
-                btn.disabled = false;
-            });
-        }
-
-        window.anularPedido = async (id) => {
-            if(confirm("¿Anular pedido?")) await deleteDoc(doc(db, "pedidos", id));
-        };
-
-        window.cerrarSesion = () => signOut(auth).then(() => window.location.href = "index.html");
-
-    </script>
 </body>
 </html>
