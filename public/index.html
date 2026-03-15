@@ -36,7 +36,7 @@
     <div id="view-login" class="view active">
         <h1 class="brand">J.A.D.I</h1>
         <div class="sub-brand">REPAIZ</div>
-        <div class="field-group"><input type="text" id="login-input" class="input-field" placeholder="ID o Celular"></div>
+        <div class="field-group"><input type="text" id="login-input" class="input-field" placeholder="ID o Celular o Correo"></div>
         <div class="field-group">
             <input type="password" id="login-pass" class="input-field" placeholder="Contraseña">
         </div>
@@ -65,7 +65,7 @@
         
         <button class="btn-gold" onclick="validarYCrearEcosistema()">Registrarme</button>
         
-        <button class="btn-google" onclick="registroConGoogle()" style="width: 100%; padding: 12px; background: white; color: #444; border: 1px solid #ddd; border-radius: 25px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 15px; display: flex; align-items: center; justify-content: center; gap: 10px;">
+        <button onclick="registroConGoogle()" style="width: 100%; padding: 12px; background: white; color: #444; border: 1px solid #ddd; border-radius: 25px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 15px; display: flex; align-items: center; justify-content: center; gap: 10px;">
             <img src="https://www.google.com/images/branding/product/2x/googleg_32dp.png" alt="G" style="width:20px;">
             Registrarme con Google
         </button>
@@ -113,7 +113,14 @@
     const auth = firebase.auth();
     let tempGoogleUser = null;
 
-    const paginasMaster = { 'ZPT': 'zapatero.html', 'PRV': 'proveedor.html', 'CLN': 'cliente.html', 'DLV': 'delivery.html', 'SHP': 'tienda.html', 'ADM': 'admin_panel.html' };
+    const paginasMaster = { 
+        'ZPT': 'zapatero.html', 
+        'PRV': 'proveedor.html', 
+        'CLN': 'cliente.html', 
+        'DLV': 'delivery.html', 
+        'SHP': 'tienda.html', 
+        'ADM': 'admin_panel.html' 
+    };
 
     // --- COMANDO SECRETO ---
     window.addEventListener('keydown', (e) => {
@@ -136,23 +143,49 @@
 
     // --- LÓGICA DE NEGOCIO (CCC) ---
     function obtenerCCC(nombre) {
+        if(!nombre) return "JDI";
         const limpio = nombre.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
-        const palabras = limpio.split(/\s+/).filter(p => p.length > 0);
-        let ccc = "";
-        if (palabras.length >= 3) {
-            for (let i = 0; i < 3; i++) {
-                const cons = palabras[i].replace(/[AEIOU]/g, "").replace(/[^A-Z]/g, "");
-                ccc += cons.charAt(0) || "X";
-            }
-        } else {
-            const todasCons = limpio.replace(/[AEIOU]/g, "").replace(/[^A-Z]/g, "");
-            ccc = todasCons.substring(0, 3);
-            while (ccc.length < 3) { ccc += "X"; }
-        }
-        return ccc;
+        const cons = limpio.replace(/[AEIOU\s]/g, "");
+        return (cons.substring(0, 3) || "JDI").padEnd(3, 'X');
     }
 
-    // --- REGISTRO CON GOOGLE ---
+    // --- LOGIN UNIFICADO ---
+    async function login() {
+        const input = document.getElementById('login-input').value.trim();
+        const pass = document.getElementById('login-pass').value;
+        if(!input || !pass) return alert("Por favor, ingresa tus datos.");
+
+        toggleLoader(true);
+        try {
+            const esCorreo = input.includes('@');
+            const t = esCorreo ? input.replace(/[.#$\[\]]/g, "_") : input.replace(/\D/g,'');
+            
+            const snap = await db.ref('usuarios/' + t).once('value');
+            
+            if(snap.exists()) {
+                const user = snap.val();
+                if(user.pass === pass || user.pass === "G_AUTH") {
+                    localStorage.setItem('session_jadi', JSON.stringify(user));
+                    const destino = paginasMaster[user.rolCodigo];
+                    if(destino) {
+                        window.location.href = destino;
+                    } else {
+                        alert("Error: Página de destino no encontrada.");
+                    }
+                } else {
+                    alert("Contraseña incorrecta.");
+                }
+            } else {
+                alert("Usuario no registrado.");
+            }
+        } catch(e) { 
+            alert("Error de conexión con la base de datos.");
+        } finally {
+            toggleLoader(false);
+        }
+    }
+
+    // --- LÓGICA GOOGLE ---
     async function registroConGoogle() {
         toggleLoader(true);
         try {
@@ -161,17 +194,19 @@
             const user = result.user;
             const t = user.email.replace(/[.#$\[\]]/g, "_");
             const snap = await db.ref('usuarios/' + t).once('value');
-            // Alrededor de la línea 170:
-if(snap.exists() && snap.val().pass === pass) {
-    localStorage.setItem('session_jadi', JSON.stringify(snap.val()));
-    
-    // Esta es la línea clave:
-    window.location.href = paginasMaster[snap.val().rolCodigo]; 
-} else { 
-    alert("Acceso incorrecto"); 
-}
-        } catch (error) { alert("Error Google: " + error.message); }
-        finally { toggleLoader(false); }
+
+            if (snap.exists()) {
+                localStorage.setItem('session_jadi', JSON.stringify(snap.val()));
+                window.location.href = paginasMaster[snap.val().rolCodigo];
+            } else {
+                tempGoogleUser = user;
+                mostrarVista('view-google-setup');
+            }
+        } catch (error) { 
+            alert("Error Google: " + error.message); 
+        } finally { 
+            toggleLoader(false); 
+        }
     }
 
     async function finalizarRegistroGoogle() {
@@ -179,71 +214,44 @@ if(snap.exists() && snap.val().pass === pass) {
         const check = document.getElementById('check-terms-google').checked;
         const nom = document.getElementById('google-empresa-nombre').value.trim();
         if(!r || !check) return alert("Completa el rol y acepta los términos.");
+
         toggleLoader(true);
         try {
             const t = tempGoogleUser.email.replace(/[.#$\[\]]/g, "_");
             const snapC = await db.ref('contadores/' + r).once('value');
             let num = (snapC.val() || 0) + 1;
             await db.ref('contadores/' + r).set(num);
-            let empID = "SISTEMA_JADI";
+
+            let empID = "PERSONAL";
             if(['PRV','ZPT','SHP'].includes(r)){
                 const snapE = await db.ref('Ecosistema_JADI/contador_empresas').once('value');
                 let nE = (snapE.val() || 0) + 1;
                 await db.ref('Ecosistema_JADI/contador_empresas').set(nE);
                 empID = `JD-${obtenerCCC(nom)}-${nE.toString().padStart(3, '0')}`;
             }
-            const obj = { nombre: tempGoogleUser.displayName, telefono: tempGoogleUser.email, rolCodigo: r, uid: r+num.toString().padStart(3,'0'), pass: "G_AUTH", empresaID: empID, empresaNombre: nom || "Personal", fecha_ingreso: new Date().toLocaleDateString() };
+
+            const obj = { 
+                nombre: tempGoogleUser.displayName, 
+                telefono: tempGoogleUser.email, 
+                rolCodigo: r, 
+                uid: r+num.toString().padStart(3,'0'), 
+                pass: "G_AUTH", 
+                empresaID: empID, 
+                empresaNombre: nom || "Personal", 
+                fecha_ingreso: new Date().toLocaleDateString() 
+            };
+
             await db.ref('usuarios/' + t).set(obj);
             localStorage.setItem('session_jadi', JSON.stringify(obj));
             window.location.href = paginasMaster[r];
-        } catch(e) { alert(e.message); }
-        finally { toggleLoader(false); }
-    }
-
-    // --- LOGIN MANUAL ---
-    async function login() {
-        const input = document.getElementById('login-input').value.trim();
-        const pass = document.getElementById('login-pass').value;
-        toggleLoader(true);
-        try {
-            const t = input.replace(/\D/g,'');
-            const snap = await db.ref('usuarios/' + t).once('value');
-            if(snap.exists() && snap.val().pass === pass) {
-                localStorage.setItem('session_jadi', JSON.stringify(snap.val()));
-                window.location.href = paginasMaster[snap.val().rolCodigo];
-            } else { alert("Acceso incorrecto"); }
-        } catch(e) { alert("Error de red"); }
-        finally { toggleLoader(false); }
+        } catch(e) { 
+            alert(e.message); 
+        } finally { 
+            toggleLoader(false); 
+        }
     }
 
     // --- REGISTRO MANUAL ---
     async function validarYCrearEcosistema() {
         const n = document.getElementById('reg-name').value.trim();
-        const t = document.getElementById('reg-tel').value.replace(/\D/g,'');
-        const r = document.getElementById('reg-rol').value;
-        const p = document.getElementById('reg-pass').value;
-        const nomE = document.getElementById('reg-empresa-nombre').value.trim();
-        if(!n || !t || !r || !p || !document.getElementById('check-terms').checked) return alert("Faltan datos");
-        toggleLoader(true);
-        try {
-            const snapC = await db.ref('contadores/' + r).once('value');
-            let num = (snapC.val() || 0) + 1;
-            await db.ref('contadores/' + r).set(num);
-            const obj = { nombre: n, telefono: t, rolCodigo: r, uid: r+num.toString().padStart(3,'0'), pass: p, empresaNombre: nomE || "Personal", fecha_ingreso: new Date().toLocaleDateString() };
-            await db.ref('usuarios/' + t).set(obj);
-            localStorage.setItem('session_jadi', JSON.stringify(obj));
-            window.location.href = paginasMaster[r];
-        } catch(e) { alert(e.message); }
-        finally { toggleLoader(false); }
-    }
-
-    async function crearAdminSecreto() {
-        const n = document.getElementById('adm-name').value;
-        const t = document.getElementById('adm-tel').value.replace(/\D/g,'');
-        const p = document.getElementById('adm-pass').value;
-        await db.ref('usuarios/' + t).set({ nombre: n, telefono: t, rolCodigo: 'ADM', pass: p, uid: "ADM"+t.slice(-3) });
-        mostrarVista('view-login');
-    }
-</script>
-</body>
-</html>
+        const t = document.getElementById('reg-tel').value.replace
