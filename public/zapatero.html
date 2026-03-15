@@ -3,136 +3,148 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>J.A.D.I - Hospital del Calzado</title>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <title>Módulo Zapatero - J.A.D.I REPAIZ</title>
     <style>
-        :root { --gold: #fbc02d; --dark: #000; --grey: #121212; --card: #1a1a1a; }
-        body { background: var(--dark); color: #fff; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; }
-        
-        /* Pantalla de Carga de Seguridad */
-        #bloqueo-seguridad { position: fixed; inset: 0; background: #000; display: flex; align-items: center; justify-content: center; z-index: 9999; }
-        
-        /* Navbar */
-        nav { background: var(--grey); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--gold); }
-        .logo { color: var(--gold); font-weight: 900; letter-spacing: 3px; font-size: 1.2rem; }
-        .id-badge { background: #333; color: var(--gold); padding: 5px 10px; border-radius: 5px; font-size: 0.7rem; font-weight: bold; }
+        body {
+            background-color: #000;
+            color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
 
-        /* Contenido */
-        .container { padding: 20px; max-width: 600px; margin: auto; padding-bottom: 80px; }
-        .welcome { margin-bottom: 25px; border-left: 4px solid var(--gold); padding-left: 15px; }
-        .welcome h2 { margin: 0; font-size: 1.6rem; color: var(--gold); }
-        .welcome p { color: #888; margin: 5px 0; font-size: 0.9rem; }
+        /* --- 1. HEADER: LOGO Y PERFIL --- */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 40px;
+            background-color: #111;
+            border-bottom: 2px solid #FFD700;
+        }
 
-        /* Cuadrícula de Funciones */
-        .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .menu-item { background: var(--card); border: 1px solid #222; padding: 25px 15px; border-radius: 20px; text-align: center; cursor: pointer; transition: 0.3s; }
-        .menu-item:active { transform: scale(0.95); border-color: var(--gold); }
-        .menu-item span { font-size: 1.8rem; display: block; margin-bottom: 10px; }
-        .menu-item b { font-size: 0.85rem; color: #fff; display: block; text-transform: uppercase; }
-        .menu-item small { font-size: 0.7rem; color: #666; }
+        .logo-group {
+            text-align: left;
+        }
 
-        /* Sección de Notificaciones */
-        .notif-box { margin-top: 30px; background: #1a1500; border: 1px solid #331100; padding: 20px; border-radius: 15px; text-align: center; }
-        
-        /* Botón Salir */
-        .btn-logout { margin-top: 40px; width: 100%; background: none; border: 1px solid #333; color: #555; padding: 10px; border-radius: 10px; cursor: pointer; font-size: 0.7rem; }
+        .logo-group h1 {
+            margin: 0;
+            font-size: 3rem; /* Más visible */
+            color: #FFD700;
+            letter-spacing: 4px;
+            font-weight: 900;
+            line-height: 0.8;
+        }
+
+        .logo-group span {
+            font-size: 1rem;
+            color: #FFF;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .profile-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 2px solid #FFD700;
+            background-color: #222;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.3s;
+            overflow: hidden;
+        }
+
+        .profile-btn:hover {
+            transform: scale(1.1);
+            background-color: #333;
+        }
+
+        /* --- 2. BIENVENIDA Y LOGIN --- */
+        .welcome-section {
+            padding: 30px 40px;
+        }
+
+        .welcome-section h2 {
+            color: #FFD700;
+            margin: 0 0 10px 0;
+            font-size: 1.8rem;
+        }
+
+        .user-info-box {
+            margin-top: 15px;
+        }
+
+        .label-personal {
+            color: #888;
+            font-size: 0.9rem;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .login-badge {
+            display: inline-block;
+            background: #222;
+            padding: 8px 15px;
+            border-radius: 5px;
+            border: 1px solid #444;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        .login-badge strong {
+            color: #FFD700;
+        }
+
+        /* --- BOTÓN CERRAR SESIÓN --- */
+        .logout-container {
+            padding: 0 40px;
+        }
+
+        .btn-logout {
+            color: #ff4d4d;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .btn-logout:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
 
-    <div id="bloqueo-seguridad">
-        <p style="color:var(--gold); font-weight: bold; letter-spacing: 2px;">VERIFICANDO ACCESO MAESTRO...</p>
-    </div>
-
-    <nav>
-        <div class="logo">J.A.D.I</div>
-        <div class="id-badge" id="txt-id">ID: ...</div>
-    </nav>
-
-    <div class="container">
-        <div class="welcome">
-            <h2 id="txt-saludo">Bienvenido, Maestro</h2>
-            <p id="txt-empresa">Cargando datos del taller...</p>
+    <header>
+        <div class="logo-group">
+            <h1>J.A.D.I</h1>
+            <span>REPAIZ</span>
         </div>
 
-        <div class="menu-grid">
-            <div class="menu-item" onclick="alert('Perfil próximamente')">
-                <span>👤</span>
-                <b>Perfil</b>
-                <small>Configurar local</small>
+        <a href="perfil.html" title="Ir a mi perfil">
+            <div class="profile-btn">
+                <span style="font-size: 1.8rem;">👤</span>
             </div>
-            <div class="menu-item" onclick="alert('Inventario próximamente')">
-                <span>📦</span>
-                <b>Inventario</b>
-                <small>Suelas y tintes</small>
-            </div>
-            <div class="menu-item" onclick="alert('Clientes próximamente')">
-                <span>👥</span>
-                <b>Clientes</b>
-                <small>Registro QR</small>
-            </div>
-            <div class="menu-item" onclick="alert('Trabajos próximamente')">
-                <span>🛠️</span>
-                <b>Trabajos</b>
-                <small>Nuevos pedidos</small>
-            </div>
-        </div>
+        </a>
+    </header>
 
-        <div class="notif-box">
-            <p style="color: var(--gold); font-size: 0.8rem; margin: 0; font-weight: bold;">SISTEMA ACTIVO</p>
-            <p style="font-size: 0.7rem; color: #888; margin-top: 5px;">Listo para recibir órdenes del Hospital del Calzado.</p>
-        </div>
-        
-        <button class="btn-logout" onclick="cerrarSesion()">CERRAR SESIÓN MAESTRO</button>
-    </div>
-
-<script>
-    const firebaseConfig = { 
-        apiKey: "AIzaSyAKPxG1osuR9hsj-PsmwJrzK-3W_XM1UyU",
-        authDomain: "jadi-repaiz.firebaseapp.com",
-        databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com",
-        projectId: "jadi-repaiz"
-    };
-    firebase.initializeApp(firebaseConfig);
-
-    const auth = firebase.auth();
-    const db = firebase.database();
-
-    // --- GUARDIA DE SEGURIDAD PARA ZAPATEROS (ZPT) ---
-    auth.onAuthStateChanged(user => {
-        if (user) {
-            // Formateamos el correo como llave (ej: nombre_gmail_com)
-            const userKey = user.email.replace(/[.#$\[\]]/g, "_");
+    <main>
+        <section class="welcome-section">
+            <h2>Bienvenido, Maestro Jesus Eduardo Villa Orozco</h2>
             
-            db.ref('usuarios/' + userKey).once('value', snapshot => {
-                const data = snapshot.val();
-                
-                // CRÍTICO: Verificamos contra el código 'ZPT'
-                if (data && data.rolCodigo === 'ZPT') {
-                    document.getElementById('bloqueo-seguridad').style.display = 'none';
-                    document.getElementById('txt-id').innerText = "ID: " + (data.uid || "ZPT-000");
-                    document.getElementById('txt-saludo').innerText = "Bienvenido, Maestro " + data.nombre;
-                    document.getElementById('txt-empresa').innerText = data.empresaNombre || "Maestro J.A.D.I";
-                } else {
-                    // Si no es ZPT, lo sacamos por seguridad
-                    console.error("Acceso Denegado: Rol no es ZPT");
-                    window.location.href = "index.html";
-                }
-            }).catch(e => {
-                window.location.href = "index.html";
-            });
-        } else {
-            window.location.href = "index.html";
-        }
-    });
+            <div class="user-info-box">
+                <span class="label-personal">Personal</span>
+                <div class="login-badge">
+                    <strong>Usuario Login:</strong> ZPT-2026-X
+                </div>
+            </div>
+        </section>
 
-    function cerrarSesion() {
-        auth.signOut().then(() => {
-            window.location.href = "index.html";
-        });
-    }
-</script>
+        <div class="logout-container">
+            <a href="index.html" class="btn-logout">Cerrar Sesión</a>
+        </div>
+    </main>
+
 </body>
 </html>
