@@ -306,6 +306,55 @@
     //FINALIZA
 }
 }
+    //GUARDAR DATOS CON GOOGLE
+    async function finalizarRegistroGoogle() {
+    const rol = document.getElementById('google-rol').value;
+    const check = document.getElementById('check-terms-google').checked;
+    const nomEmpresa = document.getElementById('google-empresa-nombre').value.trim();
+
+    if(!rol) return alert("Por favor, selecciona un rol.");
+    if(!check) return alert("Debes aceptar los términos y condiciones.");
+
+    toggleLoader(true);
+    try {
+        const t = tempGoogleUser.email.replace(/[.#$\[\]]/g, "_");
+        
+        // Generar UID y Contador
+        const snapCount = await db.ref('contadores/' + rol).once('value');
+        let num = (snapCount.val() || 0) + 1;
+        await db.ref('contadores/' + rol).set(num);
+        
+        // Lógica de Empresa (CCC) si aplica
+        let empID = "SISTEMA_JADI";
+        if(rol === 'PRV' || rol === 'ZPT' || rol === 'SHP') {
+            const snapEmp = await db.ref('Ecosistema_JADI/contador_empresas').once('value');
+            let numEmp = (snapEmp.val() || 0) + 1;
+            await db.ref('Ecosistema_JADI/contador_empresas').set(numEmp);
+            empID = `JD-${obtenerCCC(nomEmpresa || tempGoogleUser.displayName)}-${numEmp.toString().padStart(3, '0')}`;
+        }
+
+        const userObj = {
+            nombre: tempGoogleUser.displayName,
+            telefono: tempGoogleUser.email,
+            rolCodigo: rol,
+            uid: rol + num.toString().padStart(3, '0'),
+            pass: "G_AUTH",
+            empresaID: empID,
+            empresaNombre: nomEmpresa || "Personal",
+            fecha_ingreso: new Date().toLocaleDateString()
+        };
+
+        await db.ref('usuarios/' + t).set(userObj);
+        localStorage.setItem('session_jadi', JSON.stringify(userObj));
+        window.location.href = paginasMaster[rol];
+        
+    } catch (e) {
+        alert("Error al guardar: " + e.message);
+    } finally {
+        toggleLoader(false);
+    }
+}
+    //FINALIZA
 </script>
 </body>
 </html>
