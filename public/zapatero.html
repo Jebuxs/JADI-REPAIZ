@@ -3,88 +3,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>J.A.D.I - Panel Maestro Zapatero</title>
+    <title>J.A.D.I - Hospital del Calzado</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        :root { --gold: #fbc02d; --dark: #0a0a0a; --grey: #1a1a1a; --text: #eee; }
-        body { background: var(--dark); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; }
+        :root { --gold: #fbc02d; --dark: #000; --grey: #121212; --card: #1a1a1a; }
+        body { background: var(--dark); color: #fff; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; }
         
-        /* Pantalla de bloqueo de seguridad */
+        /* Pantalla de Carga de Seguridad */
         #bloqueo-seguridad { position: fixed; inset: 0; background: #000; display: flex; align-items: center; justify-content: center; z-index: 9999; }
-        .loader-text { color: var(--gold); font-weight: bold; letter-spacing: 2px; animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
-
-        /* Header Estilo Premium */
+        
+        /* Navbar */
         nav { background: var(--grey); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--gold); }
-        .logo { color: var(--gold); font-weight: 900; letter-spacing: 2px; font-size: 1.4rem; }
-        .id-badge { background: #333; color: var(--gold); padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: bold; border: 1px solid #444; }
+        .logo { color: var(--gold); font-weight: 900; letter-spacing: 3px; font-size: 1.2rem; }
+        .id-badge { background: #333; color: var(--gold); padding: 5px 10px; border-radius: 5px; font-size: 0.7rem; font-weight: bold; }
 
-        .container { padding: 25px; max-width: 500px; margin: auto; padding-bottom: 100px; }
+        /* Contenido */
+        .container { padding: 20px; max-width: 600px; margin: auto; padding-bottom: 80px; }
+        .welcome { margin-bottom: 25px; border-left: 4px solid var(--gold); padding-left: 15px; }
+        .welcome h2 { margin: 0; font-size: 1.6rem; color: var(--gold); }
+        .welcome p { color: #888; margin: 5px 0; font-size: 0.9rem; }
+
+        /* Cuadrícula de Funciones */
+        .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .menu-item { background: var(--card); border: 1px solid #222; padding: 25px 15px; border-radius: 20px; text-align: center; cursor: pointer; transition: 0.3s; }
+        .menu-item:active { transform: scale(0.95); border-color: var(--gold); }
+        .menu-item span { font-size: 1.8rem; display: block; margin-bottom: 10px; }
+        .menu-item b { font-size: 0.85rem; color: #fff; display: block; text-transform: uppercase; }
+        .menu-item small { font-size: 0.7rem; color: #666; }
+
+        /* Sección de Notificaciones */
+        .notif-box { margin-top: 30px; background: #1a1500; border: 1px solid #331100; padding: 20px; border-radius: 15px; text-align: center; }
         
-        /* Mensaje de Bienvenida */
-        .welcome-card { margin-bottom: 30px; border-left: 4px solid var(--gold); padding-left: 15px; }
-        .welcome-card h2 { margin: 0; font-size: 1.8rem; color: #fff; }
-        .welcome-card p { color: var(--gold); margin: 5px 0; font-size: 1rem; font-weight: 500; }
-
-        /* Botones de Acción Rapida */
-        .grid-acciones { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .card-accion { background: var(--grey); padding: 20px; border-radius: 15px; text-align: center; cursor: pointer; border: 1px solid #222; transition: 0.3s; }
-        .card-accion:hover { border-color: var(--gold); background: #222; }
-        .card-accion i { font-size: 2rem; margin-bottom: 10px; display: block; }
-        .card-accion b { font-size: 0.9rem; display: block; margin-top: 5px; }
-
-        /* Estado del Taller */
-        .status-box { background: #1a1a00; border: 1px solid #332b00; padding: 20px; border-radius: 15px; margin-top: 25px; text-align: center; }
-        .status-title { color: var(--gold); font-size: 0.8rem; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; }
-        
-        /* Botón Cerrar Sesión */
-        .btn-logout { margin-top: 40px; width: 100%; padding: 10px; background: transparent; color: #555; border: 1px solid #333; border-radius: 10px; cursor: pointer; font-size: 0.8rem; }
+        /* Botón Salir */
+        .btn-logout { margin-top: 40px; width: 100%; background: none; border: 1px solid #333; color: #555; padding: 10px; border-radius: 10px; cursor: pointer; font-size: 0.7rem; }
     </style>
 </head>
 <body>
 
     <div id="bloqueo-seguridad">
-        <div class="loader-text">VALIDANDO MAESTRO...</div>
+        <p style="color:var(--gold); font-weight: bold; letter-spacing: 2px;">VERIFICANDO ACCESO MAESTRO...</p>
     </div>
 
     <nav>
         <div class="logo">J.A.D.I</div>
-        <div class="id-badge" id="txt-id">Cargando ID...</div>
+        <div class="id-badge" id="txt-id">ID: ...</div>
     </nav>
 
     <div class="container">
-        <div class="welcome-card">
+        <div class="welcome">
             <h2 id="txt-saludo">Bienvenido, Maestro</h2>
-            <p id="txt-empresa">Hospital del Calzado</p>
+            <p id="txt-empresa">Cargando datos del taller...</p>
         </div>
 
-        <div class="grid-acciones">
-            <div class="card-accion" onclick="alert('Abriendo Trabajos...')">
-                <span>🛠️</span>
-                <b>Trabajos</b>
+        <div class="menu-grid">
+            <div class="menu-item" onclick="alert('Perfil próximamente')">
+                <span>👤</span>
+                <b>Perfil</b>
+                <small>Configurar local</small>
             </div>
-            <div class="card-accion" onclick="alert('Abriendo Clientes...')">
+            <div class="menu-item" onclick="alert('Inventario próximamente')">
+                <span>📦</span>
+                <b>Inventario</b>
+                <small>Suelas y tintes</small>
+            </div>
+            <div class="menu-item" onclick="alert('Clientes próximamente')">
                 <span>👥</span>
                 <b>Clientes</b>
+                <small>Registro QR</small>
             </div>
-            <div class="card-accion" onclick="alert('Abriendo Materiales...')">
-                <span>📦</span>
-                <b>Materiales</b>
-            </div>
-            <div class="card-accion" onclick="window.location.href='perfil.html'">
-                <span>⚙️</span>
-                <b>Mi Local</b>
+            <div class="menu-item" onclick="alert('Trabajos próximamente')">
+                <span>🛠️</span>
+                <b>Trabajos</b>
+                <small>Nuevos pedidos</small>
             </div>
         </div>
 
-        <div class="status-box">
-            <div class="status-title">Estado del Sistema</div>
-            <p style="margin: 0; font-size: 0.85rem;">Maestro, tienes el taller listo para recibir reparaciones.</p>
+        <div class="notif-box">
+            <p style="color: var(--gold); font-size: 0.8rem; margin: 0; font-weight: bold;">SISTEMA ACTIVO</p>
+            <p style="font-size: 0.7rem; color: #888; margin-top: 5px;">Listo para recibir órdenes del Hospital del Calzado.</p>
         </div>
-
-        <button class="btn-logout" onclick="logout()">Cerrar Sesión de Maestro</button>
+        
+        <button class="btn-logout" onclick="cerrarSesion()">CERRAR SESIÓN MAESTRO</button>
     </div>
 
 <script>
@@ -95,44 +96,43 @@
         projectId: "jadi-repaiz"
     };
     firebase.initializeApp(firebaseConfig);
+
     const auth = firebase.auth();
     const db = firebase.database();
 
-    // Verificación de Acceso
+    // --- GUARDIA DE SEGURIDAD PARA ZAPATEROS (ZPT) ---
     auth.onAuthStateChanged(user => {
         if (user) {
-            // Formateamos el correo para buscar en la DB
+            // Formateamos el correo como llave (ej: nombre_gmail_com)
             const userKey = user.email.replace(/[.#$\[\]]/g, "_");
             
             db.ref('usuarios/' + userKey).once('value', snapshot => {
                 const data = snapshot.val();
                 
-                // Verificamos si es ZPT (Zapatero)
+                // CRÍTICO: Verificamos contra el código 'ZPT'
                 if (data && data.rolCodigo === 'ZPT') {
-                    // Quitamos el bloqueo
                     document.getElementById('bloqueo-seguridad').style.display = 'none';
-                    
-                    // Rellenamos los datos reales
-                    document.getElementById('txt-saludo').innerText = "¡Bienvenido, Maestro " + data.nombre + "!";
-                    document.getElementById('txt-id').innerText = "ID: " + (data.uid || "JADI-00");
-                    document.getElementById('txt-empresa').innerText = data.empresaNombre || "Maestro Independiente";
+                    document.getElementById('txt-id').innerText = "ID: " + (data.uid || "ZPT-000");
+                    document.getElementById('txt-saludo').innerText = "Bienvenido, Maestro " + data.nombre;
+                    document.getElementById('txt-empresa').innerText = data.empresaNombre || "Maestro J.A.D.I";
                 } else {
-                    // Si el rol no es Zapatero, lo echamos al login
+                    // Si no es ZPT, lo sacamos por seguridad
+                    console.error("Acceso Denegado: Rol no es ZPT");
                     window.location.href = "index.html";
                 }
+            }).catch(e => {
+                window.location.href = "index.html";
             });
         } else {
-            // Sin sesión iniciada
             window.location.href = "index.html";
         }
     });
 
-    function logout() {
+    function cerrarSesion() {
         auth.signOut().then(() => {
             window.location.href = "index.html";
         });
     }
 </script>
-
 </body>
 </html>
