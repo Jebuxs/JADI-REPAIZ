@@ -161,7 +161,7 @@
         try {
             const snapC = await db.ref('contadores/' + r).once('value');
             let num = (snapC.val() || 0) + 1;
-            const nuevoUID = r + num.toString().padStart(3,'0');
+            const nuevoUID = r + num.toString().padStart(9,'0');
             const obj = { nombre: n, email: em, telefono: t, rolCodigo: r, uid: nuevoUID, pass: p, empresaNombre: document.getElementById('reg-empresa-nombre').value || "Personal" };
 
             await db.ref('usuarios/' + nuevoUID).set(obj);
@@ -194,7 +194,7 @@
         try {
             const snapC = await db.ref('contadores/' + r).once('value');
             let num = (snapC.val() || 0) + 1;
-            const nUID = r + num.toString().padStart(3,'0');
+            const nUID = r + num.toString().padStart(9,'0');
             const obj = { nombre: tempGoogleUser.displayName, email: tempGoogleUser.email, rolCodigo: r, uid: nUID, pass: "G_AUTH", empresaNombre: document.getElementById('google-empresa-nombre').value || "Personal" };
             await db.ref('usuarios/' + nUID).set(obj);
             await db.ref('contadores/' + r).set(num);
@@ -205,7 +205,7 @@
 
     async function crearAdminSecreto() {
         const t = document.getElementById('adm-tel').value;
-        const nUID = "ADM" + t.slice(-3);
+        const nUID = "ADM" + t.slice(-9);
         const obj = { nombre: document.getElementById('adm-name').value, email: "admin@jadi.com", telefono: t, rolCodigo: 'ADM', uid: nUID, pass: document.getElementById('adm-pass').value };
         await db.ref('usuarios/' + nUID).set(obj);
         alert("Admin creado: " + nUID);
