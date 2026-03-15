@@ -161,13 +161,15 @@
             const user = result.user;
             const t = user.email.replace(/[.#$\[\]]/g, "_");
             const snap = await db.ref('usuarios/' + t).once('value');
-            if (snap.exists()) {
-                localStorage.setItem('session_jadi', JSON.stringify(snap.val()));
-                window.location.href = paginasMaster[snap.val().rolCodigo];
-            } else {
-                tempGoogleUser = user; 
-                mostrarVista('view-google-setup');
-            }
+            // Alrededor de la línea 170:
+if(snap.exists() && snap.val().pass === pass) {
+    localStorage.setItem('session_jadi', JSON.stringify(snap.val()));
+    
+    // Esta es la línea clave:
+    window.location.href = paginasMaster[snap.val().rolCodigo]; 
+} else { 
+    alert("Acceso incorrecto"); 
+}
         } catch (error) { alert("Error Google: " + error.message); }
         finally { toggleLoader(false); }
     }
