@@ -6,7 +6,9 @@
     <title>J.A.D.I REPAIZ - Ecosistema</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
     <style>
         :root { --gold: #fbc02d; --dark: #000; --input-bg: #111; }
         body { font-family: -apple-system, sans-serif; background: var(--dark); color: white; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow: hidden; }
@@ -18,13 +20,10 @@
         .sub-brand { color: var(--gold); font-size: 0.8rem; letter-spacing: 5px; margin-top: -10px; text-transform: uppercase; margin-bottom: 30px; }
         .field-group { position: relative; margin-bottom: 12px; }
         .input-field, .select-field { width: 100%; padding: 16px; border: 1px solid #222; border-radius: 12px; background: var(--input-bg); color: white; font-size: 1rem; box-sizing: border-box; outline: none; }
-        .input-field:focus { border-color: var(--gold); }
-        .toggle-pass { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: var(--gold); cursor: pointer; z-index: 10; padding: 5px; }
         .btn-gold { width: 100%; padding: 15px; background: var(--gold); color: #000; border: none; border-radius: 25px; font-size: 1.1rem; font-weight: bold; cursor: pointer; margin-top: 10px; }
         .view { display: none; }
         .active { display: block; animation: fadeIn 0.4s; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        #login-error { color: #ff5252; font-size: 0.8rem; margin-bottom: 10px; }
         .terms { font-size: 0.7rem; color: #666; margin: 15px 0; }
     </style>
 </head>
@@ -33,16 +32,13 @@
 <div id="loader"><div class="spinner"></div><p style="color:var(--gold); margin-top:10px;">Procesando...</p></div>
 
 <div class="container">
+    
     <div id="view-login" class="view active">
         <h1 class="brand">J.A.D.I</h1>
         <div class="sub-brand">REPAIZ</div>
-        <div id="login-error"></div>
-        <div class="field-group">
-            <input type="text" id="login-input" class="input-field" placeholder="ID o Celular">
-        </div>
+        <div class="field-group"><input type="text" id="login-input" class="input-field" placeholder="ID o Celular"></div>
         <div class="field-group">
             <input type="password" id="login-pass" class="input-field" placeholder="Contraseña">
-            <i class="fas fa-eye toggle-pass" onclick="toggleView('login-pass')"></i>
         </div>
         <button class="btn-gold" onclick="login()">Entrar</button>
         <p onclick="mostrarVista('view-register')" style="color:#555; cursor:pointer; margin-top:30px; font-size: 0.9rem;">Crear empresa o cuenta</p>
@@ -52,7 +48,7 @@
         <h2 style="color:var(--gold)">Nuevo Registro</h2>
         <input type="text" id="reg-name" class="input-field" placeholder="Nombre Completo" style="margin-bottom:12px">
         <input type="tel" id="reg-tel" class="input-field" placeholder="Celular (Acceso)" style="margin-bottom:12px">
-        <select id="reg-rol" class="select-field" style="margin-bottom:12px" onchange="verificarRolEmpresa()">
+        <select id="reg-rol" class="select-field" style="margin-bottom:12px" onchange="verificarRolEmpresa('reg-rol','box-empresa')">
             <option value="" disabled selected>¿Qué quieres hacer?</option>
             <option value="PRV">Soy Proveedor (Venta de Materiales)</option>
             <option value="ZPT">Soy Maestro Zapatero (Taller)</option>
@@ -63,106 +59,82 @@
         <div id="box-empresa" style="display:none; border:1px solid #333; padding:10px; border-radius:12px; margin-bottom:12px">
             <input type="text" id="reg-empresa-nombre" class="input-field" placeholder="Nombre de tu Local">
         </div>
-        <div class="field-group">
-            <input type="password" id="reg-pass" class="input-field" placeholder="Contraseña">
-            <i class="fas fa-eye toggle-pass" onclick="toggleView('reg-pass')"></i>
-        </div>
-        <div class="field-group">
-            <input type="password" id="reg-confirm" class="input-field" placeholder="Confirmar Contraseña">
-            <i class="fas fa-eye toggle-pass" onclick="toggleView('reg-confirm')"></i>
-        </div>
+        <input type="password" id="reg-pass" class="input-field" placeholder="Contraseña" style="margin-bottom:12px">
+        <input type="password" id="reg-confirm" class="input-field" placeholder="Confirmar Contraseña">
         <div class="terms"><input type="checkbox" id="check-terms"> Acepto términos J.A.D.I</div>
+        
         <button class="btn-gold" onclick="validarYCrearEcosistema()">Registrarme</button>
-     <button class="btn-google" onclick="registroConGoogle()" style="width: 100%; padding: 12px; background: white; color: #444; border: 1px solid #ddd; border-radius: 25px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 15px; display: flex; align-items: center; justify-content: center; gap: 10px;">
-    <img src="https://www.google.com/images/branding/product/2x/googleg_32dp.png" alt="G" style="width:20px;">
-    Registrarme con Google
-</button>
-<p onclick="mostrarVista('view-login')" style="color:#555; cursor:pointer; margin-top:15px;">Volver</p>
+        
+        <button class="btn-google" onclick="registroConGoogle()" style="width: 100%; padding: 12px; background: white; color: #444; border: 1px solid #ddd; border-radius: 25px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 15px; display: flex; align-items: center; justify-content: center; gap: 10px;">
+            <img src="https://www.google.com/images/branding/product/2x/googleg_32dp.png" alt="G" style="width:20px;">
+            Registrarme con Google
+        </button>
+        <p onclick="mostrarVista('view-login')" style="color:#555; cursor:pointer; margin-top:15px;">Volver</p>
+    </div>
+
+    <div id="view-google-setup" class="view">
+        <h2 style="color:var(--gold)">Ya casi estás dentro</h2>
+        <p style="font-size:0.9rem; color:#888;">Selecciona tu rol para terminar:</p>
+        <select id="google-rol" class="select-field" style="margin-bottom:12px" onchange="verificarRolEmpresa('google-rol','box-empresa-google')">
+            <option value="" disabled selected>Selecciona tu Rol</option>
+            <option value="PRV">Soy Proveedor</option>
+            <option value="ZPT">Maestro Zapatero</option>
+            <option value="SHP">Soy Tienda</option>
+            <option value="CLN">Cliente</option>
+            <option value="DLV">Delivery</option>
+        </select>
+        <div id="box-empresa-google" style="display:none; border:1px solid #333; padding:10px; border-radius:12px; margin-bottom:12px">
+            <input type="text" id="google-empresa-nombre" class="input-field" placeholder="Nombre de tu Local">
+        </div>
+        <div class="terms"><input type="checkbox" id="check-terms-google"> Acepto términos y condiciones J.A.D.I</div>
+        <button class="btn-gold" onclick="finalizarRegistroGoogle()">Continuar</button>
     </div>
 
     <div id="view-admin-secret" class="view">
         <h1 class="brand" style="font-size: 2.5rem;">ADMIN</h1>
-        <div class="sub-brand">MAESTRO J.A.D.I</div>
-        <div class="field-group"><input type="text" id="adm-name" class="input-field" placeholder="Nombre Admin"></div>
-        <div class="field-group"><input type="tel" id="adm-tel" class="input-field" placeholder="Celular Maestro"></div>
-        <div class="field-group">
-            <input type="password" id="adm-pass" class="input-field" placeholder="Contraseña">
-            <i class="fas fa-eye toggle-pass" onclick="toggleView('adm-pass')"></i>
-        </div>
+        <input type="text" id="adm-name" class="input-field" placeholder="Nombre Admin" style="margin-bottom:12px">
+        <input type="tel" id="adm-tel" class="input-field" placeholder="Celular Maestro" style="margin-bottom:12px">
+        <input type="password" id="adm-pass" class="input-field" placeholder="Contraseña">
         <button class="btn-gold" onclick="crearAdminSecreto()">REGISTRAR ADMIN</button>
         <p onclick="mostrarVista('view-login')" style="color:#555; cursor:pointer; margin-top:20px;">Cerrar</p>
     </div>
-    //LISTADO DE ROLES ALPRECIONAR REGISTRAR CON GOOGLE
-    <div id="view-google-setup" class="view">
-    <h2 style="color:var(--gold)">Ya casi estás dentro</h2>
-    <p style="font-size:0.9rem; color:#888;">Para finalizar, dinos quién eres:</p>
-    
-    <select id="google-rol" class="select-field" style="margin-bottom:12px" onchange="const r=this.value; document.getElementById('box-empresa-google').style.display=(r==='PRV'||r==='ZPT'||r==='SHP')?'block':'none';">
-        <option value="" disabled selected>Selecciona tu Rol</option>
-        <option value="PRV">Soy Proveedor (Materiales)</option>
-        <option value="ZPT">Maestro Zapatero (Taller)</option>
-        <option value="SHP">Soy Tienda (Venta de Calzado)</option>
-        <option value="CLN">Soy Cliente (Usuario)</option>
-        <option value="DLV">Soy Delivery (Transporte)</option>
-    </select>
 
-    <div id="box-empresa-google" style="display:none; border:1px solid #333; padding:10px; border-radius:12px; margin-bottom:12px">
-        <input type="text" id="google-empresa-nombre" class="input-field" placeholder="Nombre de tu Local">
-    </div>
-
-    <div class="terms" style="margin-top:20px;">
-        <input type="checkbox" id="check-terms-google"> Acepto términos y condiciones J.A.D.I
-    </div>
-
-    <button class="btn-gold" onclick="finalizarRegistroGoogle()">Continuar</button>
-</div>
 </div>
 
 <script>
-    // FIREBASE CONFIG
+    // --- CONFIGURACIÓN E INICIALIZACIÓN ---
     const firebaseConfig = {
         apiKey: "AIzaSyAKPxG1osuR9hsj-PsmwJrzK-3W_XM1UyU",
+        authDomain: "jadi-repaiz.firebaseapp.com",
         databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com",
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
+    const auth = firebase.auth();
+    let tempGoogleUser = null;
 
-    // RUTAS
-    const paginasMaster = { 
-        'ZPT': 'zapatero.html', 
-        'PRV': 'proveedor.html', 
-        'CLN': 'cliente.html', 
-        'DLV': 'delivery.html', 
-        'ADM': 'admin_panel.html' 
-    };
+    const paginasMaster = { 'ZPT': 'zapatero.html', 'PRV': 'proveedor.html', 'CLN': 'cliente.html', 'DLV': 'delivery.html', 'SHP': 'tienda.html', 'ADM': 'admin_panel.html' };
 
-    // COMANDO SECRETO: CTRL + ALT + J
-    window.addEventListener('keydown', function(e) {
+    // --- COMANDO SECRETO ---
+    window.addEventListener('keydown', (e) => {
         if (e.ctrlKey && e.altKey && e.key.toLowerCase() === 'j') {
             e.preventDefault();
             mostrarVista('view-admin-secret');
         }
     });
 
-    // FUNCIONES GLOBALES
+    // --- FUNCIONES DE INTERFAZ ---
     function toggleLoader(show) { document.getElementById('loader').style.display = show ? 'flex' : 'none'; }
-    
     function mostrarVista(id) {
         document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-        const v = document.getElementById(id);
-        if(v) v.classList.add('active');
+        document.getElementById(id).classList.add('active');
+    }
+    function verificarRolEmpresa(selectId, boxId) {
+        const rol = document.getElementById(selectId).value;
+        document.getElementById(boxId).style.display = (rol === 'PRV' || rol === 'ZPT' || rol === 'SHP') ? 'block' : 'none';
     }
 
-    function toggleView(id) {
-        const input = document.getElementById(id);
-        if(input) input.type = input.type === "password" ? "text" : "password";
-    }
-
-    function verificarRolEmpresa() {
-        const rol = document.getElementById('reg-rol').value;
-        document.getElementById('box-empresa').style.display = (rol === 'PRV' || rol === 'ZPT') ? 'block' : 'none';
-    }
-
+    // --- LÓGICA DE NEGOCIO (CCC) ---
     function obtenerCCC(nombre) {
         const limpio = nombre.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
         const palabras = limpio.split(/\s+/).filter(p => p.length > 0);
@@ -180,181 +152,96 @@
         return ccc;
     }
 
-    // REGISTRO CORREGIDO
+    // --- REGISTRO CON GOOGLE ---
+    async function registroConGoogle() {
+        toggleLoader(true);
+        try {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            const result = await auth.signInWithPopup(provider);
+            const user = result.user;
+            const t = user.email.replace(/[.#$\[\]]/g, "_");
+            const snap = await db.ref('usuarios/' + t).once('value');
+            if (snap.exists()) {
+                localStorage.setItem('session_jadi', JSON.stringify(snap.val()));
+                window.location.href = paginasMaster[snap.val().rolCodigo];
+            } else {
+                tempGoogleUser = user; 
+                mostrarVista('view-google-setup');
+            }
+        } catch (error) { alert("Error Google: " + error.message); }
+        finally { toggleLoader(false); }
+    }
+
+    async function finalizarRegistroGoogle() {
+        const r = document.getElementById('google-rol').value;
+        const check = document.getElementById('check-terms-google').checked;
+        const nom = document.getElementById('google-empresa-nombre').value.trim();
+        if(!r || !check) return alert("Completa el rol y acepta los términos.");
+        toggleLoader(true);
+        try {
+            const t = tempGoogleUser.email.replace(/[.#$\[\]]/g, "_");
+            const snapC = await db.ref('contadores/' + r).once('value');
+            let num = (snapC.val() || 0) + 1;
+            await db.ref('contadores/' + r).set(num);
+            let empID = "SISTEMA_JADI";
+            if(['PRV','ZPT','SHP'].includes(r)){
+                const snapE = await db.ref('Ecosistema_JADI/contador_empresas').once('value');
+                let nE = (snapE.val() || 0) + 1;
+                await db.ref('Ecosistema_JADI/contador_empresas').set(nE);
+                empID = `JD-${obtenerCCC(nom)}-${nE.toString().padStart(3, '0')}`;
+            }
+            const obj = { nombre: tempGoogleUser.displayName, telefono: tempGoogleUser.email, rolCodigo: r, uid: r+num.toString().padStart(3,'0'), pass: "G_AUTH", empresaID: empID, empresaNombre: nom || "Personal", fecha_ingreso: new Date().toLocaleDateString() };
+            await db.ref('usuarios/' + t).set(obj);
+            localStorage.setItem('session_jadi', JSON.stringify(obj));
+            window.location.href = paginasMaster[r];
+        } catch(e) { alert(e.message); }
+        finally { toggleLoader(false); }
+    }
+
+    // --- LOGIN MANUAL ---
+    async function login() {
+        const input = document.getElementById('login-input').value.trim();
+        const pass = document.getElementById('login-pass').value;
+        toggleLoader(true);
+        try {
+            const t = input.replace(/\D/g,'');
+            const snap = await db.ref('usuarios/' + t).once('value');
+            if(snap.exists() && snap.val().pass === pass) {
+                localStorage.setItem('session_jadi', JSON.stringify(snap.val()));
+                window.location.href = paginasMaster[snap.val().rolCodigo];
+            } else { alert("Acceso incorrecto"); }
+        } catch(e) { alert("Error de red"); }
+        finally { toggleLoader(false); }
+    }
+
+    // --- REGISTRO MANUAL ---
     async function validarYCrearEcosistema() {
         const n = document.getElementById('reg-name').value.trim();
         const t = document.getElementById('reg-tel').value.replace(/\D/g,'');
         const r = document.getElementById('reg-rol').value;
         const p = document.getElementById('reg-pass').value;
-        const c = document.getElementById('reg-confirm').value;
-        const nomEmpresa = document.getElementById('reg-empresa-nombre').value.trim();
-        const fechaHoy = new Date().toLocaleDateString();
-
-        if(!n || !t || !r || !p || p!==c || !document.getElementById('check-terms').checked) {
-            return alert("Faltan datos o las claves no coinciden.");
-        }
-
+        const nomE = document.getElementById('reg-empresa-nombre').value.trim();
+        if(!n || !t || !r || !p || !document.getElementById('check-terms').checked) return alert("Faltan datos");
         toggleLoader(true);
         try {
-            const snapUser = await db.ref('usuarios/' + t).once('value');
-            if(snapUser.exists()) {
-                toggleLoader(false);
-                return alert("Este número ya está registrado.");
-            }
-
-            let empresaID = "SISTEMA_JADI"; 
-            if(r === 'PRV' || r === 'ZPT') {
-                const snapEmp = await db.ref('Ecosistema_JADI/contador_empresas').once('value');
-                let numEmp = (snapEmp.val() || 0) + 1;
-                await db.ref('Ecosistema_JADI/contador_empresas').set(numEmp);
-                const ccc = obtenerCCC(nomEmpresa);
-                empresaID = `JD-${ccc}-${numEmp.toString().padStart(3, '0')}`;
-
-                // SE GUARDAN DATOS DE EMPRESA
-                await db.ref('Ecosistema_JADI/Config_Empresas/' + empresaID).set({
-                    nombre: nomEmpresa, dueño: n, id: empresaID, fecha_creacion: fechaHoy
-                });
-            }
-
-            const snapCount = await db.ref('contadores/' + r).once('value');
-            let num = (snapCount.val() || 0) + 1;
+            const snapC = await db.ref('contadores/' + r).once('value');
+            let num = (snapC.val() || 0) + 1;
             await db.ref('contadores/' + r).set(num);
-            const idUnico = r + num.toString().padStart(3, '0');
-
-            const userObj = { 
-                nombre: n, telefono: t, rolCodigo: r, uid: idUnico, 
-                pass: p, empresaID: empresaID, empresaNombre: nomEmpresa || "Personal", 
-                fecha_ingreso: fechaHoy 
-            };
-
-            await db.ref('usuarios/' + t).set(userObj);
-            toggleLoader(false);
-            alert("ID Generado: " + idUnico);
-            localStorage.setItem('session_jadi', JSON.stringify(userObj));
+            const obj = { nombre: n, telefono: t, rolCodigo: r, uid: r+num.toString().padStart(3,'0'), pass: p, empresaNombre: nomE || "Personal", fecha_ingreso: new Date().toLocaleDateString() };
+            await db.ref('usuarios/' + t).set(obj);
+            localStorage.setItem('session_jadi', JSON.stringify(obj));
             window.location.href = paginasMaster[r];
-        } catch(e) { toggleLoader(false); alert("Error: " + e.message); }
-    }
-
-    // LOGIN DUAL
-    async function login() {
-        const input = document.getElementById('login-input').value.trim();
-        const pass = document.getElementById('login-pass').value;
-        if(!input || !pass) return alert("Datos incompletos.");
-
-        toggleLoader(true);
-        try {
-            let user = null;
-            const t = input.replace(/\D/g,'');
-
-            if (t.length >= 7) {
-                const snap = await db.ref('usuarios/' + t).once('value');
-                if (snap.exists()) user = snap.val();
-            }
-
-            if (!user) {
-                const snapID = await db.ref('usuarios').orderByChild('uid').equalTo(input.toUpperCase()).once('value');
-                if (snapID.exists()) {
-                    const data = snapID.val();
-                    user = data[Object.keys(data)[0]];
-                }
-            }
-
-            toggleLoader(false);
-            if(user && user.pass === pass) {
-                localStorage.setItem('session_jadi', JSON.stringify(user));
-                window.location.href = paginasMaster[user.rolCodigo] || 'index.html';
-            } else { alert("Credenciales incorrectas"); }
-        } catch(e) { toggleLoader(false); alert("Error de red"); }
+        } catch(e) { alert(e.message); }
+        finally { toggleLoader(false); }
     }
 
     async function crearAdminSecreto() {
         const n = document.getElementById('adm-name').value;
         const t = document.getElementById('adm-tel').value.replace(/\D/g,'');
         const p = document.getElementById('adm-pass').value;
-        toggleLoader(true);
-        const obj = { nombre: n, telefono: t, rolCodigo: 'ADM', pass: p, empresaID: "JADI-CORP", uid: "ADM"+t.slice(-3) };
-        await db.ref('usuarios/' + t).set(obj);
-        toggleLoader(false);
+        await db.ref('usuarios/' + t).set({ nombre: n, telefono: t, rolCodigo: 'ADM', pass: p, uid: "ADM"+t.slice(-3) });
         mostrarVista('view-login');
     }
-    // AL PRECIONAR EL BOTON REGISTRO CON GOOGLE async function registroConGoogle() {
-  async function registroConGoogle() {
-    toggleLoader(true);
-    try {
-        const provider = new firebase.auth.GoogleAuthProvider();
-        const result = await auth.signInWithPopup(provider);
-        const user = result.user;
-        const t = user.email.replace(/[.#$\[\]]/g, "_");
-        
-        const snap = await db.ref('usuarios/' + t).once('value');
-        
-        if (snap.exists()) {
-            // Si ya existe, entra de una
-            localStorage.setItem('session_jadi', JSON.stringify(snap.val()));
-            window.location.href = paginasMaster[snap.val().rolCodigo];
-        } else {
-            // Si es nuevo, guardamos el usuario y mostramos la nueva pantalla
-            tempGoogleUser = user; 
-            mostrarVista('view-google-setup');
-        }
-    } catch (error) {
-        alert("Error: " + error.message);
-    } finally {
-        toggleLoader(false);
-    }
-}
-    //FINALIZA
-}
-}
-    //GUARDAR DATOS CON GOOGLE
-    async function finalizarRegistroGoogle() {
-    const rol = document.getElementById('google-rol').value;
-    const check = document.getElementById('check-terms-google').checked;
-    const nomEmpresa = document.getElementById('google-empresa-nombre').value.trim();
-
-    if(!rol) return alert("Por favor, selecciona un rol.");
-    if(!check) return alert("Debes aceptar los términos y condiciones.");
-
-    toggleLoader(true);
-    try {
-        const t = tempGoogleUser.email.replace(/[.#$\[\]]/g, "_");
-        
-        // Generar UID y Contador
-        const snapCount = await db.ref('contadores/' + rol).once('value');
-        let num = (snapCount.val() || 0) + 1;
-        await db.ref('contadores/' + rol).set(num);
-        
-        // Lógica de Empresa (CCC) si aplica
-        let empID = "SISTEMA_JADI";
-        if(rol === 'PRV' || rol === 'ZPT' || rol === 'SHP') {
-            const snapEmp = await db.ref('Ecosistema_JADI/contador_empresas').once('value');
-            let numEmp = (snapEmp.val() || 0) + 1;
-            await db.ref('Ecosistema_JADI/contador_empresas').set(numEmp);
-            empID = `JD-${obtenerCCC(nomEmpresa || tempGoogleUser.displayName)}-${numEmp.toString().padStart(3, '0')}`;
-        }
-
-        const userObj = {
-            nombre: tempGoogleUser.displayName,
-            telefono: tempGoogleUser.email,
-            rolCodigo: rol,
-            uid: rol + num.toString().padStart(3, '0'),
-            pass: "G_AUTH",
-            empresaID: empID,
-            empresaNombre: nomEmpresa || "Personal",
-            fecha_ingreso: new Date().toLocaleDateString()
-        };
-
-        await db.ref('usuarios/' + t).set(userObj);
-        localStorage.setItem('session_jadi', JSON.stringify(userObj));
-        window.location.href = paginasMaster[rol];
-        
-    } catch (e) {
-        alert("Error al guardar: " + e.message);
-    } finally {
-        toggleLoader(false);
-    }
-}
-    //FINALIZA
 </script>
 </body>
 </html>
