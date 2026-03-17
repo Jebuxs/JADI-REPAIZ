@@ -3,109 +3,287 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Info Usuario - J.A.D.I</title>
+    <title>Perfil Usuario - J.A.D.I</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
     <style>
-        body {
-            background-color: #000;
-            color: white;
-            font-family: 'Segoe UI', sans-serif;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            text-align: center;
-        }
+        :root { --gold: #FFD700; --dark: #000; --card: #0a0a0a; }
+        body { background-color: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding-bottom: 50px; }
+        
+        /* Contenedor Principal */
+        .container { display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .info-box { border: 1px solid var(--gold); padding: 30px; border-radius: 15px; background: var(--card); width: 90%; max-width: 400px; box-shadow: 0 4px 15px rgba(255, 215, 0, 0.1); }
+        
+        h1, h2, h3 { color: var(--gold); }
+        h1 { font-size: 1.5rem; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        
+        .dato-group { text-align: left; margin-bottom: 15px; }
+        label { display: block; font-size: 0.7rem; color: var(--gold); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+        .valor { font-size: 1rem; color: #fff; }
 
-        .info-box {
-            border: 1px solid #FFD700;
-            padding: 30px;
-            border-radius: 15px;
-            background: #0a0a0a;
-            width: 320px;
-            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.1);
+        /* Pantalla de Edición (Overlay) */
+        #pantalla-edicion { 
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: var(--dark); z-index: 1000; overflow-y: auto; padding: 20px; box-sizing: border-box;
         }
+        .header-edit { text-align: center; }
+        .no-editable { color: #888; font-size: 0.9rem; margin: 2px 0; }
+        
+        /* Inputs Estilizados */
+        input { width: 100%; padding: 12px; margin-bottom: 15px; background: #111; border: 1px solid #333; color: white; border-radius: 8px; box-sizing: border-box; }
+        input:disabled { background: #050505; color: #666; border-color: #222; }
 
-        h1 { color: #FFD700; font-size: 1.5rem; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        /* Botones */
+        .btn { padding: 10px 20px; border-radius: 5px; cursor: pointer; text-decoration: none; font-size: 0.9rem; font-weight: bold; border: 1px solid var(--gold); transition: 0.3s; margin: 5px; }
+        .btn-gold { background: var(--gold); color: #000; }
+        .btn-outline { background: transparent; color: var(--gold); }
+        .btn-full { width: 100%; margin: 10px 0; }
 
-        .dato-group {
-            text-align: left;
-            margin-bottom: 15px;
-        }
+        /* Mapa */
+        #mapa { height: 250px; width: 100%; border-radius: 10px; margin: 10px 0; border: 1px solid #333; }
 
-        label {
-            display: block;
-            font-size: 0.7rem;
-            color: #FFD700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .valor {
-            font-size: 1rem;
-            color: #fff;
-            word-break: break-all;
-        }
-
-        .btn-regresar {
-            margin-top: 20px;
-            display: inline-block;
-            color: #FFD700;
-            text-decoration: none;
-            font-size: 0.9rem;
-            border: 1px solid #FFD700;
-            padding: 8px 20px;
-            border-radius: 5px;
-            transition: 0.3s;
-        }
-
-        .btn-regresar:hover {
-            background: #FFD700;
-            color: #000;
-        }
+        /* Password Wrapper (Ojos de pollo) */
+        .pass-wrapper { position: relative; }
+        .ojo-pollo { position: absolute; right: 10px; top: 12px; color: var(--gold); cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <div class="info-box">
-        <h1>Datos de Sesión</h1>
+    <div class="container" id="vista-perfil">
+        <div class="info-box">
+            <h1>Datos de Sesión</h1>
+            <div class="dato-group"><label>Nombre del Usuario</label><div id="info-nombre" class="valor">Cargando...</div></div>
+            <div class="dato-group"><label>Correo Electrónico</label><div id="info-correo" class="valor">Cargando...</div></div>
+            <div class="dato-group"><label>ID Único (UID)</label><div id="info-uid" class="valor" style="color: var(--gold);">Cargando...</div></div>
+            
+            <div style="display: flex; justify-content: center; gap: 10px;">
+                <a href="javascript:history.back()" class="btn btn-outline">← VOLVER</a>
+                <button onclick="abrirEdicion()" class="btn btn-gold">EDITAR</button>
+            </div>
+        </div>
+    </div>
 
-        <div class="dato-group">
-            <label>Nombre del Usuario</label>
-            <div id="info-nombre" class="valor">Cargando...</div>
+    <div id="pantalla-edicion">
+        <div class="header-edit">
+            <h2 id="ed-local-header">Nombre del Local</h2>
+            <p id="ed-user-header" class="no-editable">Usuario</p>
+            <p id="ed-mail-header" class="no-editable">correo@ejemplo.com</p>
+            <hr style="border: 0; border-top: 1px solid #333; margin: 20px 0;">
+            <h3 style="text-align: left;">Datos para editar</h3>
         </div>
 
-        <div class="dato-group">
-            <label>Correo Electrónico</label>
-            <div id="info-correo" class="valor">Cargando...</div>
-        </div>
+        <label>Nombre Completo</label>
+        <input type="text" id="edit-nombre">
 
-        <div class="dato-group">
-            <label>ID Único (UID)</label>
-            <div id="info-uid" class="valor" style="font-family: monospace; color: #fbc02d;">Cargando...</div>
-        </div>
+        <label>Nombre del Local</label>
+        <input type="text" id="edit-local">
+
+        <label>Número Telefónico Fijo</label>
+        <input type="tel" id="edit-fijo">
+
+        <label>WhatsApp</label>
+        <input type="tel" id="edit-ws">
+
+        <label>CI o RUC</label>
+        <input type="text" id="edit-ruc">
+
+        <label>Logotipo del Local (URL)</label>
+        <input type="text" id="edit-logo" placeholder="Link de la imagen">
+
+        <label>Ubicación del Local</label>
+        <div id="mapa"></div>
+        <button id="btn-capturar-ubicacion" class="btn btn-gold btn-full" onclick="toggleMapa()">Capturar Ubicación</button>
+
+        <hr style="border: 0; border-top: 1px solid #333; margin: 20px 0;">
+
+        <h3>Seguridad</h3>
+        <label>Usuario 1 (Teléfono)</label>
+        <input type="text" id="u1" disabled>
         
-        <a href="javascript:history.back()" class="btn-regresar">← VOLVER</a>
+        <label>Usuario 2 (UID)</label>
+        <input type="text" id="u2" disabled>
+
+        <div id="box-pass-antigua" style="display:none;">
+            <label>Contraseña Antigua</label>
+            <div class="pass-wrapper">
+                <input type="password" id="pass-antigua">
+                <i class="fa fa-eye ojo-pollo" onclick="togglePass('pass-antigua')"></i>
+            </div>
+        </div>
+
+        <label>Contraseña Nueva</label>
+        <div class="pass-wrapper">
+            <input type="password" id="pass-nueva">
+            <i class="fa fa-eye ojo-pollo" onclick="togglePass('pass-nueva')"></i>
+        </div>
+
+        <label>Confirmación</label>
+        <div class="pass-wrapper">
+            <input type="password" id="pass-confirm">
+            <i class="fa fa-eye ojo-pollo" onclick="togglePass('pass-confirm')"></i>
+        </div>
+
+        <button id="btn-guardar-pass" class="btn btn-gold btn-full" onclick="toggleEdicionPass()">Guardar Contraseña</button>
+        <p style="font-size: 0.8rem; color: #888;">¿Olvidaste tu contraseña? Contacte a soporte.</p>
+
+        <div style="display: flex; gap: 10px; margin-top: 30px;">
+            <button onclick="cerrarEdicion()" class="btn btn-outline btn-full">CANCELAR</button>
+            <button onclick="guardarTodo()" class="btn btn-gold btn-full">GUARDAR TODO</button>
+        </div>
     </div>
 
     <script>
-        // Función para cargar los datos desde la sesión local
+        // Configuración Firebase (Asegúrate de que coincida con tu index)
+        const firebaseConfig = { databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com" };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        let session = JSON.parse(localStorage.getItem('session_jadi'));
+        let mapa, marker;
+        let mapaBloqueado = false;
+        let passBloqueada = false;
+
         window.onload = function() {
-            // Buscamos la sesión que guardamos en los pasos anteriores
-            const session = JSON.parse(localStorage.getItem('session_jadi'));
-
-            if (session) {
-                document.getElementById('info-nombre').innerText = session.nombre || "No registrado";
-                document.getElementById('info-correo').innerText = session.email || "No registrado";
-                document.getElementById('info-uid').innerText = session.uid || "No generado";
-            } else {
-                document.getElementById('info-nombre').innerText = "Sin sesión";
-                document.getElementById('info-correo').innerText = "Inicie sesión";
-                document.getElementById('info-uid').innerText = "---";
-            }
+            if (!session) { window.location.href = "index.html"; return; }
+            cargarDatosVista();
         };
-    </script>
 
+        function cargarDatosVista() {
+            document.getElementById('info-nombre').innerText = session.nombre || "---";
+            document.getElementById('info-correo').innerText = session.email || "---";
+            document.getElementById('info-uid').innerText = session.uid || "---";
+        }
+
+        function abrirEdicion() {
+            document.getElementById('pantalla-edicion').style.display = 'block';
+            
+            // Cargar Header
+            document.getElementById('ed-local-header').innerText = session.empresaNombre || "Sin Local";
+            document.getElementById('ed-user-header').innerText = session.nombre;
+            document.getElementById('ed-mail-header').innerText = session.email;
+
+            // Cargar Inputs
+            document.getElementById('edit-nombre').value = session.nombre || "";
+            document.getElementById('edit-local').value = session.empresaNombre || "";
+            document.getElementById('edit-fijo').value = session.fijo || "";
+            document.getElementById('edit-ws').value = session.telefono || "";
+            document.getElementById('edit-ruc').value = session.ruc || "";
+            document.getElementById('edit-logo').value = session.logo || "";
+
+            // Cargar Seguridad
+            document.getElementById('u1').value = session.telefono || "";
+            document.getElementById('u2').value = session.uid || "";
+
+            // Lógica primera vez vs segunda vez contraseña
+            if (session.passEditada) {
+                document.getElementById('box-pass-antigua').style.display = 'block';
+            }
+
+            initMapa();
+        }
+
+        function cerrarEdicion() {
+            document.getElementById('pantalla-edicion').style.display = 'none';
+        }
+
+        function togglePass(id) {
+            const input = document.getElementById(id);
+            input.type = input.type === "password" ? "text" : "password";
+        }
+
+        // --- LOGICA MAPA ---
+        function initMapa() {
+            const latIni = session.lat || -0.1807;
+            const lngIni = session.lng || -78.4678;
+
+            if (mapa) mapa.remove(); // Limpiar si ya existe
+
+            mapa = L.map('mapa').setView([latIni, lngIni], 15);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapa);
+            marker = L.marker([latIni, lngIni], { draggable: true }).addTo(mapa);
+
+            if (session.lat) { // Si ya tiene ubicación guardada
+                mapaBloqueado = true;
+                marker.dragging.disable();
+                document.getElementById('btn-capturar-ubicacion').innerText = "Editar Ubicación";
+            } else {
+                mapaBloqueado = false;
+                document.getElementById('btn-capturar-ubicacion').innerText = "Capturar Ubicación";
+            }
+        }
+
+        function toggleMapa() {
+            const btn = document.getElementById('btn-capturar-ubicacion');
+            if (mapaBloqueado) {
+                marker.dragging.enable();
+                btn.innerText = "Capturar Ubicación";
+                mapaBloqueado = false;
+            } else {
+                marker.dragging.disable();
+                const pos = marker.getLatLng();
+                session.tempLat = pos.lat;
+                session.tempLng = pos.lng;
+                btn.innerText = "Editar Ubicación";
+                mapaBloqueado = true;
+                alert("Ubicación congelada");
+            }
+        }
+
+        // --- LOGICA PASSWORD ---
+        function toggleEdicionPass() {
+            const btn = document.getElementById('btn-guardar-pass');
+            const in1 = document.getElementById('pass-nueva');
+            const in2 = document.getElementById('pass-confirm');
+            const in3 = document.getElementById('pass-antigua');
+
+            if (passBloqueada) {
+                in1.disabled = false; in2.disabled = false; in3.disabled = false;
+                btn.innerText = "Guardar Contraseña";
+                passBloqueada = false;
+            } else {
+                if (in1.value !== in2.value) { alert("Las contraseñas no coinciden"); return; }
+                in1.disabled = true; in2.disabled = true; in3.disabled = true;
+                btn.innerText = "Editar Contraseña";
+                passBloqueada = true;
+                alert("Contraseña congelada temporalmente");
+            }
+        }
+
+        async function guardarTodo() {
+            if (!mapaBloqueado) { alert("Por favor capture su ubicación en el mapa"); return; }
+            
+            const updates = {
+                nombre: document.getElementById('edit-nombre').value,
+                empresaNombre: document.getElementById('edit-local').value,
+                fijo: document.getElementById('edit-fijo').value,
+                telefono: document.getElementById('edit-ws').value,
+                ruc: document.getElementById('edit-ruc').value,
+                logo: document.getElementById('edit-logo').value,
+                lat: marker.getLatLng().lat,
+                lng: marker.getLatLng().lng
+            };
+
+            // Si se cambió pass
+            if (passBloqueada && document.getElementById('pass-nueva').value !== "") {
+                updates.pass = document.getElementById('pass-nueva').value;
+                updates.passEditada = true;
+            }
+
+            try {
+                await db.ref('usuarios/' + session.uid).update(updates);
+                // Actualizar sesión local
+                Object.assign(session, updates);
+                localStorage.setItem('session_jadi', JSON.stringify(session));
+                alert("¡Datos actualizados correctamente!");
+                location.reload();
+            } catch (e) {
+                alert("Error al guardar: " + e.message);
+            }
+        }
+    </script>
 </body>
 </html>
