@@ -10,25 +10,38 @@
     <style>
         :root { --gold: #FFD700; --dark: #000; --card: #111; }
         body { background: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding-bottom: 80px; }
+        
         .header { padding: 15px; border-bottom: 1px solid #222; display: flex; align-items: center; background: #050505; position: sticky; top: 0; z-index: 100; justify-content: space-between; }
         .btn-back { color: var(--gold); text-decoration: none; font-size: 1.2rem; }
+
         .search-container { padding: 15px; }
         .search-bar { background: #1a1a1a; border: 1px solid #333; padding: 10px; border-radius: 10px; display: flex; align-items: center; }
         .search-bar input { background: transparent; border: none; color: white; margin-left: 10px; width: 100%; outline: none; }
+
         .orders-container { padding: 0 15px; }
         .order-card { background: var(--card); border-radius: 15px; padding: 15px; margin-bottom: 15px; border: 1px solid #222; }
         .order-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
         .order-header h3 { margin: 0; font-size: 16px; color: var(--gold); }
+        
         .status-tag { font-size: 10px; padding: 4px 8px; border-radius: 5px; text-transform: uppercase; font-weight: bold; }
         .tag-recibido { background: #444; color: white; }
         .tag-proceso { background: #0066ff; color: white; }
         .tag-listo { background: #00cc66; color: black; }
+
         .order-details { font-size: 13px; color: #aaa; margin-bottom: 15px; }
         .order-price { font-weight: bold; color: white; display: flex; justify-content: space-between; border-top: 1px solid #222; padding-top: 10px; }
+
         .order-actions { display: flex; gap: 8px; margin-top: 15px; }
         .btn-status { flex: 1; padding: 8px; border-radius: 8px; border: 1px solid #333; background: #1a1a1a; color: white; font-size: 11px; cursor: pointer; }
+
+        /* MODAL Y FORMULARIO */
         #modal-orden { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark); z-index: 300; padding: 20px; box-sizing: border-box; overflow-y: auto; }
-        input, select, textarea { width: 100%; padding: 12px; margin-bottom: 15px; background: #111; border: 1px solid #333; color: white; border-radius: 8px; box-sizing: border-box; }
+        input, select, textarea { width: 100%; padding: 12px; margin-bottom: 15px; background: #111; border: 1px solid #333; color: white; border-radius: 8px; box-sizing: border-box; outline: none; transition: 0.3s; }
+        
+        /* Estilo invitación */
+        #box-invitacion { display: none; background: #1a1500; border: 1px solid var(--gold); padding: 12px; border-radius: 10px; margin-bottom: 15px; text-align: center; }
+        .btn-invitar { background: var(--gold); color: black; border: none; padding: 8px 15px; border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer; }
+
         .fab { position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; background: var(--gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: black; font-size: 24px; border: none; cursor: pointer; box-shadow: 0 4px 15px rgba(255,215,0,0.4); }
     </style>
 </head>
@@ -47,26 +60,38 @@
         </div>
     </div>
 
-    <div id="lista-trabajos" class="orders-container"></div>
+    <div class="orders-container" id="lista-trabajos"></div>
 
     <button class="fab" onclick="abrirModal()"><i class="fas fa-plus"></i></button>
 
     <div id="modal-orden">
-        <h2 style="color: var(--gold); margin-top: 0;">Nueva Orden</h2>
-        <input type="tel" id="cli-celular" placeholder="Número Celular" onblur="verificarCliente(this.value)">
+        <h2 style="color: var(--gold); margin-top: 0;">Nueva Orden de Trabajo</h2>
+        
+        <input type="tel" id="cli-celular" placeholder="Número Celular (Ej: 0999000111)" onkeyup="detectarCliente(this.value)">
+
+        <div id="box-invitacion">
+            <p style="font-size: 11px; margin: 0 0 10px 0; color: #ccc;">Este cliente no está en J.A.D.I</p>
+            <button class="btn-invitar" onclick="enviarInvitacion()">
+                <i class="fab fa-whatsapp"></i> ENVIAR INVITACIÓN
+            </button>
+        </div>
+
         <input type="text" id="cli-nombre" placeholder="Nombre del Cliente">
+        
         <select id="tipo-calzado">
             <option value="Deportivo">Deportivo</option>
             <option value="Formal">Formal</option>
             <option value="Botas">Botas</option>
+            <option value="Tacones">Tacones</option>
         </select>
-        <textarea id="trabajo-desc" rows="3" placeholder="¿Qué reparación haremos?"></textarea>
-        <input type="number" id="precio-total" placeholder="Precio $">
+        
+        <textarea id="trabajo-desc" rows="3" placeholder="Descripción de la reparación..."></textarea>
+        <input type="number" id="precio-total" placeholder="Precio Total $">
         <input type="date" id="fecha-entrega">
         
         <div style="display: flex; gap: 10px;">
             <button onclick="cerrarModal()" style="flex:1; background: transparent; color: white; border: 1px solid #444; padding: 15px; border-radius: 10px;">CANCELAR</button>
-            <button onclick="guardarOrden()" style="flex:1; background: var(--gold); color: black; border: none; padding: 15px; border-radius: 10px; font-weight: bold;">GUARDAR</button>
+            <button onclick="guardarOrden()" style="flex:1; background: var(--gold); color: black; border: none; padding: 15px; border-radius: 10px; font-weight: bold;">GUARDAR ORDEN</button>
         </div>
     </div>
 
@@ -77,37 +102,65 @@
         const session = JSON.parse(localStorage.getItem('session_jadi'));
 
         function abrirModal() { document.getElementById('modal-orden').style.display = 'block'; }
-        function cerrarModal() { document.getElementById('modal-orden').style.display = 'none'; }
+        function cerrarModal() { 
+            document.getElementById('modal-orden').style.display = 'none';
+            document.getElementById('box-invitacion').style.display = 'none';
+        }
 
-        async function verificarCliente(cel) {
-            if(cel.length < 7) return;
-            const snap = await db.ref('usuarios').orderByChild('telefono').equalTo(cel).once('value');
-            if(snap.exists()) {
-                snap.forEach(c => {
-                    document.getElementById('cli-nombre').value = c.val().nombre;
-                    document.getElementById('cli-nombre').style.borderColor = "#FFD700";
-                });
+        // DETECTAR SI EL CLIENTE EXISTE EN EL ECOSISTEMA
+        async function detectarCliente(cel) {
+            const boxInv = document.getElementById('box-invitacion');
+            const inputNom = document.getElementById('cli-nombre');
+            
+            if(cel.length >= 10) {
+                const snap = await db.ref('usuarios').orderByChild('telefono').equalTo(cel).once('value');
+                if(snap.exists()) {
+                    boxInv.style.display = 'none';
+                    snap.forEach(c => {
+                        inputNom.value = c.val().nombre;
+                        inputNom.style.borderColor = "var(--gold)";
+                    });
+                } else {
+                    boxInv.style.display = 'block';
+                    inputNom.value = "";
+                    inputNom.style.borderColor = "#333";
+                }
+            } else {
+                boxInv.style.display = 'none';
             }
         }
 
+        // ENVIAR MENSAJE DE INVITACIÓN POR WHATSAPP
+        function enviarInvitacion() {
+            const cel = document.getElementById('cli-celular').value;
+            const zapateria = session.empresaNombre || "Nuestra Zapatería";
+            const linkApp = "https://jadi-repaiz.web.app"; 
+            
+            const mensaje = `*${zapateria}* te invita a ser parte del ecosistema *JADI REPAIZ* ✨\n\nSigue tus reparaciones en tiempo real registrándote aquí:\n${linkApp}\n\n¡Solo completa tus datos faltantes y listo!`;
+            
+            window.open(`https://wa.me/593${cel.startsWith('0') ? cel.substring(1) : cel}?text=${encodeURIComponent(mensaje)}`, '_blank');
+        }
+
+        // GUARDAR ORDEN Y VINCULAR CLIENTE
         async function guardarOrden() {
             const cel = document.getElementById('cli-celular').value;
             const nom = document.getElementById('cli-nombre').value;
             
-            // Buscar o Crear Cliente Global
+            if(!cel || !nom) return alert("Faltan datos del cliente");
+
             const snap = await db.ref('usuarios').orderByChild('telefono').equalTo(cel).once('value');
             let cliId;
+
             if(!snap.exists()) {
                 const newRef = db.ref('usuarios').push();
                 cliId = newRef.key;
                 await newRef.set({ nombre: nom, telefono: cel, tipo: "cliente", verificado: false });
-                enviarInvitacion(cel, nom);
             } else {
                 snap.forEach(c => cliId = c.key);
             }
 
-            // Guardar Orden
-            const newOrder = {
+            // Guardar Trabajo
+            await db.ref('trabajos').push({
                 zapateroId: session.uid,
                 clienteId: cliId,
                 cliente: nom,
@@ -118,20 +171,14 @@
                 entrega: document.getElementById('fecha-entrega').value,
                 estado: 'Recibido',
                 timestamp: Date.now()
-            };
-            await db.ref('trabajos').push(newOrder);
+            });
 
-            // Registrar en mi lista personal de clientes
+            // Registrar en mi lista personal (clientes.html)
             await db.ref(`relaciones_clientes/${session.uid}/${cliId}`).set({
                 nombre: nom, telefono: cel, ultimaVisita: Date.now()
             });
 
             cerrarModal();
-        }
-
-        function enviarInvitacion(cel, nom) {
-            const msj = `Hola ${nom}, registré tu trabajo en J.A.D.I. Descarga la app para seguir el estado de tu calzado!`;
-            window.open(`https://wa.me/${cel}?text=${encodeURIComponent(msj)}`, '_blank');
         }
 
         function cargarTrabajos() {
@@ -157,7 +204,15 @@
                 });
             });
         }
+
         function updateStatus(id, s) { db.ref('trabajos/'+id).update({estado: s}); }
+        function filtrarTrabajos() {
+            const bus = document.getElementById('inputBusqueda').value.toLowerCase();
+            document.querySelectorAll('.order-card').forEach(c => {
+                c.style.display = c.getAttribute('data-nombre').includes(bus) ? "block" : "none";
+            });
+        }
+
         window.onload = cargarTrabajos;
     </script>
 </body>
