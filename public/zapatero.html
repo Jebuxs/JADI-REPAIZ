@@ -31,21 +31,19 @@
         .personal-label { color: #888; font-size: 14px; margin: 5px 0 0 20px; font-style: italic; }
         .login-id { background: #332b00; color: var(--gold); display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; margin: 10px 0 0 20px; font-weight: bold; border: 1px solid #554400; }
 
-        /* TABLERO DE CONTADORES (Dashboard) */
+        /* TABLERO DE CONTADORES */
         .dashboard-stats {
             display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; margin-bottom: 30px;
         }
-        .stat-card {
-            background: #111; border: 1px solid #222; padding: 15px 10px; border-radius: 12px; text-align: center;
-        }
+        .stat-card { background: #111; border: 1px solid #222; padding: 15px 10px; border-radius: 12px; text-align: center; }
         .stat-card i { font-size: 1.2rem; margin-bottom: 5px; display: block; }
         .stat-card span { font-size: 1.5rem; font-weight: bold; display: block; }
         .stat-card p { font-size: 10px; color: #666; margin: 0; text-transform: uppercase; }
-        .color-new { color: #ff4d4d; }   /* Rojo para nuevos */
-        .color-proc { color: #4dadff; }  /* Azul para proceso */
-        .color-ready { color: #4dff88; } /* Verde para listos */
+        .color-new { color: #ff4d4d; }
+        .color-proc { color: #4dadff; }
+        .color-ready { color: #4dff88; }
 
-        /* GRILLA DE ACCIONES */
+        /* GRILLA DE ACCIONES RECONECTADA */
         .grid-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
         .card { 
             background-color: var(--card-bg); padding: 25px 15px; border-radius: 20px; text-align: center; 
@@ -109,25 +107,28 @@
         </div>
 
         <div class="grid-container">
-            <a href="perfil.html" class="card">
+            <a href="local.html" class="card">
                 <i class="fas fa-store"></i>
                 <h3>MI LOCAL</h3>
-                <p>Perfil y Ubicación</p>
+                <p>Vitrina Pública</p>
             </a>
-            <div class="card" onclick="alert('Módulo en construcción')">
+            
+            <a href="inventario.html" class="card">
                 <i class="fas fa-boxes-stacked"></i>
                 <h3>INVENTARIO</h3>
                 <p>Suelas y Materiales</p>
-            </div>
-            <div class="card" onclick="alert('Módulo en construcción')">
+            </a>
+            
+            <a href="clientes.html" class="card">
                 <i class="fas fa-qrcode"></i>
                 <h3>CLIENTES</h3>
-                <p>Escanear y Registrar</p>
-            </div>
+                <p>Registro y QR</p>
+            </a>
+            
             <a href="trabajos.html" class="card">
                 <i class="fas fa-tools"></i>
                 <h3>TRABAJOS</h3>
-                <p>Gestionar Órdenes</p>
+                <p>Órdenes Activas</p>
             </a>
         </div>
 
@@ -144,27 +145,20 @@
 
     <script>
         window.onload = function() {
-            // 1. Obtener la sesión real del localStorage
             const session = JSON.parse(localStorage.getItem('session_jadi'));
-
             if (session) {
-                // 2. Pintar datos reales en pantalla
                 document.getElementById('display-nombre').innerText = "Bienvenido, " + (session.nombre || "Maestro");
                 document.getElementById('display-id').innerText = "ID: " + (session.uid || "ZPT---------");
                 document.getElementById('display-local').innerText = session.empresaNombre || "Personal / Independiente";
                 document.getElementById('local-footer').innerText = session.empresaNombre || "tu local";
-                
-                // 3. Cargar el logo si existe
                 if (session.logo) {
                     document.getElementById('header-logo').src = session.logo;
                 }
             } else {
-                // Si no hay sesión, regresarlo al login
                 window.location.href = "index.html";
             }
         };
 
-        // Cerrar Sesión
         document.getElementById('logout-trigger').onclick = function() {
             localStorage.removeItem('session_jadi'); 
         };
