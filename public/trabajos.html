@@ -10,40 +10,25 @@
     <style>
         :root { --gold: #FFD700; --dark: #000; --card: #111; }
         body { background: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding-bottom: 80px; }
-        
-        /* HEADER */
         .header { padding: 15px; border-bottom: 1px solid #222; display: flex; align-items: center; background: #050505; position: sticky; top: 0; z-index: 100; justify-content: space-between; }
         .btn-back { color: var(--gold); text-decoration: none; font-size: 1.2rem; }
-
-        /* BUSCADOR */
         .search-container { padding: 15px; }
         .search-bar { background: #1a1a1a; border: 1px solid #333; padding: 10px; border-radius: 10px; display: flex; align-items: center; }
         .search-bar input { background: transparent; border: none; color: white; margin-left: 10px; width: 100%; outline: none; }
-
-        /* LISTA DE TRABAJOS */
         .orders-container { padding: 0 15px; }
-        .order-card { background: var(--card); border-radius: 15px; padding: 15px; margin-bottom: 15px; border: 1px solid #222; position: relative; }
+        .order-card { background: var(--card); border-radius: 15px; padding: 15px; margin-bottom: 15px; border: 1px solid #222; }
         .order-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
         .order-header h3 { margin: 0; font-size: 16px; color: var(--gold); }
         .status-tag { font-size: 10px; padding: 4px 8px; border-radius: 5px; text-transform: uppercase; font-weight: bold; }
-        
         .tag-recibido { background: #444; color: white; }
         .tag-proceso { background: #0066ff; color: white; }
         .tag-listo { background: #00cc66; color: black; }
-
         .order-details { font-size: 13px; color: #aaa; margin-bottom: 15px; }
         .order-price { font-weight: bold; color: white; display: flex; justify-content: space-between; border-top: 1px solid #222; padding-top: 10px; }
-
-        /* BOTONES DE ACCIÓN RÁPIDA */
         .order-actions { display: flex; gap: 8px; margin-top: 15px; }
-        .btn-status { flex: 1; padding: 8px; border-radius: 8px; border: 1px solid #333; background: #1a1a1a; color: white; font-size: 11px; cursor: pointer; transition: 0.3s; }
-        .btn-status:hover { border-color: var(--gold); }
-
-        /* MODAL */
+        .btn-status { flex: 1; padding: 8px; border-radius: 8px; border: 1px solid #333; background: #1a1a1a; color: white; font-size: 11px; cursor: pointer; }
         #modal-orden { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark); z-index: 300; padding: 20px; box-sizing: border-box; overflow-y: auto; }
         input, select, textarea { width: 100%; padding: 12px; margin-bottom: 15px; background: #111; border: 1px solid #333; color: white; border-radius: 8px; box-sizing: border-box; }
-        
-        /* BOTÓN FLOTANTE */
         .fab { position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; background: var(--gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: black; font-size: 24px; border: none; cursor: pointer; box-shadow: 0 4px 15px rgba(255,215,0,0.4); }
     </style>
 </head>
@@ -62,28 +47,26 @@
         </div>
     </div>
 
-    <div class="orders-container" id="lista-trabajos">
-        <p style="text-align: center; color: #444; margin-top: 50px;">Cargando órdenes...</p>
-    </div>
+    <div id="lista-trabajos" class="orders-container"></div>
 
     <button class="fab" onclick="abrirModal()"><i class="fas fa-plus"></i></button>
 
     <div id="modal-orden">
-        <h2 style="color: var(--gold); margin-top: 0;">Nueva Orden de Trabajo</h2>
-        <input type="text" id="cliente-nombre" placeholder="Nombre del Cliente">
+        <h2 style="color: var(--gold); margin-top: 0;">Nueva Orden</h2>
+        <input type="tel" id="cli-celular" placeholder="Número Celular" onblur="verificarCliente(this.value)">
+        <input type="text" id="cli-nombre" placeholder="Nombre del Cliente">
         <select id="tipo-calzado">
             <option value="Deportivo">Deportivo</option>
             <option value="Formal">Formal</option>
             <option value="Botas">Botas</option>
-            <option value="Tacones">Tacones</option>
         </select>
-        <textarea id="trabajo-desc" rows="3" placeholder="Descripción de la reparación..."></textarea>
-        <input type="number" id="precio-total" placeholder="Precio Total $">
+        <textarea id="trabajo-desc" rows="3" placeholder="¿Qué reparación haremos?"></textarea>
+        <input type="number" id="precio-total" placeholder="Precio $">
         <input type="date" id="fecha-entrega">
         
         <div style="display: flex; gap: 10px;">
             <button onclick="cerrarModal()" style="flex:1; background: transparent; color: white; border: 1px solid #444; padding: 15px; border-radius: 10px;">CANCELAR</button>
-            <button onclick="guardarOrden()" style="flex:1; background: var(--gold); color: black; border: none; padding: 15px; border-radius: 10px; font-weight: bold;">GUARDAR ORDEN</button>
+            <button onclick="guardarOrden()" style="flex:1; background: var(--gold); color: black; border: none; padding: 15px; border-radius: 10px; font-weight: bold;">GUARDAR</button>
         </div>
     </div>
 
@@ -96,11 +79,39 @@
         function abrirModal() { document.getElementById('modal-orden').style.display = 'block'; }
         function cerrarModal() { document.getElementById('modal-orden').style.display = 'none'; }
 
-        // GUARDAR ORDEN EN FIREBASE
+        async function verificarCliente(cel) {
+            if(cel.length < 7) return;
+            const snap = await db.ref('usuarios').orderByChild('telefono').equalTo(cel).once('value');
+            if(snap.exists()) {
+                snap.forEach(c => {
+                    document.getElementById('cli-nombre').value = c.val().nombre;
+                    document.getElementById('cli-nombre').style.borderColor = "#FFD700";
+                });
+            }
+        }
+
         async function guardarOrden() {
-            const orden = {
+            const cel = document.getElementById('cli-celular').value;
+            const nom = document.getElementById('cli-nombre').value;
+            
+            // Buscar o Crear Cliente Global
+            const snap = await db.ref('usuarios').orderByChild('telefono').equalTo(cel).once('value');
+            let cliId;
+            if(!snap.exists()) {
+                const newRef = db.ref('usuarios').push();
+                cliId = newRef.key;
+                await newRef.set({ nombre: nom, telefono: cel, tipo: "cliente", verificado: false });
+                enviarInvitacion(cel, nom);
+            } else {
+                snap.forEach(c => cliId = c.key);
+            }
+
+            // Guardar Orden
+            const newOrder = {
                 zapateroId: session.uid,
-                cliente: document.getElementById('cliente-nombre').value,
+                clienteId: cliId,
+                cliente: nom,
+                celular: cel,
                 calzado: document.getElementById('tipo-calzado').value,
                 descripcion: document.getElementById('trabajo-desc').value,
                 precio: document.getElementById('precio-total').value,
@@ -108,63 +119,45 @@
                 estado: 'Recibido',
                 timestamp: Date.now()
             };
+            await db.ref('trabajos').push(newOrder);
 
-            await db.ref('trabajos').push(orden);
+            // Registrar en mi lista personal de clientes
+            await db.ref(`relaciones_clientes/${session.uid}/${cliId}`).set({
+                nombre: nom, telefono: cel, ultimaVisita: Date.now()
+            });
+
             cerrarModal();
-            alert("Orden registrada con éxito");
         }
 
-        // CARGAR TRABAJOS EN TIEMPO REAL
+        function enviarInvitacion(cel, nom) {
+            const msj = `Hola ${nom}, registré tu trabajo en J.A.D.I. Descarga la app para seguir el estado de tu calzado!`;
+            window.open(`https://wa.me/${cel}?text=${encodeURIComponent(msj)}`, '_blank');
+        }
+
         function cargarTrabajos() {
-            db.ref('trabajos').orderByChild('zapateroId').equalTo(session.uid).on('value', snapshot => {
+            db.ref('trabajos').orderByChild('zapateroId').equalTo(session.uid).on('value', snap => {
                 const container = document.getElementById('lista-trabajos');
                 container.innerHTML = "";
-                
-                snapshot.forEach(child => {
-                    const id = child.key;
+                snap.forEach(child => {
                     const o = child.val();
+                    const id = child.key;
                     container.innerHTML += `
-                        <div class="order-card" data-nombre="${o.cliente.toLowerCase()} ${o.calzado.toLowerCase()}">
+                        <div class="order-card" data-nombre="${o.cliente.toLowerCase()}">
                             <div class="order-header">
                                 <h3>${o.cliente}</h3>
                                 <span class="status-tag tag-${o.estado.toLowerCase().replace(" ","")}">${o.estado}</span>
                             </div>
-                            <div class="order-details">
-                                <i class="fas fa-shoe-prints"></i> ${o.calzado} | ${o.descripcion}
-                            </div>
-                            <div class="order-price">
-                                <span>Total: $${o.precio}</span>
-                                <span style="font-size: 11px; color: var(--gold)">📅 ${o.entrega}</span>
-                            </div>
+                            <div class="order-details">${o.calzado} - ${o.descripcion}</div>
+                            <div class="order-price"><span>$${o.precio}</span> <small>📅 ${o.entrega}</small></div>
                             <div class="order-actions">
-                                <button class="btn-status" onclick="actualizarEstado('${id}', 'En Proceso')">REPARAR</button>
-                                <button class="btn-status" onclick="actualizarEstado('${id}', 'Listo')">TERMINAR</button>
-                                <button class="btn-status" style="color:#ff4d4d" onclick="eliminarOrden('${id}')"><i class="fas fa-trash"></i></button>
+                                <button class="btn-status" onclick="updateStatus('${id}','En Proceso')">PROCESO</button>
+                                <button class="btn-status" onclick="updateStatus('${id}','Listo')">LISTO</button>
                             </div>
-                        </div>
-                    `;
+                        </div>`;
                 });
             });
         }
-
-        function actualizarEstado(id, nuevoEstado) {
-            db.ref('trabajos/' + id).update({ estado: nuevoEstado });
-        }
-
-        function eliminarOrden(id) {
-            if(confirm("¿Seguro que deseas eliminar esta orden?")) {
-                db.ref('trabajos/' + id).remove();
-            }
-        }
-
-        function filtrarTrabajos() {
-            const busqueda = document.getElementById('inputBusqueda').value.toLowerCase();
-            document.querySelectorAll('.order-card').forEach(card => {
-                const texto = card.getAttribute('data-nombre');
-                card.style.display = texto.includes(busqueda) ? "block" : "none";
-            });
-        }
-
+        function updateStatus(id, s) { db.ref('trabajos/'+id).update({estado: s}); }
         window.onload = cargarTrabajos;
     </script>
 </body>
