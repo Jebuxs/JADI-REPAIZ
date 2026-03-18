@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Trabajos - J.A.D.I</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --gold: #FFD700; --dark: #000; --card: #111; }
+        body { background: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding-bottom: 80px; }
+        
+        /* Header */
+        .header { padding: 15px; border-bottom: 1px solid #222; display: flex; align-items: center; background: #050505; position: sticky; top: 0; z-index: 100; }
+        .btn-back { color: var(--gold); text-decoration: none; font-size: 1.2rem; margin-right: 15px; }
+        
+        /* Filtros Rápidos */
+        .filter-bar { display: flex; gap: 10px; padding: 15px; overflow-x: auto; white-space: nowrap; }
+        .filter-chip { padding: 8px 15px; border-radius: 20px; border: 1px solid #333; font-size: 12px; cursor: pointer; }
+        .filter-chip.active { background: var(--gold); color: black; border-color: var(--gold); }
+
+        /* Lista de Trabajos */
+        .orders-container { padding: 0 15px; }
+        .order-card { background: var(--card); border-radius: 15px; padding: 15px; margin-bottom: 15px; border: 1px solid #222; display: flex; gap: 15px; align-items: center; }
+        .order-img { width: 70px; height: 70px; border-radius: 10px; object-fit: cover; background: #222; }
+        .order-info { flex: 1; }
+        .order-info h3 { margin: 0; font-size: 14px; color: var(--gold); }
+        .order-info p { margin: 3px 0; font-size: 12px; color: #888; }
+        .status-tag { font-size: 10px; padding: 3px 8px; border-radius: 5px; text-transform: uppercase; font-weight: bold; }
+        .tag-recibido { background: #555; color: white; }
+        .tag-proceso { background: #0066ff; color: white; }
+        .tag-listo { background: #00cc66; color: white; }
+
+        /* Botón Flotante */
+        .fab { position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; background: var(--gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: black; font-size: 24px; box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4); text-decoration: none; border: none; cursor: pointer; z-index: 200; }
+
+        /* Modal Formulario */
+        #modal-orden { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark); z-index: 300; padding: 20px; box-sizing: border-box; overflow-y: auto; }
+        input, select, textarea { width: 100%; padding: 12px; margin-bottom: 15px; background: #111; border: 1px solid #333; color: white; border-radius: 8px; box-sizing: border-box; }
+        label { color: var(--gold); font-size: 12px; display: block; margin-bottom: 5px; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <a href="zapatero.html" class="btn-back"><i class="fas fa-arrow-left"></i></a>
+        <h2 style="margin:0; font-size: 1.1rem;">Órdenes de Trabajo</h2>
+    </div>
+
+    <div class="filter-bar">
+        <div class="filter-chip active">Todos</div>
+        <div class="filter-chip">Recibidos</div>
+        <div class="filter-chip">En Proceso</div>
+        <div class="filter-chip">Listos</div>
+    </div>
+
+    <div class="orders-container" id="lista-trabajos">
+        <p style="text-align: center; color: #555; margin-top: 50px;">No tienes órdenes pendientes.</p>
+    </div>
+
+    <button class="fab" onclick="abrirModal()"><i class="fas fa-plus"></i></button>
+
+    <div id="modal-orden">
+        <h2 style="color: var(--gold);">Nueva Orden</h2>
+        <hr style="border: 0; border-top: 1px solid #222; margin-bottom: 20px;">
+        
+        <label>Nombre del Cliente</label>
+        <input type="text" id="cliente-nombre" placeholder="Ej: Juan Pérez">
+
+        <label>Tipo de Calzado</label>
+        <select id="tipo-calzado">
+            <option value="Deportivo">Deportivo</option>
+            <option value="Formal">Zapato Formal</option>
+            <option value="Botas">Botas</option>
+            <option value="Tacones">Tacones/Gala</option>
+            <option value="Otro">Otro</option>
+        </select>
+
+        <label>Descripción del Trabajo</label>
+        <textarea id="trabajo-desc" rows="3" placeholder="Ej: Cambio de suelas y limpieza profunda"></textarea>
+
+        <div style="display: flex; gap: 10px;">
+            <div style="flex: 1;">
+                <label>Precio Total ($)</label>
+                <input type="number" id="precio-total" placeholder="0.00">
+            </div>
+            <div style="flex: 1;">
+                <label>Abono ($)</label>
+                <input type="number" id="precio-abono" placeholder="0.00">
+            </div>
+        </div>
+
+        <label>Fecha Prometida de Entrega</label>
+        <input type="date" id="fecha-entrega">
+
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button class="btn-back" style="flex:1; border: 1px solid var(--gold); padding: 15px; border-radius: 10px;" onclick="cerrarModal()">CANCELAR</button>
+            <button style="flex:1; background: var(--gold); color: black; border: none; padding: 15px; border-radius: 10px; font-weight: bold;" onclick="guardarOrden()">CREAR ORDEN</button>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = { databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com" };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        let session = JSON.parse(localStorage.getItem('session_jadi'));
+
+        function abrirModal() { document.getElementById('modal-orden').style.display = 'block'; }
+        function cerrarModal() { document.getElementById('modal-orden').style.display = 'none'; }
+
+        async function guardarOrden() {
+            if (!session) return;
+
+            const nuevaOrden = {
+                zapateroId: session.uid,
+                cliente: document.getElementById('cliente-nombre').value,
+                calzado: document.getElementById('tipo-calzado').value,
+                descripcion: document.getElementById('trabajo-desc').value,
+                total: document.getElementById('precio-total').value,
+                abono: document.getElementById('precio-abono').value,
+                entrega: document.getElementById('fecha-entrega').value,
+                estado: 'Recibido',
+                fechaRegistro: new Date().toISOString()
+            };
+
+            try {
+                // Guardamos en una carpeta global 'trabajos'
+                await db.ref('trabajos').push(nuevaOrden);
+                alert("¡Orden Creada!");
+                cerrarModal();
+                cargarTrabajos();
+            } catch (e) {
+                alert("Error: " + e.message);
+            }
+        }
+
+        function cargarTrabajos() {
+            if (!session) return;
+            
+            // Solo traemos los trabajos que pertenecen a ESTE zapatero
+            db.ref('trabajos').orderByChild('zapateroId').equalTo(session.uid).on('value', (snapshot) => {
+                const container = document.getElementById('lista-trabajos');
+                container.innerHTML = "";
+                
+                if (!snapshot.exists()) {
+                    container.innerHTML = '<p style="text-align: center; color: #555; margin-top: 50px;">No tienes órdenes pendientes.</p>';
+                    return;
+                }
+
+                snapshot.forEach((child) => {
+                    const orden = child.val();
+                    const card = `
+                        <div class="order-card">
+                            <div class="order-img"><i class="fas fa-shoe-prints" style="font-size: 30px; color: #333; margin: 20px;"></i></div>
+                            <div class="order-info">
+                                <h3>${orden.cliente}</h3>
+                                <p>${orden.calzado} - ${orden.descripcion}</p>
+                                <p style="color: var(--gold)">Entrega: ${orden.entrega}</p>
+                            </div>
+                            <span class="status-tag tag-${orden.estado.toLowerCase()}">${orden.estado}</span>
+                        </div>
+                    `;
+                    container.innerHTML += card;
+                });
+            });
+        }
+
+        window.onload = cargarTrabajos;
+    </script>
+</body>
+</html>
