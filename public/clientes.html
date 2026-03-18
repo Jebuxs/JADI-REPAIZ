@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clientes J.A.D.I - Escaneo QR</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        :root { --gold: #FFD700; --dark: #000; --card: #111; }
+        body { background: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding-bottom: 30px; }
+        
+        .header { padding: 15px; border-bottom: 1px solid #222; display: flex; align-items: center; background: #050505; }
+        .btn-back { color: var(--gold); text-decoration: none; font-size: 1.2rem; margin-right: 15px; }
+
+        .main-container { padding: 20px; max-width: 500px; margin: auto; }
+
+        /* Lector QR */
+        #reader { width: 100%; border-radius: 15px; overflow: hidden; border: 2px solid #333 !important; background: #000; }
+        #reader__dashboard_section_csr button { background: var(--gold); border: none; padding: 10px; border-radius: 5px; font-weight: bold; cursor: pointer; margin: 10px 0; }
+
+        /* Tarjeta de Cliente Encontrado */
+        #resultado-cliente { display: none; background: var(--card); border: 1px solid var(--gold); border-radius: 15px; padding: 20px; margin-top: 20px; text-align: center; }
+        .user-icon { font-size: 3rem; color: var(--gold); margin-bottom: 10px; }
+        .btn-accion-cliente { background: var(--gold); color: black; border: none; padding: 12px; border-radius: 8px; width: 100%; font-weight: bold; margin-top: 15px; cursor: pointer; text-decoration: none; display: block; }
+
+        /* Lista de Clientes Recientes */
+        .seccion-recientes { margin-top: 30px; }
+        .seccion-recientes h3 { font-size: 1rem; color: #888; border-bottom: 1px solid #222; padding-bottom: 10px; }
+        .cliente-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #111; }
+        .cliente-info h4 { margin: 0; font-size: 14px; }
+        .cliente-info p { margin: 0; font-size: 12px; color: #666; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <a href="zapatero.html" class="btn-back"><i class="fas fa-arrow-left"></i></a>
+        <h2 style="margin:0; font-size: 1.1rem;">Escanear Cliente</h2>
+    </div>
+
+    <div class="main-container">
+        
+        <div id="reader"></div>
+
+        <div id="resultado-cliente">
+            <i class="fas fa-user-check user-icon"></i>
+            <h3 id="cli-nombre" style="margin: 0;">Nombre Cliente</h3>
+            <p id="cli-puntos" style="color: var(--gold); font-size: 12px; margin: 5px 0;">Cliente Frecuente (5 Trabajos)</p>
+            <p id="cli-tel" style="color: #888; font-size: 13px;">+593 999 999 999</p>
+            
+            <button class="btn-accion-cliente" onclick="crearTrabajoDirecto()">CREAR NUEVA ORDEN</button>
+            <button class="btn-accion-cliente" style="background: transparent; color: white; border: 1px solid #444;" onclick="resetLector()">ESCANEAR OTRO</button>
+        </div>
+
+        <div class="seccion-recientes">
+            <h3>Mis Clientes Recientes</h3>
+            <div id="lista-clientes">
+                <p style="text-align: center; color: #444; margin-top: 20px;">Escanea un código QR para registrar un cliente.</p>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Configuración Firebase
+        const firebaseConfig = { databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com" };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        let html5QrCode;
+        const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+
+        window.onload = function() {
+            startScanner();
+            cargarClientesRecientes();
+        };
+
+        function startScanner() {
+            html5QrCode = new Html5Qrcode("reader");
+            html5QrCode.start(
+                { facingMode: "environment" }, 
+                config,
+                onScanSuccess
+            );
+        }
+
+        async function onScanSuccess(decodedText, decodedResult) {
+            // El decodedText debería ser el UID del cliente (ej: CLI123456789)
+            html5QrCode.stop();
+            document.getElementById('reader').style.display = 'none';
+            buscarClienteEnJadi(decodedText);
+        }
+
+        async function buscarClienteEnJadi(uidCliente) {
+            const resBox = document.getElementById('resultado-cliente');
+            resBox.style.display = 'block';
+            resBox.innerHTML = "buscando cliente...";
+
+            try {
+                // Buscamos en la rama global de usuarios/clientes de J.A.D.I
+                const snapshot = await db.ref('usuarios/' + uidCliente).once('value');
+                
+                if (snapshot.exists()) {
+                    const data = snapshot.val();
+                    resBox.innerHTML = `
+                        <i class="fas fa-user-check user-icon"></i>
+                        <h3 style="margin: 0;">${data.nombre}</h3>
+                        <p style="color: var(--gold); font-size: 12px; margin: 5px 0;">ID: ${uidCliente}</p>
+                        <p style="color: #888; font-size: 13px;">${data.telefono || 'Sin teléfono'}</p>
+                        <button class="btn-accion-cliente" onclick="crearTrabajoPara('${uidCliente}', '${data.nombre}')">CREAR NUEVA ORDEN</button>
+                        <button class="btn-accion-cliente" style="background: transparent; color: white; border: 1px solid #444;" onclick="resetLector()">VOLVER A ESCANEAR</button>
+                    `;
+                    // Guardar relación Zapatero-Cliente para el historial
+                    registrarVinculo(uidCliente, data);
+                } else {
+                    resBox.innerHTML = `
+                        <i class="fas fa-user-slash user-icon" style="color: #ff4d4d;"></i>
+                        <h3>No Encontrado</h3>
+                        <p>Este código no pertenece a un cliente J.A.D.I</p>
+                        <button class="btn-accion-cliente" onclick="resetLector()">REINTENTAR</button>
+                    `;
+                }
+            } catch (e) {
+                alert("Error al buscar cliente");
+            }
+        }
+
+        function registrarVinculo(uidCli, dataCli) {
+            const session = JSON.parse(localStorage.getItem('session_jadi'));
+            // Guardamos en una lista de clientes "atendidos" por este zapatero
+            db.ref('relaciones_clientes/' + session.uid + '/' + uidCli).set({
+                nombre: dataCli.nombre,
+                telefono: dataCli.telefono || "",
+                ultimoContacto: new Date().toISOString()
+            });
+        }
+
+        function crearTrabajoPara(id, nombre) {
+            // Guardamos temporalmente el cliente seleccionado para la nueva orden
+            localStorage.setItem('cliente_seleccionado', JSON.stringify({id, nombre}));
+            window.location.href = "trabajos.html";
+        }
+
+        function resetLector() {
+            document.getElementById('resultado-cliente').style.display = 'none';
+            document.getElementById('reader').style.display = 'block';
+            startScanner();
+        }
+
+        function cargarClientesRecientes() {
+            const session = JSON.parse(localStorage.getItem('session_jadi'));
+            db.ref('relaciones_clientes/' + session.uid).limitToLast(5).on('value', snapshot => {
+                const lista = document.getElementById('lista-clientes');
+                if(!snapshot.exists()) return;
+                lista.innerHTML = "";
+                snapshot.forEach(child => {
+                    const c = child.val();
+                    lista.innerHTML += `
+                        <div class="cliente-item">
+                            <div class="cliente-info">
+                                <h4>${c.nombre}</h4>
+                                <p>${c.telefono}</p>
+                            </div>
+                            <i class="fas fa-chevron-right" style="color:#333"></i>
+                        </div>
+                    `;
+                });
+            });
+        }
+    </script>
+</body>
+</html>
