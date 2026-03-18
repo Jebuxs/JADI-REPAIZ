@@ -11,92 +11,79 @@
         :root { --gold: #FFD700; --dark: #000; --card: #111; }
         body { background: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding-bottom: 80px; }
         
-        /* Header */
-        .header { padding: 15px; border-bottom: 1px solid #222; display: flex; align-items: center; background: #050505; position: sticky; top: 0; z-index: 100; }
-        .btn-back { color: var(--gold); text-decoration: none; font-size: 1.2rem; margin-right: 15px; }
-        
-        /* Filtros Rápidos */
-        .filter-bar { display: flex; gap: 10px; padding: 15px; overflow-x: auto; white-space: nowrap; }
-        .filter-chip { padding: 8px 15px; border-radius: 20px; border: 1px solid #333; font-size: 12px; cursor: pointer; }
-        .filter-chip.active { background: var(--gold); color: black; border-color: var(--gold); }
+        /* HEADER */
+        .header { padding: 15px; border-bottom: 1px solid #222; display: flex; align-items: center; background: #050505; position: sticky; top: 0; z-index: 100; justify-content: space-between; }
+        .btn-back { color: var(--gold); text-decoration: none; font-size: 1.2rem; }
 
-        /* Lista de Trabajos */
+        /* BUSCADOR */
+        .search-container { padding: 15px; }
+        .search-bar { background: #1a1a1a; border: 1px solid #333; padding: 10px; border-radius: 10px; display: flex; align-items: center; }
+        .search-bar input { background: transparent; border: none; color: white; margin-left: 10px; width: 100%; outline: none; }
+
+        /* LISTA DE TRABAJOS */
         .orders-container { padding: 0 15px; }
-        .order-card { background: var(--card); border-radius: 15px; padding: 15px; margin-bottom: 15px; border: 1px solid #222; display: flex; gap: 15px; align-items: center; }
-        .order-img { width: 70px; height: 70px; border-radius: 10px; object-fit: cover; background: #222; }
-        .order-info { flex: 1; }
-        .order-info h3 { margin: 0; font-size: 14px; color: var(--gold); }
-        .order-info p { margin: 3px 0; font-size: 12px; color: #888; }
-        .status-tag { font-size: 10px; padding: 3px 8px; border-radius: 5px; text-transform: uppercase; font-weight: bold; }
-        .tag-recibido { background: #555; color: white; }
+        .order-card { background: var(--card); border-radius: 15px; padding: 15px; margin-bottom: 15px; border: 1px solid #222; position: relative; }
+        .order-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+        .order-header h3 { margin: 0; font-size: 16px; color: var(--gold); }
+        .status-tag { font-size: 10px; padding: 4px 8px; border-radius: 5px; text-transform: uppercase; font-weight: bold; }
+        
+        .tag-recibido { background: #444; color: white; }
         .tag-proceso { background: #0066ff; color: white; }
-        .tag-listo { background: #00cc66; color: white; }
+        .tag-listo { background: #00cc66; color: black; }
 
-        /* Botón Flotante */
-        .fab { position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; background: var(--gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: black; font-size: 24px; box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4); text-decoration: none; border: none; cursor: pointer; z-index: 200; }
+        .order-details { font-size: 13px; color: #aaa; margin-bottom: 15px; }
+        .order-price { font-weight: bold; color: white; display: flex; justify-content: space-between; border-top: 1px solid #222; padding-top: 10px; }
 
-        /* Modal Formulario */
+        /* BOTONES DE ACCIÓN RÁPIDA */
+        .order-actions { display: flex; gap: 8px; margin-top: 15px; }
+        .btn-status { flex: 1; padding: 8px; border-radius: 8px; border: 1px solid #333; background: #1a1a1a; color: white; font-size: 11px; cursor: pointer; transition: 0.3s; }
+        .btn-status:hover { border-color: var(--gold); }
+
+        /* MODAL */
         #modal-orden { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark); z-index: 300; padding: 20px; box-sizing: border-box; overflow-y: auto; }
         input, select, textarea { width: 100%; padding: 12px; margin-bottom: 15px; background: #111; border: 1px solid #333; color: white; border-radius: 8px; box-sizing: border-box; }
-        label { color: var(--gold); font-size: 12px; display: block; margin-bottom: 5px; }
+        
+        /* BOTÓN FLOTANTE */
+        .fab { position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; background: var(--gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: black; font-size: 24px; border: none; cursor: pointer; box-shadow: 0 4px 15px rgba(255,215,0,0.4); }
     </style>
 </head>
 <body>
 
     <div class="header">
         <a href="zapatero.html" class="btn-back"><i class="fas fa-arrow-left"></i></a>
-        <h2 style="margin:0; font-size: 1.1rem;">Órdenes de Trabajo</h2>
+        <h2 style="margin:0; font-size: 1.1rem;">Panel de Órdenes</h2>
+        <i class="fas fa-sync-alt" onclick="location.reload()" style="color: var(--gold); cursor: pointer;"></i>
     </div>
 
-    <div class="filter-bar">
-        <div class="filter-chip active">Todos</div>
-        <div class="filter-chip">Recibidos</div>
-        <div class="filter-chip">En Proceso</div>
-        <div class="filter-chip">Listos</div>
+    <div class="search-container">
+        <div class="search-bar">
+            <i class="fas fa-search" style="color: #555;"></i>
+            <input type="text" id="inputBusqueda" onkeyup="filtrarTrabajos()" placeholder="Buscar cliente o calzado...">
+        </div>
     </div>
 
     <div class="orders-container" id="lista-trabajos">
-        <p style="text-align: center; color: #555; margin-top: 50px;">No tienes órdenes pendientes.</p>
+        <p style="text-align: center; color: #444; margin-top: 50px;">Cargando órdenes...</p>
     </div>
 
     <button class="fab" onclick="abrirModal()"><i class="fas fa-plus"></i></button>
 
     <div id="modal-orden">
-        <h2 style="color: var(--gold);">Nueva Orden</h2>
-        <hr style="border: 0; border-top: 1px solid #222; margin-bottom: 20px;">
-        
-        <label>Nombre del Cliente</label>
-        <input type="text" id="cliente-nombre" placeholder="Ej: Juan Pérez">
-
-        <label>Tipo de Calzado</label>
+        <h2 style="color: var(--gold); margin-top: 0;">Nueva Orden de Trabajo</h2>
+        <input type="text" id="cliente-nombre" placeholder="Nombre del Cliente">
         <select id="tipo-calzado">
             <option value="Deportivo">Deportivo</option>
-            <option value="Formal">Zapato Formal</option>
+            <option value="Formal">Formal</option>
             <option value="Botas">Botas</option>
-            <option value="Tacones">Tacones/Gala</option>
-            <option value="Otro">Otro</option>
+            <option value="Tacones">Tacones</option>
         </select>
-
-        <label>Descripción del Trabajo</label>
-        <textarea id="trabajo-desc" rows="3" placeholder="Ej: Cambio de suelas y limpieza profunda"></textarea>
-
-        <div style="display: flex; gap: 10px;">
-            <div style="flex: 1;">
-                <label>Precio Total ($)</label>
-                <input type="number" id="precio-total" placeholder="0.00">
-            </div>
-            <div style="flex: 1;">
-                <label>Abono ($)</label>
-                <input type="number" id="precio-abono" placeholder="0.00">
-            </div>
-        </div>
-
-        <label>Fecha Prometida de Entrega</label>
+        <textarea id="trabajo-desc" rows="3" placeholder="Descripción de la reparación..."></textarea>
+        <input type="number" id="precio-total" placeholder="Precio Total $">
         <input type="date" id="fecha-entrega">
-
-        <div style="display: flex; gap: 10px; margin-top: 20px;">
-            <button class="btn-back" style="flex:1; border: 1px solid var(--gold); padding: 15px; border-radius: 10px;" onclick="cerrarModal()">CANCELAR</button>
-            <button style="flex:1; background: var(--gold); color: black; border: none; padding: 15px; border-radius: 10px; font-weight: bold;" onclick="guardarOrden()">CREAR ORDEN</button>
+        
+        <div style="display: flex; gap: 10px;">
+            <button onclick="cerrarModal()" style="flex:1; background: transparent; color: white; border: 1px solid #444; padding: 15px; border-radius: 10px;">CANCELAR</button>
+            <button onclick="guardarOrden()" style="flex:1; background: var(--gold); color: black; border: none; padding: 15px; border-radius: 10px; font-weight: bold;">GUARDAR ORDEN</button>
         </div>
     </div>
 
@@ -104,66 +91,77 @@
         const firebaseConfig = { databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com" };
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
-
-        let session = JSON.parse(localStorage.getItem('session_jadi'));
+        const session = JSON.parse(localStorage.getItem('session_jadi'));
 
         function abrirModal() { document.getElementById('modal-orden').style.display = 'block'; }
         function cerrarModal() { document.getElementById('modal-orden').style.display = 'none'; }
 
+        // GUARDAR ORDEN EN FIREBASE
         async function guardarOrden() {
-            if (!session) return;
-
-            const nuevaOrden = {
+            const orden = {
                 zapateroId: session.uid,
                 cliente: document.getElementById('cliente-nombre').value,
                 calzado: document.getElementById('tipo-calzado').value,
                 descripcion: document.getElementById('trabajo-desc').value,
-                total: document.getElementById('precio-total').value,
-                abono: document.getElementById('precio-abono').value,
+                precio: document.getElementById('precio-total').value,
                 entrega: document.getElementById('fecha-entrega').value,
                 estado: 'Recibido',
-                fechaRegistro: new Date().toISOString()
+                timestamp: Date.now()
             };
 
-            try {
-                // Guardamos en una carpeta global 'trabajos'
-                await db.ref('trabajos').push(nuevaOrden);
-                alert("¡Orden Creada!");
-                cerrarModal();
-                cargarTrabajos();
-            } catch (e) {
-                alert("Error: " + e.message);
-            }
+            await db.ref('trabajos').push(orden);
+            cerrarModal();
+            alert("Orden registrada con éxito");
         }
 
+        // CARGAR TRABAJOS EN TIEMPO REAL
         function cargarTrabajos() {
-            if (!session) return;
-            
-            // Solo traemos los trabajos que pertenecen a ESTE zapatero
-            db.ref('trabajos').orderByChild('zapateroId').equalTo(session.uid).on('value', (snapshot) => {
+            db.ref('trabajos').orderByChild('zapateroId').equalTo(session.uid).on('value', snapshot => {
                 const container = document.getElementById('lista-trabajos');
                 container.innerHTML = "";
                 
-                if (!snapshot.exists()) {
-                    container.innerHTML = '<p style="text-align: center; color: #555; margin-top: 50px;">No tienes órdenes pendientes.</p>';
-                    return;
-                }
-
-                snapshot.forEach((child) => {
-                    const orden = child.val();
-                    const card = `
-                        <div class="order-card">
-                            <div class="order-img"><i class="fas fa-shoe-prints" style="font-size: 30px; color: #333; margin: 20px;"></i></div>
-                            <div class="order-info">
-                                <h3>${orden.cliente}</h3>
-                                <p>${orden.calzado} - ${orden.descripcion}</p>
-                                <p style="color: var(--gold)">Entrega: ${orden.entrega}</p>
+                snapshot.forEach(child => {
+                    const id = child.key;
+                    const o = child.val();
+                    container.innerHTML += `
+                        <div class="order-card" data-nombre="${o.cliente.toLowerCase()} ${o.calzado.toLowerCase()}">
+                            <div class="order-header">
+                                <h3>${o.cliente}</h3>
+                                <span class="status-tag tag-${o.estado.toLowerCase().replace(" ","")}">${o.estado}</span>
                             </div>
-                            <span class="status-tag tag-${orden.estado.toLowerCase()}">${orden.estado}</span>
+                            <div class="order-details">
+                                <i class="fas fa-shoe-prints"></i> ${o.calzado} | ${o.descripcion}
+                            </div>
+                            <div class="order-price">
+                                <span>Total: $${o.precio}</span>
+                                <span style="font-size: 11px; color: var(--gold)">📅 ${o.entrega}</span>
+                            </div>
+                            <div class="order-actions">
+                                <button class="btn-status" onclick="actualizarEstado('${id}', 'En Proceso')">REPARAR</button>
+                                <button class="btn-status" onclick="actualizarEstado('${id}', 'Listo')">TERMINAR</button>
+                                <button class="btn-status" style="color:#ff4d4d" onclick="eliminarOrden('${id}')"><i class="fas fa-trash"></i></button>
+                            </div>
                         </div>
                     `;
-                    container.innerHTML += card;
                 });
+            });
+        }
+
+        function actualizarEstado(id, nuevoEstado) {
+            db.ref('trabajos/' + id).update({ estado: nuevoEstado });
+        }
+
+        function eliminarOrden(id) {
+            if(confirm("¿Seguro que deseas eliminar esta orden?")) {
+                db.ref('trabajos/' + id).remove();
+            }
+        }
+
+        function filtrarTrabajos() {
+            const busqueda = document.getElementById('inputBusqueda').value.toLowerCase();
+            document.querySelectorAll('.order-card').forEach(card => {
+                const texto = card.getAttribute('data-nombre');
+                card.style.display = texto.includes(busqueda) ? "block" : "none";
             });
         }
 
