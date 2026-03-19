@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro J.A.D.I - Cliente</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --gold: #FFD700; --dark: #000; }
+        body { background: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
+        
+        .reg-card { background: #111; padding: 30px; border-radius: 20px; border: 1px solid #222; width: 100%; max-width: 400px; text-align: center; }
+        .logo { color: var(--gold); font-size: 35px; font-weight: 900; letter-spacing: 5px; margin-bottom: 5px; }
+        .sub-logo { font-size: 10px; letter-spacing: 3px; color: #888; margin-bottom: 30px; }
+        
+        input { width: 100%; padding: 15px; margin-bottom: 15px; background: #000; border: 1px solid #333; color: white; border-radius: 10px; box-sizing: border-box; font-size: 16px; }
+        input:focus { border-color: var(--gold); outline: none; }
+        
+        .btn-reg { background: var(--gold); color: black; border: none; padding: 15px; width: 100%; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 16px; }
+        .status-msg { font-size: 13px; margin-top: 15px; color: #888; }
+    </style>
+</head>
+<body>
+
+    <div class="reg-card">
+        <div class="logo">J.A.D.I</div>
+        <div class="sub-logo">REPAIZ ECOSISTEMA</div>
+        
+        <h3 id="titulo">Completar Registro</h3>
+        <p id="instrucciones" style="font-size: 13px; color: #aaa; margin-bottom: 20px;">Ingresa el celular con el que te registraron en el taller.</p>
+
+        <input type="tel" id="reg-celular" placeholder="Número de Celular" onblur="validarPreRegistro(this.value)">
+        
+        <div id="campos-extra" style="display: none;">
+            <input type="text" id="reg-nombre" placeholder="Nombre Completo">
+            <input type="email" id="reg-correo" placeholder="Correo Electrónico">
+            <input type="password" id="reg-pass" placeholder="Crea una Contraseña">
+            <button class="btn-reg" onclick="finalizarRegistro()">ACTIVAR MI CUENTA</button>
+        </div>
+
+        <div id="status" class="status-msg"></div>
+    </div>
+
+    <script>
+        const firebaseConfig = { databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com" };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        let uidClienteExistente = null;
+
+        async function validarPreRegistro(cel) {
+            const status = document.getElementById('status');
+            const campos = document.getElementById('campos-extra');
+            
+            if(cel.length < 10) return;
+
+            status.innerText = "Buscando tu invitación...";
+            
+            const snap = await db.ref('usuarios').orderByChild('telefono').equalTo(cel).once('value');
+            
+            if(snap.exists()) {
+                snap.forEach(child => {
+                    const data = child.val();
+                    uidClienteExistente = child.key;
+                    
+                    if(data.verificado) {
+                        status.innerHTML = "Tu cuenta ya está activa. <a href='index.html' style='color:var(--gold)'>Inicia sesión aquí</a>";
+                    } else {
+                        status.innerText = "¡Te encontramos! Completa tus datos para activar tu perfil.";
+                        document.getElementById('reg-nombre').value = data.nombre;
+                        campos.style.display = 'block';
+                        document.getElementById('reg-celular').disabled = true;
+                    }
+                });
+            } else {
+                status.innerText = "No encontramos una invitación para este número. ¿Quieres registrarte de cero?";
+                campos.style.display = 'block';
+            }
+        }
+
+        async function finalizarRegistro() {
+            const email = document.getElementById('reg-correo').value;
+            const pass = document.getElementById('reg-pass').value;
+            const nombre = document.getElementById('reg-nombre').value;
+            const cel = document.getElementById('reg-celular').value;
+
+            if(!email || !pass) return alert("Completa todos los campos");
+
+            const updateData = {
+                nombre: nombre,
+                correo: email,
+                password: pass, // Nota: En producción usar Firebase Auth para seguridad
+                verificado: true,
+                registroFecha: Date.now(),
+                tipo: "cliente"
+            };
+
+            if(uidClienteExistente) {
+                // Actualizar el pre-registro que hizo el zapatero
+                await db.ref('usuarios/' + uidClienteExistente).update(updateData);
+            } else {
+                // Crear registro nuevo totalmente
+                await db.ref('usuarios').push(updateData);
+            }
+
+            alert("¡Cuenta activada con éxito! Ya puedes ver tus zapatos en reparación.");
+            window.location.href = "index.html"; 
+        }
+    </script>
+</body>
+</html>
