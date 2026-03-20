@@ -3,39 +3,119 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cliente - Taller Master</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Mi Calzado - J.A.D.I Cliente</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        /* Estilos rápidos para centrar el contenido si no tienes el CSS listo */
-        .cliente-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            text-align: center;
-            font-family: Arial, sans-serif;
-        }
-        .logout-link {
-            margin-top: 20px;
-            color: #d9534f;
-            text-decoration: none;
-            font-weight: bold;
-        }
-        .logout-link:hover {
-            text-decoration: underline;
-        }
+        :root { --gold: #FFD700; --dark: #000; --card: #111; --green: #00ff6a; }
+        body { background: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding-bottom: 20px; }
+        
+        .header-client { padding: 25px; background: linear-gradient(180deg, #0a0a0a, #000); border-bottom: 1px solid #222; text-align: center; }
+        .header-client h1 { color: var(--gold); margin: 0; letter-spacing: 2px; font-size: 24px; }
+        
+        .container { padding: 20px; max-width: 600px; margin: auto; }
+
+        /* TARJETA DE ESTADO DE TRABAJO */
+        .status-card { background: var(--card); border-radius: 20px; padding: 20px; border: 1px solid #222; margin-bottom: 20px; }
+        .status-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        
+        /* BARRA DE PROGRESO */
+        .progress-track { display: flex; justify-content: space-between; position: relative; margin: 20px 0; }
+        .progress-track::before { content: ''; position: absolute; top: 50%; left: 0; width: 100%; height: 2px; background: #333; z-index: 1; transform: translateY(-50%); }
+        .step { width: 30px; height: 30px; border-radius: 50%; background: #222; z-index: 2; display: flex; align-items: center; justify-content: center; font-size: 12px; border: 2px solid #333; }
+        .step.active { background: var(--gold); color: black; border-color: var(--gold); box-shadow: 0 0 10px rgba(255,215,0,0.5); }
+        .step.done { background: var(--green); color: black; border-color: var(--green); }
+
+        /* SECCIÓN DE GARANTÍA */
+        .warranty-box { background: rgba(0, 255, 106, 0.05); border: 1px dashed var(--green); padding: 15px; border-radius: 12px; margin-top: 15px; display: flex; align-items: center; gap: 15px; }
+        .warranty-box i { color: var(--green); font-size: 24px; }
+
+        /* BOTÓN CHAT */
+        .btn-chat-direct { background: #fff; color: #000; border: none; padding: 15px; width: 100%; border-radius: 12px; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; text-decoration: none; margin-top: 10px; }
+
+        .empty-state { text-align: center; padding: 50px 20px; color: #555; }
     </style>
 </head>
 <body>
 
-    <div class="cliente-container">
-        <h1>Bienvenido SR Cliente</h1>
-        
-        <nav>
-            <a href="index.html" class="logout-link">Cerrar Sesión</a>
-        </nav>
+    <div class="header-client">
+        <span>BIENVENIDO A</span>
+        <h1>J.A.D.I REPAIZ</h1>
+        <small id="cliente-nombre" style="color: #888;"></small>
     </div>
 
+    <div class="container" id="mis-reparaciones">
+        </div>
+
+    <script>
+        const firebaseConfig = { databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com" };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // Para pruebas, supongamos que el cliente entra con su número de celular
+        // En el futuro, esto viene de un login o un link de WhatsApp
+        const celularCliente = localStorage.getItem('cliente_celular') || "0987654321"; 
+
+        function cargarMisTrabajos() {
+            db.ref('trabajos').orderByChild('celular').equalTo(celularCliente).on('value', snap => {
+                const container = document.getElementById('mis-reparaciones');
+                if(!snap.exists()) {
+                    container.innerHTML = `<div class="empty-state"><i class="fas fa-box-open fa-3x"></i><p>No tienes reparaciones activas.</p></div>`;
+                    return;
+                }
+
+                container.innerHTML = "";
+                snap.forEach(child => {
+                    const o = child.val();
+                    const obraId = child.key;
+
+                    // Lógica de pasos de la barra
+                    let s1="active", s2="", s3="";
+                    if(o.estado === "En Proceso") { s1="done"; s2="active"; }
+                    if(o.estado === "Listo") { s1="done"; s2="done"; s3="active"; }
+
+                    container.innerHTML += `
+                        <div class="status-card">
+                            <div class="status-header">
+                                <div>
+                                    <h3 style="margin:0">${o.obras.join(", ")}</h3>
+                                    <small style="color:var(--gold)">Maestro: ${o.maestroNom || 'Asociado JADI'}</small>
+                                </div>
+                                <div style="text-align:right">
+                                    <span style="display:block; font-size:18px; font-weight:bold">$${o.price || o.precio}</span>
+                                </div>
+                            </div>
+
+                            <div class="progress-track">
+                                <div class="step ${s1}"><i class="fas fa-receipt"></i></div>
+                                <div class="step ${s2}"><i class="fas fa-hammer"></i></div>
+                                <div class="step ${s3}"><i class="fas fa-check"></i></div>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; font-size:10px; color:#666; margin-top:-10px">
+                                <span>RECIBIDO</span>
+                                <span>EN OBRA</span>
+                                <span>LISTO</span>
+                            </div>
+
+                            ${o.garantia > 0 ? `
+                            <div class="warranty-box">
+                                <i class="fas fa-shield-alt"></i>
+                                <div>
+                                    <div style="font-size:12px; font-weight:bold; color:var(--green)">GARANTÍA ACTIVA</div>
+                                    <div style="font-size:11px; color:#aaa">${o.garantia} meses de respaldo oficial.</div>
+                                </div>
+                            </div>` : ''}
+
+                            <a href="chat.html?id=${obraId}" class="btn-chat-direct">
+                                <i class="fas fa-comment-dots"></i> CONSULTAR AL MAESTRO
+                            </a>
+                        </div>`;
+                });
+            });
+        }
+
+        window.onload = cargarMisTrabajos;
+    </script>
 </body>
 </html>
