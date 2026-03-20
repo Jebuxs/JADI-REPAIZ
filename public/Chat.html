@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mensajería J.A.D.I - Ecosistema</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --gold: #FFD700; --dark: #000; --bg: #050505; --card: #111; }
+        body { background-color: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+        /* LISTA DE CHATS (BANDEJA DE ENTRADA) */
+        #lista-chats-screen { display: flex; flex-direction: column; height: 100%; }
+        .header-main { padding: 20px; border-bottom: 1px solid var(--gold); background: var(--bg); display: flex; justify-content: space-between; align-items: center; }
+        
+        .search-chat { padding: 10px 20px; }
+        .search-chat input { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #222; background: #111; color: white; }
+
+        .chat-item { display: flex; align-items: center; padding: 15px 20px; border-bottom: 1px solid #111; cursor: pointer; transition: 0.2s; }
+        .chat-item:hover { background: #111; }
+        .avatar { width: 50px; height: 50px; border-radius: 50%; background: #222; border: 1px solid var(--gold); display: flex; align-items: center; justify-content: center; margin-right: 15px; font-weight: bold; color: var(--gold); }
+        .chat-info { flex: 1; }
+        .chat-info h4 { margin: 0; font-size: 16px; display: flex; justify-content: space-between; }
+        .chat-info p { margin: 5px 0 0; font-size: 13px; color: #777; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .tag-rol { font-size: 9px; padding: 2px 6px; border-radius: 4px; background: #332b00; color: var(--gold); text-transform: uppercase; }
+
+        /* VENTANA DE CONVERSACIÓN ACTIVA */
+        #ventana-chat-screen { display: none; flex-direction: column; height: 100%; position: absolute; top:0; left:0; width: 100%; background: var(--dark); z-index: 100; }
+        .chat-header { padding: 15px; background: var(--bg); border-bottom: 1px solid #222; display: flex; align-items: center; }
+        .chat-messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 10px; background-image: radial-gradient(#111 1px, transparent 1px); background-size: 20px 20px; }
+        
+        /* BURBUJAS */
+        .bubble { max-width: 80%; padding: 12px 15px; border-radius: 15px; font-size: 14px; line-height: 1.4; position: relative; }
+        .bubble.me { align-self: flex-end; background: var(--gold); color: black; border-bottom-right-radius: 2px; }
+        .bubble.other { align-self: flex-start; background: #222; color: white; border-bottom-left-radius: 2px; }
+        
+        /* SELLO DE GARANTÍA EN CHAT */
+        .garantia-card { background: #001a0a; border: 1px solid #00ff6a; padding: 10px; border-radius: 10px; margin: 10px 0; text-align: center; }
+        .garantia-card i { color: #00ff6a; font-size: 20px; }
+
+        .chat-input-area { padding: 15px; background: var(--bg); border-top: 1px solid #222; display: flex; gap: 10px; align-items: center; }
+        .chat-input-area input { flex: 1; padding: 12px; border-radius: 25px; border: 1px solid #333; background: #000; color: white; }
+        .btn-send { background: var(--gold); border: none; width: 45px; height: 45px; border-radius: 50%; color: black; cursor: pointer; }
+
+        .btn-garantia { background: none; border: 1px solid #444; color: #888; padding: 8px; border-radius: 50%; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div id="lista-chats-screen">
+        <div class="header-main">
+            <h2 style="margin:0; color: var(--gold);">Mensajes</h2>
+            <i class="fas fa-ellipsis-v" style="color:#555"></i>
+        </div>
+        
+        <div class="search-chat">
+            <input type="text" placeholder="Buscar cliente o proveedor...">
+        </div>
+
+        <div id="contenedor-chats" style="overflow-y: auto; flex: 1;">
+            </div>
+    </div>
+
+    <div id="ventana-chat-screen">
+        <div class="chat-header">
+            <i class="fas fa-arrow-left" onclick="cerrarVentana()" style="margin-right: 15px; color:var(--gold); font-size: 20px;"></i>
+            <div class="avatar" id="active-avatar">?</div>
+            <div style="flex:1">
+                <h4 id="active-name" style="margin:0">Nombre</h4>
+                <span id="active-rol" class="tag-rol">Cliente</span>
+            </div>
+            <button class="btn-garantia" onclick="activarGarantiaRapida()" title="Emitir Garantía">
+                <i class="fas fa-shield-alt"></i>
+            </button>
+        </div>
+
+        <div class="chat-messages" id="box-mensajes">
+            </div>
+
+        <div class="chat-input-area">
+            <input type="text" id="input-texto" placeholder="Escribe un mensaje...">
+            <button class="btn-send" onclick="enviarMensaje()"><i class="fas fa-paper-plane"></i></button>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = { databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com" };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const session = JSON.parse(localStorage.getItem('session_jadi'));
+
+        let idConversacionActiva = null;
+
+        // 1. CARGAR LISTA DE CHATS (BANDEJA)
+        function cargarBandeja() {
+            // Buscamos en la rama de 'relaciones_chat' donde participe el usuario actual
+            db.ref('relaciones_chat').orderByChild(session.uid).equalTo(true).on('value', snap => {
+                const lista = document.getElementById('contenedor-chats');
+                lista.innerHTML = "";
+                
+                snap.forEach(child => {
+                    const info = child.val();
+                    const otroId = Object.keys(info).find(k => k !== session.uid && k !== 'ultimoMsg');
+                    
+                    lista.innerHTML += `
+                        <div class="chat-item" onclick="abrirConversacion('${child.key}', '${info.nombreOtro}', '${info.rolOtro}')">
+                            <div class="avatar">${info.nombreOtro.charAt(0)}</div>
+                            <div class="chat-info">
+                                <h4>${info.nombreOtro} <span class="tag-rol">${info.rolOtro}</span></h4>
+                                <p>${info.ultimoMsg || "Haz clic para chatear"}</p>
+                            </div>
+                        </div>`;
+                });
+            });
+        }
+
+        // 2. ABRIR UNA CONVERSACIÓN ESPECÍFICA
+        function abrirConversacion(idChat, nombre, rol) {
+            idConversacionActiva = idChat;
+            document.getElementById('active-name').innerText = nombre;
+            document.getElementById('active-rol').innerText = rol;
+            document.getElementById('active-avatar').innerText = nombre.charAt(0);
+            document.getElementById('ventana-chat-screen').style.display = 'flex';
+
+            // Escuchar mensajes en tiempo real
+            db.ref(`mensajes_ecosistema/${idChat}`).on('value', snap => {
+                const box = document.getElementById('box-mensajes');
+                box.innerHTML = "";
+                snap.forEach(mChild => {
+                    const m = mChild.val();
+                    const clase = m.emisor === session.uid ? 'me' : 'other';
+                    
+                    if(m.tipo === 'garantia') {
+                        box.innerHTML += `
+                            <div class="garantia-card">
+                                <i class="fas fa-shield-alt"></i>
+                                <p style="margin:5px 0; font-weight:bold">GARANTÍA J.A.D.I EMITIDA</p>
+                                <small>${m.texto}</small>
+                            </div>`;
+                    } else {
+                        box.innerHTML += `<div class="bubble ${clase}">${m.texto}</div>`;
+                    }
+                });
+                box.scrollTop = box.scrollHeight;
+            });
+        }
+
+        // 3. ENVIAR MENSAJE
+        function enviarMensaje() {
+            const input = document.getElementById('input-texto');
+            if(!input.value.trim()) return;
+
+            const msg = {
+                emisor: session.uid,
+                texto: input.value,
+                time: Date.now(),
+                tipo: 'texto'
+            };
+
+            db.ref(`mensajes_ecosistema/${idConversacionActiva}`).push(msg);
+            db.ref(`relaciones_chat/${idConversacionActiva}`).update({ ultimoMsg: input.value });
+            input.value = "";
+        }
+
+        // 4. SELLO DE GARANTÍA RÁPIDA
+        function activarGarantiaRapida() {
+            const tiempo = prompt("¿Cuántos meses de garantía ofrecerás? (Ej: 3, 6, 12)");
+            if(!tiempo) return;
+
+            const msgGarantia = {
+                emisor: session.uid,
+                texto: `Este trabajo cuenta con respaldo J.A.D.I por ${tiempo} meses a partir de hoy.`,
+                time: Date.now(),
+                tipo: 'garantia'
+            };
+
+            db.ref(`mensajes_ecosistema/${idConversacionActiva}`).push(msgGarantia);
+        }
+
+        function cerrarVentana() { document.getElementById('ventana-chat-screen').style.display = 'none'; }
+
+        window.onload = cargarBandeja;
+    </script>
+</body>
+</html>
