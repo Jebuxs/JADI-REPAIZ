@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>J.A.D.I - Panel de Marketing</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body { background-color: #f4f7f6; padding: 20px; }
+        .card { border-radius: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .preview-box { background: #e9ecef; border-left: 5px solid #25d366; padding: 15px; font-style: italic; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="card p-4">
+        <h2 class="text-center text-primary">📢 Configuración de Mensajes (Marketing)</h2>
+        <p class="text-center text-muted">Ajusta cómo saludas y te despides de tus clientes en WhatsApp.</p>
+        <hr>
+
+        <div class="form-group">
+            <label><b>Saludo Inicial:</b> (Ej: Hola Máster, Estimado/a)</label>
+            <input type="text" id="txtSaludo" class="form-control" placeholder="Ej: ¡Hola Máster!">
+        </div>
+
+        <div class="form-group">
+            <label><b>Cuerpo del Mensaje (Recepción):</b></label>
+            <textarea id="txtCuerpo" class="form-control" rows="3" placeholder="Ej: Hemos recibido tu calzado en J.A.D.I Repaiz."></textarea>
+        </div>
+
+        <div class="form-group">
+            <label><b>Firma o Despedida:</b></label>
+            <input type="text" id="txtFirma" class="form-control" placeholder="Ej: Atentamente, el equipo de J.A.D.I">
+        </div>
+
+        <div class="mt-3">
+            <h5>👀 Vista Previa:</h5>
+            <div id="vistaPrevia" class="preview-box">
+                Cargando configuración...
+            </div>
+        </div>
+
+        <button id="btnGuardar" class="btn btn-success btn-block mt-4">
+            💾 GUARDAR CAMBIOS EN LA NUBE
+        </button>
+    </div>
+</div>
+
+<script type="module">
+    import { db } from "./firebase-config.js"; // Tu archivo de conexión
+    import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const docRef = doc(db, "configuracion", "mensajes");
+
+    // 1. CARGAR DATOS ACTUALES
+    async function cargarMensajes() {
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            document.getElementById('txtSaludo').value = data.saludo;
+            document.getElementById('txtCuerpo').value = data.cuerpo;
+            document.getElementById('txtFirma').value = data.firma;
+            actualizarPreview();
+        }
+    }
+
+    // 2. ACTUALIZAR VISTA PREVIA MIENTRAS ESCRIBES
+    function actualizarPreview() {
+        const s = document.getElementById('txtSaludo').value;
+        const c = document.getElementById('txtCuerpo').value;
+        const f = document.getElementById('txtFirma').value;
+        document.getElementById('vistaPrevia').innerHTML = 
+            `<b>${s} [Nombre Cliente]</b><br>${c}<br>Total: $0.00<br><br><i>${f}</i>`;
+    }
+
+    document.querySelectorAll('input, textarea').forEach(el => {
+        el.addEventListener('input', actualizarPreview);
+    });
+
+    // 3. GUARDAR EN FIREBASE
+    document.getElementById('btnGuardar').addEventListener('click', async () => {
+        try {
+            await setDoc(docRef, {
+                saludo: document.getElementById('txtSaludo').value,
+                cuerpo: document.getElementById('txtCuerpo').value,
+                firma: document.getElementById('txtFirma').value
+            });
+            alert("¡Configuración guardada! Todos los módulos ahora usarán este mensaje.");
+        } catch (e) {
+            console.error("Error al guardar: ", e);
+        }
+    });
+
+    cargarMensajes();
+</script>
+
+</body>
+</html>
