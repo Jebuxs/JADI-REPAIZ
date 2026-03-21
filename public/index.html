@@ -65,7 +65,7 @@
     </div>
 
     <div id="view-register" class="view">
-        <h2 style="color:var(--gold)">Nuevo Registro</h2>
+        <h2 id="register-title" style="color:var(--gold)">Nuevo Registro</h2>
         <div class="input-group"><input type="text" id="reg-name" class="input-field" placeholder="Nombre Completo"></div>
         <div class="input-group"><input type="email" id="reg-email" class="input-field" placeholder="Correo"></div>
         <div class="input-group"><input type="tel" id="reg-tel" class="input-field" placeholder="Celular (10 dígitos)"></div>
@@ -77,6 +77,7 @@
             <option value="SHP">Tienda</option>
             <option value="CLN">Cliente</option>
             <option value="DLV">Delivery</option>
+            <option id="opt-admin" value="ADM" style="display:none;">ADMINISTRADOR MAESTRO</option>
         </select>
 
         <div id="box-empresa" style="display:none; margin-top:12px;">
@@ -129,7 +130,25 @@
     const auth = firebase.auth();
     let tempGoogleUser = null;
 
-    const paginasMaster = { 'ZPT': 'zapatero.html', 'PRV': 'proveedor.html', 'CLN': 'cliente.html', 'DLV': 'delivery.html', 'SHP': 'tienda.html', 'ADM': 'admin_panel.html' };
+    const paginasMaster = { 
+        'ZPT': 'trabajos.html', 
+        'PRV': 'proveedor.html', 
+        'CLN': 'cliente.html', 
+        'DLV': 'delivery.html', 
+        'SHP': 'tienda.html', 
+        'ADM': 'admin_panel.html' 
+    };
+
+    // --- LLAMADO DE TECLAS MAESTRO (CTRL + ALT + J) ---
+    document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey && e.altKey && e.key.toLowerCase() === 'j') {
+            alert("¡ACCESO MAESTRO ACTIVADO!");
+            mostrarVista('view-register');
+            document.getElementById('register-title').innerText = "REGISTRO DE DUEÑO";
+            document.getElementById('opt-admin').style.display = 'block';
+            document.getElementById('reg-rol').value = 'ADM';
+        }
+    });
 
     function mostrarVista(id) {
         document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
@@ -151,7 +170,7 @@
 
     function verificarRolEmpresa(s, b) {
         const r = document.getElementById(s).value;
-        document.getElementById(b).style.display = (['PRV','ZPT','SHP'].includes(r)) ? 'block' : 'none';
+        document.getElementById(b).style.display = (['PRV','ZPT','SHP','ADM'].includes(r)) ? 'block' : 'none';
     }
 
     async function login() {
@@ -175,7 +194,6 @@
         } catch(e) { alert("Error"); } finally { toggleLoader(false); }
     }
 
-    // --- LÓGICA DE REGISTRO CON SINCRONIZACIÓN DE CELULAR ---
     async function validarYCrearEcosistema() {
         const n = document.getElementById('reg-name').value;
         const em = document.getElementById('reg-email').value;
@@ -189,31 +207,24 @@
 
         toggleLoader(true);
         try {
-            // 1. BUSCAR SI EL CELULAR YA EXISTE (Creado por un zapatero)
             const snapExistente = await db.ref('usuarios').orderByChild('telefono').equalTo(t).once('value');
             let finalUID;
 
             if(snapExistente.exists()){
-                // SI EXISTE, ACTUALIZAMOS LOS DATOS EN EL MISMO ID
                 snapExistente.forEach(child => { finalUID = child.key; });
-                const updateObj = { nombre: n, email: em, pass: p, verificado: true, rolCodigo: r, empresaNombre: document.getElementById('reg-empresa-nombre').value || "Personal" };
+                const updateObj = { nombre: n, email: em, pass: p, verificado: true, rolCodigo: r, empresaNombre: document.getElementById('reg-empresa-nombre').value || "JADI REPAIZ" };
                 await db.ref('usuarios/' + finalUID).update(updateObj);
-                
                 const fullUser = (await db.ref('usuarios/' + finalUID).once('value')).val();
                 localStorage.setItem('session_jadi', JSON.stringify(fullUser));
             } else {
-                // SI NO EXISTE, CREAMOS UNO NUEVO CON CONTADOR
                 const snapC = await db.ref('contadores/' + r).once('value');
                 let num = (snapC.val() || 0) + 1;
                 finalUID = r + num.toString().padStart(9,'0');
-                
-                const nuevoObj = { nombre: n, email: em, telefono: t, rolCodigo: r, uid: finalUID, pass: p, verificado: true, empresaNombre: document.getElementById('reg-empresa-nombre').value || "Personal" };
-                
+                const nuevoObj = { nombre: n, email: em, telefono: t, rolCodigo: r, uid: finalUID, pass: p, verificado: true, empresaNombre: document.getElementById('reg-empresa-nombre').value || "JADI REPAIZ" };
                 await db.ref('usuarios/' + finalUID).set(nuevoObj);
                 await db.ref('contadores/' + r).set(num);
                 localStorage.setItem('session_jadi', JSON.stringify(nuevoObj));
             }
-
             window.location.href = paginasMaster[r];
         } catch(e) { alert(e.message); } finally { toggleLoader(false); }
     }
@@ -223,10 +234,7 @@
         try {
             const res = await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
             tempGoogleUser = res.user;
-            
-            // Buscar por Email
             const snap = await db.ref('usuarios').orderByChild('email').equalTo(tempGoogleUser.email).once('value');
-            
             if(snap.exists()) {
                 let u; snap.forEach(c => u = c.val());
                 localStorage.setItem('session_jadi', JSON.stringify(u));
@@ -244,10 +252,8 @@
 
         toggleLoader(true);
         try {
-            // Verificar si el teléfono ya existe para vincular con Google
             const snapTel = await db.ref('usuarios').orderByChild('telefono').equalTo(t).once('value');
             let finalUID;
-
             if(snapTel.exists()){
                 snapTel.forEach(c => finalUID = c.key);
                 await db.ref('usuarios/' + finalUID).update({ email: tempGoogleUser.email, pass: "G_AUTH", verificado: true });
@@ -255,13 +261,11 @@
                 const snapC = await db.ref('contadores/' + r).once('value');
                 let num = (snapC.val() || 0) + 1;
                 finalUID = r + num.toString().padStart(9,'0');
-                
                 await db.ref('usuarios/' + finalUID).set({
                     nombre: tempGoogleUser.displayName, email: tempGoogleUser.email, telefono: t, rolCodigo: r, uid: finalUID, pass: "G_AUTH", verificado: true, empresaNombre: document.getElementById('google-empresa-nombre').value || "Personal"
                 });
                 await db.ref('contadores/' + r).set(num);
             }
-
             const finalUser = (await db.ref('usuarios/' + finalUID).once('value')).val();
             localStorage.setItem('session_jadi', JSON.stringify(finalUser));
             window.location.href = paginasMaster[r];
