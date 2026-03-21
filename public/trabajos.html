@@ -23,13 +23,20 @@
         .tag-recibido { background: #444; color: white; }
         .tag-proceso { background: #0066ff; color: white; }
         .tag-listo { background: #00cc66; color: black; }
-        .order-details { font-size: 13px; color: #aaa; margin-bottom: 15px; }
+        .order-details { font-size: 13px; color: #aaa; margin-bottom: 10px; }
         .order-price { font-weight: bold; color: white; display: flex; justify-content: space-between; border-top: 1px solid #222; padding-top: 10px; font-size: 12px; }
         .order-actions { display: flex; gap: 8px; margin-top: 15px; }
         .btn-status { flex: 1; padding: 8px; border-radius: 8px; border: 1px solid #333; background: #1a1a1a; color: white; font-size: 11px; cursor: pointer; }
+        
         #modal-orden { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark); z-index: 300; padding: 20px; box-sizing: border-box; overflow-y: auto; }
         input, select, textarea { width: 100%; padding: 12px; margin-bottom: 12px; background: #111; border: 1px solid #333; color: white; border-radius: 8px; box-sizing: border-box; outline: none; }
         label { font-size: 11px; color: var(--gold); margin-bottom: 5px; display: block; }
+        
+        /* Estilos Tabla de Items */
+        .item-row { display: flex; gap: 5px; margin-bottom: 10px; }
+        .item-table { background: #080808; border-radius: 10px; padding: 10px; margin-bottom: 15px; border: 1px dashed #333; }
+        .item-list-row { display: flex; justify-content: space-between; font-size: 12px; padding: 5px 0; border-bottom: 1px solid #1a1a1a; }
+        
         .fab { position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; background: var(--gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: black; font-size: 24px; border: none; cursor: pointer; box-shadow: 0 4px 15px rgba(255,215,0,0.4); }
     </style>
 </head>
@@ -65,28 +72,38 @@
 
         <input type="text" id="cli-nombre" placeholder="Nombre completo">
 
-        <label>TIPO DE ARTÍCULO (DEPORTIVO, MOCHILA, ETC)</label>
-        <input list="lista-servicios" id="tipo-calzado" placeholder="Escribe o selecciona...">
+        <div class="item-table">
+            <label>AGREGAR TRABAJOS (ESTILO FACTURA)</label>
+            <div class="item-row">
+                <input type="text" id="item-cant" placeholder="Cant" style="flex:0.6;" value="1">
+                <input list="lista-servicios" id="item-tipo" placeholder="Tipo" style="flex:1.2;">
+                <input list="lista-detalles" id="item-desc" placeholder="Detalle" style="flex:2;">
+                <input type="number" id="item-precio" placeholder="$" style="flex:1;">
+                <button onclick="agregarItemALista()" style="background:var(--gold); border:none; border-radius:8px; width:45px; height:42px; color:black;"><i class="fas fa-plus"></i></button>
+            </div>
+            <div id="tabla-items-visual">
+                </div>
+        </div>
+
         <datalist id="lista-servicios"></datalist>
+        <datalist id="lista-detalles"></datalist>
 
-        <textarea id="trabajo-desc" rows="2" placeholder="Detalle de la reparación (Ej: 2 chullas, 1 mochila)"></textarea>
-
-        <div style="display: flex; gap: 10px;">
-            <div style="flex:1">
-                <label>PRECIO TOTAL $</label>
-                <input type="number" id="precio-total" placeholder="0.00" onkeyup="calcularSaldo()">
+        <div style="background: #0a0a0a; padding: 12px; border-radius: 10px; border: 1px solid #222;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <label style="margin:0;">TOTAL NEGOCIADO $</label>
+                <input type="number" id="precio-total" style="width:100px; margin:0; text-align:right; color:var(--gold); font-weight:bold;" onkeyup="calcularSaldo()">
             </div>
-            <div style="flex:1">
-                <label>ABONO $</label>
-                <input type="number" id="abono-inicial" placeholder="0.00" onkeyup="calcularSaldo()">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <label style="margin:0;">ABONO INICIAL $</label>
+                <input type="number" id="abono-inicial" style="width:100px; margin:0; text-align:right;" onkeyup="calcularSaldo()">
             </div>
-            <div style="flex:1">
-                <label>PENDIENTE $</label>
-                <input type="number" id="saldo-pendiente" value="0.00" readonly style="color:var(--gold); font-weight:bold;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <label style="margin:0; font-weight:bold;">SALDO PENDIENTE $</label>
+                <input type="number" id="saldo-pendiente" readonly style="width:100px; margin:0; text-align:right; border:none; background:transparent; color:#ff4444; font-weight:bold;">
             </div>
         </div>
 
-        <label>FECHA DE ENTREGA</label>
+        <label style="margin-top:15px;">FECHA DE ENTREGA</label>
         <input type="date" id="fecha-entrega">
         
         <div style="display: flex; gap: 10px; margin-top: 10px;">
@@ -101,22 +118,86 @@
         const db = firebase.database();
         const session = JSON.parse(localStorage.getItem('session_jadi'));
 
-        function abrirModal() { document.getElementById('modal-orden').style.display = 'block'; }
+        let itemsTemporales = [];
+
+        function abrirModal() { 
+            document.getElementById('modal-orden').style.display = 'block'; 
+            itemsTemporales = [];
+            document.getElementById('tabla-items-visual').innerHTML = "";
+        }
         function cerrarModal() { document.getElementById('modal-orden').style.display = 'none'; }
+
+        // --- LÓGICA DE IDS CONSONÁNTICOS / INICIALES ---
+        function generarIDInteligente(texto) {
+            let palabras = texto.trim().split(/\s+/);
+            if (palabras.length > 1) {
+                // Iniciales de cada palabra
+                return palabras.map(p => p[0].toUpperCase()).join('');
+            } else {
+                // Consonantes de palabra corta
+                return texto.replace(/[aeiouáéíóú]/gi, '').toUpperCase().substring(0, 3);
+            }
+        }
+
+        async function agregarItemALista() {
+            const cant = document.getElementById('item-cant').value;
+            const tipo = document.getElementById('item-tipo').value;
+            const desc = document.getElementById('item-desc').value;
+            const precio = parseFloat(document.getElementById('item-precio').value) || 0;
+
+            if(!tipo || !desc) return alert("Completa tipo y detalle");
+
+            // Generar ID según tu lógica
+            let idBase = generarIDInteligente(desc);
+            
+            // Verificar duplicados en la base global para numeración
+            const snapCat = await db.ref('categorias_servicios').once('value');
+            let contador = 0;
+            snapCat.forEach(child => {
+                let codExistente = child.val().codigo;
+                if (codExistente.replace(/[0-9]/g, '') === idBase) contador++;
+            });
+            let idFinal = contador === 0 ? idBase : idBase + contador;
+
+            // Registrar en categorías si no existe
+            db.ref('categorias_servicios').push({ nombre: desc, codigo: idFinal });
+
+            const nuevoItem = { cant, tipo, desc, precio, codigo: idFinal };
+            itemsTemporales.push(nuevoItem);
+            renderItems();
+
+            // Limpiar inputs de item
+            document.getElementById('item-tipo').value = "";
+            document.getElementById('item-desc').value = "";
+            document.getElementById('item-precio').value = "";
+            document.getElementById('item-cant').value = "1";
+        }
+
+        function renderItems() {
+            const container = document.getElementById('tabla-items-visual');
+            container.innerHTML = "";
+            let suma = 0;
+            itemsTemporales.forEach((it, index) => {
+                suma += it.precio;
+                container.innerHTML += `
+                    <div class="item-list-row">
+                        <span>${it.cant} | <b>${it.codigo}</b> | ${it.tipo} - ${it.desc}</span>
+                        <span>$${it.precio.toFixed(2)} <i class="fas fa-trash" onclick="eliminarItem(${index})" style="color:#555; margin-left:8px;"></i></span>
+                    </div>`;
+            });
+            document.getElementById('precio-total').value = suma.toFixed(2);
+            calcularSaldo();
+        }
+
+        function eliminarItem(index) {
+            itemsTemporales.splice(index, 1);
+            renderItems();
+        }
 
         function calcularSaldo() {
             const total = parseFloat(document.getElementById('precio-total').value) || 0;
             const abono = parseFloat(document.getElementById('abono-inicial').value) || 0;
             document.getElementById('saldo-pendiente').value = (total - abono).toFixed(2);
-        }
-
-        // CARGAR CATEGORÍAS COMPARTIDAS
-        function cargarSugerencias() {
-            db.ref('categorias_servicios').on('value', snap => {
-                const list = document.getElementById('lista-servicios');
-                list.innerHTML = "";
-                snap.forEach(c => { list.innerHTML += `<option value="${c.val()}">`; });
-            });
         }
 
         async function detectarCliente(cel) {
@@ -132,14 +213,9 @@
         async function guardarOrden() {
             const cel = document.getElementById('cli-celular').value;
             const nom = document.getElementById('cli-nombre').value;
-            const tipo = document.getElementById('tipo-calzado').value;
-            if(!cel || !nom || !tipo) return alert("Faltan datos");
+            if(!cel || !nom || itemsTemporales.length === 0) return alert("Faltan datos o ítems");
 
-            // 1. Guardar Categoría si es nueva
-            const snapCat = await db.ref('categorias_servicios').orderByValue().equalTo(tipo).once('value');
-            if(!snapCat.exists()) db.ref('categorias_servicios').push(tipo);
-
-            // 2. Buscar/Crear Cliente
+            // Buscar/Crear Cliente
             const snapCli = await db.ref('usuarios').orderByChild('telefono').equalTo(cel).once('value');
             let cliId;
             if(!snapCli.exists()) {
@@ -150,19 +226,17 @@
                 await db.ref('contadores/CLN').set(num);
             } else { snapCli.forEach(c => cliId = c.val().uid); }
 
-            // 3. Crear ID de Trabajo Corto
+            // Crear ID de Trabajo Corto
             const snapT = await db.ref('contadores/TRB').once('value');
             let numT = (snapT.val() || 0) + 1;
             const trbID = 'TRB-' + numT.toString().padStart(5, '0');
 
-            // 4. Guardar Orden
             await db.ref('trabajos').push({
                 ordenID: trbID,
                 zapateroId: session.uid,
                 clienteId: cliId,
                 cliente: nom,
-                calzado: tipo,
-                descripcion: document.getElementById('trabajo-desc').value,
+                items: itemsTemporales,
                 precio: document.getElementById('precio-total').value,
                 abono: document.getElementById('abono-inicial').value,
                 saldo: document.getElementById('saldo-pendiente').value,
@@ -171,7 +245,6 @@
                 timestamp: Date.now()
             });
             await db.ref('contadores/TRB').set(numT);
-
             cerrarModal();
         }
 
@@ -181,17 +254,17 @@
                 container.innerHTML = "";
                 snap.forEach(child => {
                     const o = child.val();
+                    let detalleTexto = o.items ? o.items.map(i => `${i.cant} ${i.codigo}`).join(', ') : 'Sin detalle';
                     container.innerHTML += `
                         <div class="order-card" data-nombre="${o.cliente.toLowerCase()}">
                             <div class="order-header">
                                 <h3>${o.cliente} <small style="color:#666; font-size:10px;">#${o.ordenID}</small></h3>
                                 <span class="status-tag tag-${o.estado.toLowerCase()}">${o.estado}</span>
                             </div>
-                            <div class="order-details"><b>${o.calzado}</b>: ${o.descripcion}</div>
+                            <div class="order-details">📦 ${detalleTexto}</div>
                             <div class="order-price">
                                 <span>TOTAL: $${o.precio}</span>
-                                <span>ABONO: $${o.abono || 0}</span>
-                                <span style="color:var(--gold)">DEBE: $${o.saldo || 0}</span>
+                                <span style="color:var(--gold)">DEBE: $${o.saldo}</span>
                             </div>
                             <div class="order-actions">
                                 <button class="btn-status" onclick="updateStatus('${child.key}','En Proceso')">PROCESO</button>
@@ -211,7 +284,7 @@
             });
         }
 
-        window.onload = () => { cargarTrabajos(); cargarSugerencias(); };
+        window.onload = () => { cargarTrabajos(); };
     </script>
 </body>
 </html>
