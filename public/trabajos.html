@@ -10,37 +10,26 @@
     <style>
         :root { --gold: #FFD700; --dark: #000; --card: #111; }
         body { background: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding-bottom: 80px; }
-        
         .header { padding: 15px; border-bottom: 1px solid #222; display: flex; align-items: center; background: #050505; position: sticky; top: 0; z-index: 100; justify-content: space-between; }
         .btn-back { color: var(--gold); text-decoration: none; font-size: 1.2rem; }
-
         .search-container { padding: 15px; }
         .search-bar { background: #1a1a1a; border: 1px solid #333; padding: 10px; border-radius: 10px; display: flex; align-items: center; }
         .search-bar input { background: transparent; border: none; color: white; margin-left: 10px; width: 100%; outline: none; }
-
         .orders-container { padding: 0 15px; }
         .order-card { background: var(--card); border-radius: 15px; padding: 15px; margin-bottom: 15px; border: 1px solid #222; }
         .order-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
         .order-header h3 { margin: 0; font-size: 16px; color: var(--gold); cursor: pointer; text-decoration: underline; }
-        
         .status-tag { font-size: 10px; padding: 4px 8px; border-radius: 5px; text-transform: uppercase; font-weight: bold; }
         .tag-recibido { background: #444; color: white; }
         .tag-proceso { background: #0066ff; color: white; }
         .tag-listo { background: #00cc66; color: black; }
-
         .order-details { font-size: 13px; color: #aaa; margin-bottom: 15px; }
-        .order-price { font-weight: bold; color: white; display: flex; justify-content: space-between; border-top: 1px solid #222; padding-top: 10px; }
-
+        .order-price { font-weight: bold; color: white; display: flex; justify-content: space-between; border-top: 1px solid #222; padding-top: 10px; font-size: 12px; }
         .order-actions { display: flex; gap: 8px; margin-top: 15px; }
-        .btn-status { flex: 1; padding: 8px; border-radius: 8px; border: 1px solid #333; background: #1a1a1a; color: white; font-size: 11px; cursor: pointer; transition: 0.3s; }
-        .btn-chat { border-color: var(--gold) !important; color: var(--gold) !important; }
-
+        .btn-status { flex: 1; padding: 8px; border-radius: 8px; border: 1px solid #333; background: #1a1a1a; color: white; font-size: 11px; cursor: pointer; }
         #modal-orden { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark); z-index: 300; padding: 20px; box-sizing: border-box; overflow-y: auto; }
-        input, select, textarea { width: 100%; padding: 12px; margin-bottom: 15px; background: #111; border: 1px solid #333; color: white; border-radius: 8px; box-sizing: border-box; outline: none; }
-        
-        #box-invitacion { display: none; background: #1a1500; border: 1px solid var(--gold); padding: 12px; border-radius: 10px; margin-bottom: 15px; text-align: center; }
-        .btn-invitar { background: var(--gold); color: black; border: none; padding: 8px 15px; border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer; }
-
+        input, select, textarea { width: 100%; padding: 12px; margin-bottom: 12px; background: #111; border: 1px solid #333; color: white; border-radius: 8px; box-sizing: border-box; outline: none; }
+        label { font-size: 11px; color: var(--gold); margin-bottom: 5px; display: block; }
         .fab { position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; background: var(--gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: black; font-size: 24px; border: none; cursor: pointer; box-shadow: 0 4px 15px rgba(255,215,0,0.4); }
     </style>
 </head>
@@ -65,29 +54,44 @@
 
     <div id="modal-orden">
         <h2 style="color: var(--gold); margin-top: 0;">Nueva Orden de Trabajo</h2>
+        
+        <label>CLIENTE (CELULAR)</label>
         <input type="tel" id="cli-celular" placeholder="Número Celular" onkeyup="detectarCliente(this.value)">
 
-        <div id="box-invitacion">
-            <p style="font-size: 11px; margin: 0 0 10px 0; color: #ccc;">Este cliente no está en J.A.D.I</p>
-            <button class="btn-invitar" onclick="enviarInvitacion()">
-                <i class="fab fa-whatsapp"></i> ENVIAR INVITACIÓN
-            </button>
+        <div id="box-invitacion" style="display:none; background:#1a1500; border:1px solid var(--gold); padding:10px; border-radius:10px; margin-bottom:15px; text-align:center;">
+            <p style="font-size: 11px; margin:0 0 10px 0;">Cliente no registrado</p>
+            <button onclick="enviarInvitacion()" style="background:var(--gold); border:none; padding:5px 10px; border-radius:5px; font-weight:bold; font-size:10px;">INVITAR POR WHATSAPP</button>
         </div>
 
-        <input type="text" id="cli-nombre" placeholder="Nombre del Cliente">
-        <select id="tipo-calzado">
-            <option value="Deportivo">Deportivo</option>
-            <option value="Formal">Formal</option>
-            <option value="Botas">Botas</option>
-            <option value="Tacones">Tacones</option>
-        </select>
-        <textarea id="trabajo-desc" rows="3" placeholder="Descripción de la reparación..."></textarea>
-        <input type="number" id="precio-total" placeholder="Precio Total $">
+        <input type="text" id="cli-nombre" placeholder="Nombre completo">
+
+        <label>TIPO DE ARTÍCULO (DEPORTIVO, MOCHILA, ETC)</label>
+        <input list="lista-servicios" id="tipo-calzado" placeholder="Escribe o selecciona...">
+        <datalist id="lista-servicios"></datalist>
+
+        <textarea id="trabajo-desc" rows="2" placeholder="Detalle de la reparación (Ej: 2 chullas, 1 mochila)"></textarea>
+
+        <div style="display: flex; gap: 10px;">
+            <div style="flex:1">
+                <label>PRECIO TOTAL $</label>
+                <input type="number" id="precio-total" placeholder="0.00" onkeyup="calcularSaldo()">
+            </div>
+            <div style="flex:1">
+                <label>ABONO $</label>
+                <input type="number" id="abono-inicial" placeholder="0.00" onkeyup="calcularSaldo()">
+            </div>
+            <div style="flex:1">
+                <label>PENDIENTE $</label>
+                <input type="number" id="saldo-pendiente" value="0.00" readonly style="color:var(--gold); font-weight:bold;">
+            </div>
+        </div>
+
+        <label>FECHA DE ENTREGA</label>
         <input type="date" id="fecha-entrega">
         
-        <div style="display: flex; gap: 10px;">
-            <button onclick="cerrarModal()" style="flex:1; background: transparent; color: white; border: 1px solid #444; padding: 15px; border-radius: 10px;">CANCELAR</button>
-            <button onclick="guardarOrden()" style="flex:1; background: var(--gold); color: black; border: none; padding: 15px; border-radius: 10px; font-weight: bold;">GUARDAR ORDEN</button>
+        <div style="display: flex; gap: 10px; margin-top: 10px;">
+            <button onclick="cerrarModal()" style="flex:1; background:transparent; color:white; border:1px solid #444; padding:15px; border-radius:10px;">CANCELAR</button>
+            <button onclick="guardarOrden()" style="flex:1; background:var(--gold); color:black; border:none; padding:15px; border-radius:10px; font-weight:bold;">GUARDAR ORDEN</button>
         </div>
     </div>
 
@@ -98,77 +102,75 @@
         const session = JSON.parse(localStorage.getItem('session_jadi'));
 
         function abrirModal() { document.getElementById('modal-orden').style.display = 'block'; }
-        function cerrarModal() { 
-            document.getElementById('modal-orden').style.display = 'none';
-            document.getElementById('box-invitacion').style.display = 'none';
+        function cerrarModal() { document.getElementById('modal-orden').style.display = 'none'; }
+
+        function calcularSaldo() {
+            const total = parseFloat(document.getElementById('precio-total').value) || 0;
+            const abono = parseFloat(document.getElementById('abono-inicial').value) || 0;
+            document.getElementById('saldo-pendiente').value = (total - abono).toFixed(2);
         }
 
-        function irAlChat(obraId, clienteNombre) {
-            const datosChat = { id: obraId, nombre: clienteNombre, rol: 'Cliente' };
-            localStorage.setItem('chat_activo', JSON.stringify(datosChat));
-            window.location.href = 'chat.html';
+        // CARGAR CATEGORÍAS COMPARTIDAS
+        function cargarSugerencias() {
+            db.ref('categorias_servicios').on('value', snap => {
+                const list = document.getElementById('lista-servicios');
+                list.innerHTML = "";
+                snap.forEach(c => { list.innerHTML += `<option value="${c.val()}">`; });
+            });
         }
 
         async function detectarCliente(cel) {
-            const boxInv = document.getElementById('box-invitacion');
-            const inputNom = document.getElementById('cli-nombre');
             if(cel.length >= 10) {
                 const snap = await db.ref('usuarios').orderByChild('telefono').equalTo(cel).once('value');
                 if(snap.exists()) {
-                    boxInv.style.display = 'none';
-                    snap.forEach(c => {
-                        inputNom.value = c.val().nombre;
-                        inputNom.style.borderColor = "var(--gold)";
-                    });
-                } else {
-                    boxInv.style.display = 'block';
-                    inputNom.value = "";
-                }
-            } else { boxInv.style.display = 'none'; }
-        }
-
-        function enviarInvitacion() {
-            const cel = document.getElementById('cli-celular').value;
-            const zapateria = session.empresaNombre || "J.A.D.I";
-            const linkApp = "https://jadi-repaiz.web.app"; 
-            const mensaje = `*${zapateria}* te invita a *JADI REPAIZ* ✨\n\nSigue tus reparaciones aquí:\n${linkApp}`;
-            window.open(`https://wa.me/593${cel.startsWith('0') ? cel.substring(1) : cel}?text=${encodeURIComponent(mensaje)}`, '_blank');
+                    document.getElementById('box-invitacion').style.display = 'none';
+                    snap.forEach(c => { document.getElementById('cli-nombre').value = c.val().nombre; });
+                } else { document.getElementById('box-invitacion').style.display = 'block'; }
+            }
         }
 
         async function guardarOrden() {
             const cel = document.getElementById('cli-celular').value;
             const nom = document.getElementById('cli-nombre').value;
-            if(!cel || !nom) return alert("Faltan datos");
+            const tipo = document.getElementById('tipo-calzado').value;
+            if(!cel || !nom || !tipo) return alert("Faltan datos");
 
-            // BUSCAR SI YA EXISTE O GENERAR ID OFICIAL CLN
-            const snap = await db.ref('usuarios').orderByChild('telefono').equalTo(cel).once('value');
+            // 1. Guardar Categoría si es nueva
+            const snapCat = await db.ref('categorias_servicios').orderByValue().equalTo(tipo).once('value');
+            if(!snapCat.exists()) db.ref('categorias_servicios').push(tipo);
+
+            // 2. Buscar/Crear Cliente
+            const snapCli = await db.ref('usuarios').orderByChild('telefono').equalTo(cel).once('value');
             let cliId;
-
-            if(!snap.exists()) {
+            if(!snapCli.exists()) {
                 const snapC = await db.ref('contadores/CLN').once('value');
                 let num = (snapC.val() || 0) + 1;
                 cliId = 'CLN' + num.toString().padStart(9, '0');
-
-                await db.ref('usuarios/' + cliId).set({ 
-                    nombre: nom, telefono: cel, rolCodigo: "CLN", uid: cliId, verificado: false 
-                });
+                await db.ref('usuarios/' + cliId).set({ nombre: nom, telefono: cel, rolCodigo: "CLN", uid: cliId, verificado: false });
                 await db.ref('contadores/CLN').set(num);
-            } else {
-                snap.forEach(c => cliId = c.val().uid);
-            }
+            } else { snapCli.forEach(c => cliId = c.val().uid); }
 
+            // 3. Crear ID de Trabajo Corto
+            const snapT = await db.ref('contadores/TRB').once('value');
+            let numT = (snapT.val() || 0) + 1;
+            const trbID = 'TRB-' + numT.toString().padStart(5, '0');
+
+            // 4. Guardar Orden
             await db.ref('trabajos').push({
+                ordenID: trbID,
                 zapateroId: session.uid,
                 clienteId: cliId,
                 cliente: nom,
-                celular: cel,
-                calzado: document.getElementById('tipo-calzado').value,
+                calzado: tipo,
                 descripcion: document.getElementById('trabajo-desc').value,
                 precio: document.getElementById('precio-total').value,
+                abono: document.getElementById('abono-inicial').value,
+                saldo: document.getElementById('saldo-pendiente').value,
                 entrega: document.getElementById('fecha-entrega').value,
                 estado: 'Recibido',
                 timestamp: Date.now()
             });
+            await db.ref('contadores/TRB').set(numT);
 
             cerrarModal();
         }
@@ -179,23 +181,22 @@
                 container.innerHTML = "";
                 snap.forEach(child => {
                     const o = child.val();
-                    const id = child.key;
-                    const tagClass = o.estado.toLowerCase().replace(/\s/g, "");
-
                     container.innerHTML += `
                         <div class="order-card" data-nombre="${o.cliente.toLowerCase()}">
                             <div class="order-header">
-                                <h3 onclick="irAlChat('${id}', '${o.cliente}')">${o.cliente}</h3>
-                                <span class="status-tag tag-${tagClass}">${o.estado}</span>
+                                <h3>${o.cliente} <small style="color:#666; font-size:10px;">#${o.ordenID}</small></h3>
+                                <span class="status-tag tag-${o.estado.toLowerCase()}">${o.estado}</span>
                             </div>
-                            <div class="order-details">${o.calzado} - ${o.descripcion}</div>
-                            <div class="order-price"><span>$${o.precio}</span> <small>📅 ${o.entrega}</small></div>
+                            <div class="order-details"><b>${o.calzado}</b>: ${o.descripcion}</div>
+                            <div class="order-price">
+                                <span>TOTAL: $${o.precio}</span>
+                                <span>ABONO: $${o.abono || 0}</span>
+                                <span style="color:var(--gold)">DEBE: $${o.saldo || 0}</span>
+                            </div>
                             <div class="order-actions">
-                                <button class="btn-status" onclick="updateStatus('${id}','En Proceso')">PROCESO</button>
-                                <button class="btn-status" onclick="updateStatus('${id}','Listo')">LISTO</button>
-                                <button class="btn-status btn-chat" onclick="irAlChat('${id}', '${o.cliente}')">
-                                    <i class="fas fa-comment"></i> CHAT
-                                </button>
+                                <button class="btn-status" onclick="updateStatus('${child.key}','En Proceso')">PROCESO</button>
+                                <button class="btn-status" onclick="updateStatus('${child.key}','Listo')">LISTO</button>
+                                <button class="btn-status" style="border-color:var(--gold); color:var(--gold)" onclick="window.location.href='chat.html'">CHAT</button>
                             </div>
                         </div>`;
                 });
@@ -210,7 +211,7 @@
             });
         }
 
-        window.onload = cargarTrabajos;
+        window.onload = () => { cargarTrabajos(); cargarSugerencias(); };
     </script>
 </body>
 </html>
