@@ -2,63 +2,56 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mensajes - J.A.D.I</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Chat J.A.D.I</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --gold: #FFD700; --dark: #000; --card: #111; --msg-in: #222; --msg-out: #443a00; }
-        body { background: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        :root { --gold: #fbc02d; --dark: #000; --msg-in: #1a1a1a; --msg-out: #302a00; }
         
-        /* Header dinámico */
-        .chat-header { padding: 15px; background: #050505; border-bottom: 1px solid #222; display: flex; align-items: center; gap: 15px; z-index: 100; }
+        /* Ajuste para que quepa en pantalla sin scroll lateral */
+        html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; background: var(--dark); font-family: -apple-system, sans-serif; }
+        
+        body { display: flex; flex-direction: column; }
+
+        .chat-header { padding: 10px 15px; background: #050505; border-bottom: 1px solid #222; display: flex; align-items: center; gap: 12px; height: 60px; box-sizing: border-box; }
         .btn-back { color: var(--gold); text-decoration: none; font-size: 1.2rem; }
-        .user-info h4 { margin: 0; font-size: 16px; color: var(--gold); }
-        .user-info span { font-size: 10px; color: #888; display: block; }
+        .user-info h4 { margin: 0; font-size: 15px; color: white; }
+        .user-info span { font-size: 10px; color: var(--gold); }
 
-        /* Contenedor de mensajes */
-        #chat-flow { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 12px; background: #080808; }
-        .msg { max-width: 85%; padding: 10px 15px; border-radius: 18px; font-size: 14px; line-height: 1.4; position: relative; animation: fadeIn 0.3s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
-        .msg.received { align-self: flex-start; background: var(--msg-in); border-bottom-left-radius: 4px; }
-        .msg.sent { align-self: flex-end; background: var(--msg-out); border-bottom-right-radius: 4px; border: 1px solid #554a00; }
-        .msg-time { font-size: 9px; color: #666; display: block; margin-top: 5px; text-align: right; }
+        /* Área de mensajes con scroll fluido */
+        #chat-flow { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 8px; background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); background-blend-mode: overlay; background-color: #080808; }
 
-        /* Input de texto */
-        .input-box { padding: 15px; background: #050505; border-top: 1px solid #222; display: flex; gap: 10px; align-items: center; }
-        #input-text { flex: 1; background: #151515; border: 1px solid #333; padding: 12px 18px; border-radius: 25px; color: white; outline: none; font-size: 14px; }
-        .btn-send { background: var(--gold); color: black; border: none; width: 45px; height: 45px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
-        .btn-send:active { transform: scale(0.9); }
+        .msg { max-width: 75%; padding: 8px 12px; border-radius: 12px; font-size: 14px; position: relative; color: white; line-height: 1.4; word-wrap: break-word; }
+        .msg.received { align-self: flex-start; background: var(--msg-in); border-bottom-left-radius: 2px; }
+        .msg.sent { align-self: flex-end; background: var(--msg-out); border-bottom-right-radius: 2px; border: 0.5px solid #4a4100; }
 
-        /* Vista de bandeja vacía / Lista */
-        .empty-state { text-align: center; margin-top: 100px; color: #444; }
-        .empty-state i { font-size: 4rem; margin-bottom: 15px; }
+        .msg-meta { display: flex; align-items: center; justify-content: flex-end; gap: 4px; margin-top: 4px; font-size: 9px; color: #888; }
+        .ticks { color: #4fc3f7; font-size: 10px; } /* Color azul para el visto */
+
+        /* Barra de entrada ajustada al teclado del móvil */
+        .input-area { padding: 10px; background: #050505; display: flex; gap: 8px; align-items: center; border-top: 1px solid #222; padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
+        #input-text { flex: 1; background: #151515; border: 1px solid #333; padding: 10px 15px; border-radius: 20px; color: white; outline: none; font-size: 15px; }
+        .btn-send { background: var(--gold); color: black; border: none; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+
     </style>
 </head>
 <body>
 
     <div class="chat-header">
-        <a href="trabajos.html" class="btn-back"><i class="fas fa-arrow-left"></i></a>
+        <a href="javascript:history.back()" class="btn-back"><i class="fas fa-arrow-left"></i></a>
         <div class="user-info">
-            <h4 id="display-name">Mensajes</h4>
-            <span id="display-status">Selecciona un chat</span>
+            <h4 id="chat-name">Cargando...</h4>
+            <span id="chat-status">En línea</span>
         </div>
     </div>
 
-    <div id="chat-flow">
-        <div class="empty-state">
-            <i class="fas fa-comments"></i>
-            <p>Cargando conversación...</p>
-        </div>
-    </div>
+    <div id="chat-flow"></div>
 
-    <div class="input-box">
-        <input type="text" id="input-text" placeholder="Escribe un mensaje..." onkeypress="if(event.key==='Enter') enviarMensaje()">
-        <button class="btn-send" onclick="enviarMensaje()">
-            <i class="fas fa-paper-plane"></i>
-        </button>
+    <div class="input-area">
+        <input type="text" id="input-text" placeholder="Escribe un mensaje..." autocomplete="off">
+        <button class="btn-send" onclick="enviarMensaje()"><i class="fas fa-paper-plane"></i></button>
     </div>
 
     <script>
@@ -69,70 +62,72 @@
         const session = JSON.parse(localStorage.getItem('session_jadi'));
         const chatInfo = JSON.parse(localStorage.getItem('chat_activo'));
 
-        // Redirigir si no hay sesión
-        if(!session) window.location.href = "index.html";
+        if(!chatInfo) window.location.href = "index.html";
+        document.getElementById('chat-name').innerText = chatInfo.nombre;
 
-        function inicializarChat() {
-            if(chatInfo) {
-                // Configurar interfaz para el cliente específico
-                document.getElementById('display-name').innerText = chatInfo.nombre;
-                document.getElementById('display-status').innerText = "Orden: " + chatInfo.id.substring(0,8).toUpperCase();
-                escucharMensajes(chatInfo.id);
-            } else {
-                document.getElementById('chat-flow').innerHTML = '<div class="empty-state"><p>No se seleccionó ninguna orden.</p></div>';
-            }
-        }
-
-        function escucharMensajes(chatId) {
-            const ref = db.ref('mensajes_nativos/' + chatId);
-            ref.on('value', snap => {
-                const container = document.getElementById('chat-flow');
-                container.innerHTML = "";
-                
-                if(snap.exists()) {
-                    snap.forEach(child => {
-                        const m = child.val();
-                        const esMio = m.senderId === session.uid;
-                        const hora = new Date(m.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-
-                        container.innerHTML += `
-                            <div class="msg ${esMio ? 'sent' : 'received'}">
-                                ${m.text}
-                                <span class="msg-time">${hora}</span>
-                            </div>`;
-                    });
-                    container.scrollTop = container.scrollHeight;
-                } else {
-                    container.innerHTML = '<div class="empty-state"><p>Envía el primer mensaje para iniciar la conversación.</p></div>';
-                }
+        // --- CARGA EN TIEMPO REAL ULTRA RÁPIDA ---
+        function iniciarChat() {
+            const ref = db.ref('mensajes_nativos/' + chatInfo.id);
+            
+            // child_added es más rápido que 'value' porque solo trae el nuevo mensaje
+            ref.on('child_added', snap => {
+                const m = snap.val();
+                renderizarMensaje(m);
             });
         }
 
-        function enviarMensaje() {
+        function renderizarMensaje(m) {
+            const container = document.getElementById('chat-flow');
+            const esMio = m.senderId === session.uid;
+            const hora = new Date(m.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            
+            // Los "dos vistos" (ticks)
+            const ticks = esMio ? '<i class="fas fa-check-double ticks"></i>' : '';
+
+            const msgHtml = `
+                <div class="msg ${esMio ? 'sent' : 'received'}">
+                    ${m.text}
+                    <div class="msg-meta">
+                        ${hora} ${ticks}
+                    </div>
+                </div>`;
+            
+            container.insertAdjacentHTML('beforeend', msgHtml);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        async function enviarMensaje() {
             const input = document.getElementById('input-text');
             const texto = input.value.trim();
-            if(!texto || !chatInfo) return;
+            if(!texto) return;
 
-            const msj = {
+            const nuevoMensaje = {
                 senderId: session.uid,
-                senderNombre: session.nombre,
                 text: texto,
-                timestamp: Date.now()
+                timestamp: Date.now(),
+                status: 'sent'
             };
 
-            // 1. Guardar en el nodo de la orden
-            db.ref('mensajes_nativos/' + chatInfo.id).push(msj);
+            // Limpiar input de inmediato para sensación de velocidad
+            input.value = "";
 
-            // 2. Notificar a la bandeja de entrada (para que aparezca en la lista general)
+            // Guardar en Firebase
+            await db.ref('mensajes_nativos/' + chatInfo.id).push(nuevoMensaje);
+            
+            // Actualizar última actividad para la lista general
             db.ref('ultimos_mensajes/' + chatInfo.id).set({
-                ...msj,
+                text: texto,
+                timestamp: Date.now(),
                 clienteNombre: chatInfo.nombre
             });
-
-            input.value = "";
         }
 
-        window.onload = inicializarChat;
+        // Enviar con Enter
+        document.getElementById('input-text').addEventListener('keypress', (e) => {
+            if(e.key === 'Enter') enviarMensaje();
+        });
+
+        window.onload = iniciarChat;
     </script>
 </body>
 </html>
