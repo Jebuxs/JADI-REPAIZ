@@ -32,7 +32,6 @@
         input, select, textarea { width: 100%; padding: 12px; margin-bottom: 12px; background: #111; border: 1px solid #333; color: white; border-radius: 8px; box-sizing: border-box; outline: none; }
         label { font-size: 11px; color: var(--gold); margin-bottom: 5px; display: block; }
         
-        /* Estilos Tabla de Items */
         .item-row { display: flex; gap: 5px; margin-bottom: 10px; }
         .item-table { background: #080808; border-radius: 10px; padding: 10px; margin-bottom: 15px; border: 1px dashed #333; }
         .item-list-row { display: flex; justify-content: space-between; font-size: 12px; padding: 5px 0; border-bottom: 1px solid #1a1a1a; }
@@ -66,8 +65,10 @@
         <input type="tel" id="cli-celular" placeholder="Número Celular" onkeyup="detectarCliente(this.value)">
 
         <div id="box-invitacion" style="display:none; background:#1a1500; border:1px solid var(--gold); padding:10px; border-radius:10px; margin-bottom:15px; text-align:center;">
-            <p style="font-size: 11px; margin:0 0 10px 0;">Cliente no registrado</p>
-            <button onclick="enviarInvitacion()" style="background:var(--gold); border:none; padding:5px 10px; border-radius:5px; font-weight:bold; font-size:10px;">INVITAR POR WHATSAPP</button>
+            <p style="font-size: 11px; margin:0 0 10px 0;">¿Enviar ticket de ingreso al cliente?</p>
+            <button onclick="enviarWhatsAppMaster('ingreso')" style="background:var(--gold); border:none; padding:8px 15px; border-radius:5px; font-weight:bold; font-size:11px;">
+                <i class="fab fa-whatsapp"></i> ENVIAR INVITACIÓN
+            </button>
         </div>
 
         <input type="text" id="cli-nombre" placeholder="Nombre completo">
@@ -77,16 +78,12 @@
             <div class="item-row">
                 <input type="text" id="item-cant" placeholder="Cant" style="flex:0.6;" value="1">
                 <input list="lista-servicios" id="item-tipo" placeholder="Tipo" style="flex:1.2;">
-                <input list="lista-detalles" id="item-desc" placeholder="Detalle" style="flex:2;">
+                <input list="lista-desc" id="item-desc" placeholder="Detalle" style="flex:2;">
                 <input type="number" id="item-precio" placeholder="$" style="flex:1;">
                 <button onclick="agregarItemALista()" style="background:var(--gold); border:none; border-radius:8px; width:45px; height:42px; color:black;"><i class="fas fa-plus"></i></button>
             </div>
-            <div id="tabla-items-visual">
-                </div>
+            <div id="tabla-items-visual"></div>
         </div>
-
-        <datalist id="lista-servicios"></datalist>
-        <datalist id="lista-detalles"></datalist>
 
         <div style="background: #0a0a0a; padding: 12px; border-radius: 10px; border: 1px solid #222;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
@@ -116,7 +113,7 @@
         const firebaseConfig = { databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com" };
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
-        const session = JSON.parse(localStorage.getItem('session_jadi'));
+        const session = JSON.parse(localStorage.getItem('session_jadi')) || { uid: "ZAP001" };
 
         let itemsTemporales = [];
 
@@ -124,22 +121,37 @@
             document.getElementById('modal-orden').style.display = 'block'; 
             itemsTemporales = [];
             document.getElementById('tabla-items-visual').innerHTML = "";
+            document.getElementById('cli-celular').value = "";
+            document.getElementById('cli-nombre').value = "";
+            document.getElementById('precio-total').value = "";
+            document.getElementById('abono-inicial').value = "";
+            document.getElementById('saldo-pendiente').value = "";
         }
         function cerrarModal() { document.getElementById('modal-orden').style.display = 'none'; }
 
-        // --- LÓGICA DE IDS CONSONÁNTICOS / INICIALES ---
-        function generarIDInteligente(texto) {
-            let palabras = texto.trim().split(/\s+/);
-            if (palabras.length > 1) {
-                // Iniciales de cada palabra
-                return palabras.map(p => p[0].toUpperCase()).join('');
-            } else {
-                // Consonantes de palabra corta
-                return texto.replace(/[aeiouáéíóú]/gi, '').toUpperCase().substring(0, 3);
+        // --- LÓGICA DE MENSAJERÍA INTELIGENTE ---
+        async function enviarWhatsAppMaster(tipo, dataExtra = null) {
+            const tel = dataExtra ? dataExtra.telefono : document.getElementById('cli-celular').value;
+            const nom = dataExtra ? dataExtra.nombre : document.getElementById('cli-nombre').value;
+            const total = dataExtra ? dataExtra.total : document.getElementById('precio-total').value;
+
+            if(!tel) return alert("Ingrese un teléfono");
+
+            // Traer configuración de la nube
+            const snap = await db.ref('configuracion/mensajes').once('value');
+            const config = snap.val() || { saludo: "Hola", cuerpo: "Recibimos tu calzado.", firma: "J.A.D.I Repaiz" };
+
+            let mensaje = "";
+            if(tipo === 'ingreso') {
+                mensaje = `*${config.saludo} ${nom}*%0A%0A${config.cuerpo}%0A*Total: $${total}*%0A%0A${config.firma}`;
+            } else if(tipo === 'listo') {
+                mensaje = `*¡Buenas noticias ${nom}!* 👞✨%0A%0ATu calzado ya está listo para retirar en *J.A.D.I Repaiz*.%0A*Saldo pendiente: $${dataExtra.saldo}*%0A%0A${config.firma}`;
             }
+
+            window.open(`https://web.whatsapp.com/send?phone=593${tel}&text=${mensaje}`, '_blank');
         }
 
-        async function agregarItemALista() {
+        function agregarItemALista() {
             const cant = document.getElementById('item-cant').value;
             const tipo = document.getElementById('item-tipo').value;
             const desc = document.getElementById('item-desc').value;
@@ -147,30 +159,9 @@
 
             if(!tipo || !desc) return alert("Completa tipo y detalle");
 
-            // Generar ID según tu lógica
-            let idBase = generarIDInteligente(desc);
-            
-            // Verificar duplicados en la base global para numeración
-            const snapCat = await db.ref('categorias_servicios').once('value');
-            let contador = 0;
-            snapCat.forEach(child => {
-                let codExistente = child.val().codigo;
-                if (codExistente.replace(/[0-9]/g, '') === idBase) contador++;
-            });
-            let idFinal = contador === 0 ? idBase : idBase + contador;
-
-            // Registrar en categorías si no existe
-            db.ref('categorias_servicios').push({ nombre: desc, codigo: idFinal });
-
-            const nuevoItem = { cant, tipo, desc, precio, codigo: idFinal };
+            const nuevoItem = { cant, tipo, desc, precio };
             itemsTemporales.push(nuevoItem);
             renderItems();
-
-            // Limpiar inputs de item
-            document.getElementById('item-tipo').value = "";
-            document.getElementById('item-desc').value = "";
-            document.getElementById('item-precio').value = "";
-            document.getElementById('item-cant').value = "1";
         }
 
         function renderItems() {
@@ -179,19 +170,10 @@
             let suma = 0;
             itemsTemporales.forEach((it, index) => {
                 suma += it.precio;
-                container.innerHTML += `
-                    <div class="item-list-row">
-                        <span>${it.cant} | <b>${it.codigo}</b> | ${it.tipo} - ${it.desc}</span>
-                        <span>$${it.precio.toFixed(2)} <i class="fas fa-trash" onclick="eliminarItem(${index})" style="color:#555; margin-left:8px;"></i></span>
-                    </div>`;
+                container.innerHTML += `<div class="item-list-row"><span>${it.cant} | ${it.tipo} - ${it.desc}</span><span>$${it.precio.toFixed(2)}</span></div>`;
             });
             document.getElementById('precio-total').value = suma.toFixed(2);
             calcularSaldo();
-        }
-
-        function eliminarItem(index) {
-            itemsTemporales.splice(index, 1);
-            renderItems();
         }
 
         function calcularSaldo() {
@@ -203,30 +185,18 @@
         async function detectarCliente(cel) {
             if(cel.length >= 10) {
                 const snap = await db.ref('usuarios').orderByChild('telefono').equalTo(cel).once('value');
+                document.getElementById('box-invitacion').style.display = 'block';
                 if(snap.exists()) {
-                    document.getElementById('box-invitacion').style.display = 'none';
                     snap.forEach(c => { document.getElementById('cli-nombre').value = c.val().nombre; });
-                } else { document.getElementById('box-invitacion').style.display = 'block'; }
+                }
             }
         }
 
         async function guardarOrden() {
             const cel = document.getElementById('cli-celular').value;
             const nom = document.getElementById('cli-nombre').value;
-            if(!cel || !nom || itemsTemporales.length === 0) return alert("Faltan datos o ítems");
+            if(!cel || !nom || itemsTemporales.length === 0) return alert("Faltan datos");
 
-            // Buscar/Crear Cliente
-            const snapCli = await db.ref('usuarios').orderByChild('telefono').equalTo(cel).once('value');
-            let cliId;
-            if(!snapCli.exists()) {
-                const snapC = await db.ref('contadores/CLN').once('value');
-                let num = (snapC.val() || 0) + 1;
-                cliId = 'CLN' + num.toString().padStart(9, '0');
-                await db.ref('usuarios/' + cliId).set({ nombre: nom, telefono: cel, rolCodigo: "CLN", uid: cliId, verificado: false });
-                await db.ref('contadores/CLN').set(num);
-            } else { snapCli.forEach(c => cliId = c.val().uid); }
-
-            // Crear ID de Trabajo Corto
             const snapT = await db.ref('contadores/TRB').once('value');
             let numT = (snapT.val() || 0) + 1;
             const trbID = 'TRB-' + numT.toString().padStart(5, '0');
@@ -234,8 +204,8 @@
             await db.ref('trabajos').push({
                 ordenID: trbID,
                 zapateroId: session.uid,
-                clienteId: cliId,
                 cliente: nom,
+                telefono: cel,
                 items: itemsTemporales,
                 precio: document.getElementById('precio-total').value,
                 abono: document.getElementById('abono-inicial').value,
@@ -254,22 +224,20 @@
                 container.innerHTML = "";
                 snap.forEach(child => {
                     const o = child.val();
-                    let detalleTexto = o.items ? o.items.map(i => `${i.cant} ${i.codigo}`).join(', ') : 'Sin detalle';
                     container.innerHTML += `
                         <div class="order-card" data-nombre="${o.cliente.toLowerCase()}">
                             <div class="order-header">
-                                <h3>${o.cliente} <small style="color:#666; font-size:10px;">#${o.ordenID}</small></h3>
+                                <h3>${o.cliente} <small style="color:#666">#${o.ordenID}</small></h3>
                                 <span class="status-tag tag-${o.estado.toLowerCase()}">${o.estado}</span>
                             </div>
-                            <div class="order-details">📦 ${detalleTexto}</div>
                             <div class="order-price">
                                 <span>TOTAL: $${o.precio}</span>
                                 <span style="color:var(--gold)">DEBE: $${o.saldo}</span>
                             </div>
                             <div class="order-actions">
                                 <button class="btn-status" onclick="updateStatus('${child.key}','En Proceso')">PROCESO</button>
-                                <button class="btn-status" onclick="updateStatus('${child.key}','Listo')">LISTO</button>
-                                <button class="btn-status" style="border-color:var(--gold); color:var(--gold)" onclick="window.location.href='chat.html'">CHAT</button>
+                                <button class="btn-status" style="background: #00cc66; color:black; font-weight:bold;" 
+                                    onclick="marcarComoListo('${child.key}', '${o.cliente}', '${o.telefono}', '${o.saldo}')">LISTO</button>
                             </div>
                         </div>`;
                 });
@@ -277,6 +245,14 @@
         }
 
         function updateStatus(id, s) { db.ref('trabajos/'+id).update({estado: s}); }
+
+        function marcarComoListo(id, nombre, tel, saldo) {
+            updateStatus(id, 'Listo');
+            if(confirm("¿Enviar WhatsApp de 'Trabajo Listo' al cliente?")) {
+                enviarWhatsAppMaster('listo', { nombre: nombre, telefono: tel, saldo: saldo });
+            }
+        }
+
         function filtrarTrabajos() {
             const bus = document.getElementById('inputBusqueda').value.toLowerCase();
             document.querySelectorAll('.order-card').forEach(c => {
