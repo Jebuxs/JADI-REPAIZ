@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catálogo de Productos - J.A.D.I</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --gold: #fbc02d; --dark: #000; --card: #111; }
+        body { background: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 15px; }
+        
+        header { display: flex; align-items: center; gap: 15px; padding: 10px 0; border-bottom: 1px solid #222; margin-bottom: 20px; }
+        .back-btn { color: var(--gold); text-decoration: none; font-size: 1.2rem; }
+        
+        .shop-banner { background: linear-gradient(to bottom, #1a1a1a, var(--card)); padding: 20px; border-radius: 15px; border: 1px solid #222; margin-bottom: 25px; text-align: center; }
+        .shop-banner h2 { margin: 10px 0 5px; color: var(--gold); font-size: 1.4rem; }
+        .shop-banner p { margin: 0; font-size: 0.8rem; color: #666; }
+
+        .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; }
+        
+        .product-card { 
+            background: var(--card); 
+            border-radius: 12px; 
+            overflow: hidden; 
+            border: 1px solid #222; 
+            transition: 0.3s;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .product-img { 
+            width: 100%; 
+            aspect-ratio: 1/1; 
+            background: #1a1a1a; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            font-size: 2rem;
+            color: #333;
+            border-bottom: 1px solid #222;
+        }
+
+        .product-info { padding: 12px; flex-grow: 1; }
+        .product-info h4 { margin: 0; font-size: 0.9rem; color: #eee; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .product-info .price { color: var(--gold); font-weight: bold; font-size: 1.1rem; margin: 8px 0; display: block; }
+        .product-info .stock { font-size: 0.7rem; color: #4caf50; text-transform: uppercase; }
+
+        .btn-buy { 
+            width: 100%; 
+            background: var(--gold); 
+            color: black; 
+            border: none; 
+            padding: 10px; 
+            font-weight: bold; 
+            font-size: 0.8rem; 
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-buy:active { transform: scale(0.95); opacity: 0.8; }
+
+        .empty-msg { text-align: center; padding: 50px; color: #444; grid-column: 1 / -1; }
+    </style>
+</head>
+<body>
+
+<header>
+    <a href="tiendas.html" class="back-btn"><i class="fas fa-arrow-left"></i></a>
+    <h2 style="margin:0; font-size: 1.1rem;">Catálogo Virtual</h2>
+</header>
+
+<div class="shop-banner">
+    <i class="fas fa-store-alt fa-3x" style="color: #222;"></i>
+    <h2 id="store-name">Cargando tienda...</h2>
+    <p id="store-id">Verificando stock oficial</p>
+</div>
+
+<div id="products-container" class="products-grid">
+    </div>
+
+<script>
+    // Configuración de Firebase
+    const firebaseConfig = {
+        apiKey: "AIzaSyAKPxG1osuR9hsj-PsmwJrzK-3W_XM1UyU",
+        authDomain: "jadi-repaiz.firebaseapp.com",
+        databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com",
+    };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // Obtener parámetros de la URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const tiendaId = urlParams.get('tienda');
+    const nombreTemp = localStorage.getItem('temp_shop_name');
+
+    function init() {
+        if (!tiendaId) {
+            window.location.href = "tiendas.html";
+            return;
+        }
+
+        document.getElementById('store-name').innerText = nombreTemp || "Tienda Aliada";
+        document.getElementById('store-id').innerText = "ID de Tienda: " + tiendaId.slice(-8).toUpperCase();
+        
+        cargarProductos();
+    }
+
+    function cargarProductos() {
+        const container = document.getElementById('products-container');
+        
+        // Buscamos en la tabla 'ventas' filtrando por 'tiendaId'
+        db.ref('ventas').orderByChild('tiendaId').equalTo(tiendaId).on('value', snap => {
+            container.innerHTML = "";
+
+            if (!snap.exists()) {
+                container.innerHTML = `
+                    <div class="empty-msg">
+                        <i class="fas fa-box-open fa-3x"></i>
+                        <p>Esta tienda aún no ha publicado productos.</p>
+                    </div>`;
+                return;
+            }
+
+            snap.forEach(child => {
+                const p = child.val();
+                // Si tienes campo de imagen en la BD lo usas, si no, ponemos un icono
+                const imgHTML = p.fotoUrl ? `<img src="${p.fotoUrl}" style="width:100%; height:100%; object-fit:cover;">` : `<i class="fas fa-tag"></i>`;
+
+                container.innerHTML += `
+                    <div class="product-card">
+                        <div class="product-img">
+                            ${imgHTML}
+                        </div>
+                        <div class="product-info">
+                            <h4>${p.producto || 'Sin nombre'}</h4>
+                            <span class="price">S/ ${p.precio || '0.00'}</span>
+                            <div class="stock"><i class="fas fa-check"></i> Disponible</div>
+                        </div>
+                        <button class="btn-buy" onclick="contactarTienda('${p.producto}', '${p.precio}')">
+                            <i class="fas fa-shopping-cart"></i> COMPRAR
+                        </button>
+                    </div>
+                `;
+            });
+        });
+    }
+
+    function contactarTienda(prod, precio) {
+        alert("Interés en: " + prod + "\nPrecio: S/ " + precio + "\n\nSe abrirá el chat con la tienda para concretar la venta.");
+        // Aquí podrías redirigir al chat.html pasando el ID del producto
+        window.location.href = "chat.html";
+    }
+
+    init();
+</script>
+</body>
+</html>
