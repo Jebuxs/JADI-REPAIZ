@@ -8,53 +8,37 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --gold: #fbc02d; --dark: #000; --card: #111; }
+        :root { --gold: #fbc02d; --dark: #000; --card: #111; --success: #00cc66; --danger: #ff4444; }
         body { background: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 15px; padding-bottom: 80px; }
         
         header { display: flex; align-items: center; gap: 15px; padding: 10px 0; border-bottom: 1px solid #222; margin-bottom: 20px; }
         .back-btn { color: var(--gold); text-decoration: none; font-size: 1.2rem; }
 
-        /* Estilo Factura / Formulario */
         .repa-box { background: var(--card); border-radius: 15px; padding: 20px; border: 1px dotted #444; margin-bottom: 20px; position: relative; }
-        .item-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; border-bottom: 1px solid #222; padding-bottom: 10px; }
+        .item-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
         input, select, textarea { background: #1a1a1a; border: 1px solid #333; color: white; padding: 12px; border-radius: 8px; width: 100%; box-sizing: border-box; outline: none; font-size: 0.9rem; }
         input:focus, select:focus, textarea:focus { border-color: var(--gold); }
 
-        /* EL BOTÓN "+" ESTILO TRABAJOS */
         .btn-add-circle { 
-            position: absolute; 
-            bottom: -25px; 
-            right: 20px; 
-            background: var(--gold); 
-            color: black; 
-            width: 50px; 
-            height: 50px; 
-            border-radius: 50%; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            font-size: 1.5rem; 
-            border: 4px solid var(--dark); 
-            cursor: pointer; 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5); 
-            transition: 0.2s; 
-            z-index: 10;
+            position: absolute; bottom: -25px; right: 20px; background: var(--gold); 
+            color: black; width: 50px; height: 50px; border-radius: 50%; 
+            display: flex; align-items: center; justify-content: center; 
+            font-size: 1.5rem; border: 4px solid var(--dark); cursor: pointer; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5); z-index: 10;
         }
-        .btn-add-circle:active { transform: scale(0.9) translateY(2px); }
 
-        /* Botón Enviar Final */
-        .btn-send { background: var(--gold); color: black; border: none; width: 100%; padding: 15px; border-radius: 10px; cursor: pointer; margin-top: 40px; font-weight: bold; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; }
-        .btn-send:active { transform: scale(0.98); opacity: 0.9; }
+        .btn-send { background: var(--gold); color: black; border: none; width: 100%; padding: 15px; border-radius: 10px; cursor: pointer; margin-top: 40px; font-weight: bold; font-size: 1rem; text-transform: uppercase; }
+        
+        .invoice-item { background: #0a0a0a; padding: 12px; border-radius: 8px; margin-bottom: 8px; font-size: 0.85rem; display: flex; justify-content: space-between; border-left: 3px solid var(--gold); border: 1px solid #222; }
 
-        /* Lista de Ítems Agregados */
-        .invoice-list { margin-top: 30px; }
-        .invoice-item { background: #0a0a0a; padding: 12px; border-radius: 8px; margin-bottom: 8px; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; border-left: 3px solid var(--gold); border: 1px solid #222; }
-
-        /* Pestañas */
         .tabs { display: flex; gap: 10px; margin-bottom: 25px; }
-        .tab { flex: 1; padding: 12px; text-align: center; border-radius: 8px; background: #111; color: #666; cursor: pointer; font-size: 0.8rem; font-weight: bold; text-transform: uppercase; }
-        .tab.active { background: var(--gold); color: black; box-shadow: 0 2px 5px rgba(251,192,45,0.3); }
+        .tab { flex: 1; padding: 12px; text-align: center; border-radius: 8px; background: #111; color: #666; cursor: pointer; font-size: 0.8rem; font-weight: bold; }
+        .tab.active { background: var(--gold); color: black; }
 
+        /* Estilos de Negociación */
+        .negoc-box { background: #1a1500; border: 1px solid var(--gold); padding: 12px; border-radius: 10px; margin-top: 10px; text-align: center; }
+        .btn-negoc { border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; flex: 1; font-size: 0.8rem; }
+        
         .hidden { display: none; }
     </style>
 </head>
@@ -62,7 +46,7 @@
 
 <header>
     <a href="cliente.html" class="back-btn"><i class="fas fa-arrow-left"></i></a>
-    <h2 style="margin:0; font-size: 1.1rem; color: #fff;">Gestión de Reparaciones</h2>
+    <h2 style="margin:0; font-size: 1.1rem;">Gestión de Reparaciones</h2>
 </header>
 
 <div class="tabs">
@@ -73,7 +57,6 @@
 <div id="sec-nueva" class="content-sec">
     <div class="repa-box">
         <h3 style="color: var(--gold); margin-top:0; font-size: 1rem; margin-bottom: 15px;"><i class="fas fa-file-invoice"></i> Detalle del Pedido</h3>
-        
         <div class="item-row">
             <select id="tipo">
                 <option value="Zapatillas">Zapatillas</option>
@@ -82,52 +65,30 @@
                 <option value="Chompa">Chompa</option>
                 <option value="Otro">Otro</option>
             </select>
-            <input type="text" id="color" placeholder="Color (Ej: Negro)">
+            <input type="text" id="color" placeholder="Color">
         </div>
-        <textarea id="trabajo" placeholder="¿Qué trabajo necesita? (Ej: Cambio de suela, costura, teñido...)" rows="3"></textarea>
-        
-        <div class="btn-add-circle" onclick="agregarAlCarrito()" title="Añadir este ítem">
-            <i class="fas fa-plus"></i>
-        </div>
+        <textarea id="trabajo" placeholder="¿Qué trabajo necesita? (Ej: Cambio de suela, costura...)" rows="3"></textarea>
+        <div class="btn-add-circle" onclick="agregarAlCarrito()"><i class="fas fa-plus"></i></div>
     </div>
-
-    <div class="invoice-list" id="lista-previa">
-        </div>
-
-    <button id="btn-finalizar" class="btn-send hidden" onclick="enviarSolicitud()">LANZAR PEDIDO A ZAPATEROS</button>
+    <div class="invoice-list" id="lista-previa"></div>
+    <button id="btn-finalizar" class="btn-send hidden" onclick="enviarSolicitud()">LANZAR PEDIDO A RED JADI</button>
 </div>
 
 <div id="sec-seg" class="content-sec hidden">
-    <div id="lista-seguimiento">
-        </div>
+    <div id="lista-seguimiento"></div>
 </div>
 
 <script>
-    // Tu configuración de Firebase sigue igual
-    const firebaseConfig = {
-        apiKey: "AIzaSyAKPxG1osuR9hsj-PsmwJrzK-3W_XM1UyU",
-        authDomain: "jadi-repaiz.firebaseapp.com",
-        databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com",
-    };
+    const firebaseConfig = { databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com" };
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
     const session = JSON.parse(localStorage.getItem('session_jadi'));
     let carritoReparaciones = [];
 
-    // Esta función verifica el acceso, asegúrate de tenerla en el init()
-    function verificarAcceso() {
-        if(!session || (session.rolCodigo !== 'CLN' && session.rolCodigo !== 'ADM')) {
-            window.location.href = "index.html";
-            return false;
-        }
-        return true;
-    }
-
     function switchTab(t) {
         document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
         document.querySelectorAll('.content-sec').forEach(el => el.classList.add('hidden'));
-        
         if(t === 'nueva') {
             document.getElementById('tab-nueva').classList.add('active');
             document.getElementById('sec-nueva').classList.remove('hidden');
@@ -142,22 +103,23 @@
         const tipo = document.getElementById('tipo').value;
         const color = document.getElementById('color').value;
         const desc = document.getElementById('trabajo').value;
+        if(!color || !desc) return alert("Completa los datos");
 
-        if(!color || !desc) { alert("Completa el color y la descripción del trabajo"); return; }
-
-        const item = { tipo, color, desc };
+        // Estructura sincronizada para 'trabajos.html'
+        const item = { 
+            cant: 1, 
+            tipo: tipo, 
+            desc: `${color} | ${desc}`, 
+            precio: 0 
+        };
         carritoReparaciones.push(item);
 
-        // Actualizar vista previa
-        const lista = document.getElementById('lista-previa');
-        lista.innerHTML += `
+        document.getElementById('lista-previa').innerHTML += `
             <div class="invoice-item">
-                <span><b>${tipo}</b> (${color}) - ${desc}</span>
+                <span><b>${tipo}</b> - ${item.desc}</span>
                 <i class="fas fa-check-circle" style="color:var(--gold)"></i>
-            </div>
-        `;
-
-        // Limpiar campos y mostrar botón enviar
+            </div>`;
+        
         document.getElementById('color').value = "";
         document.getElementById('trabajo').value = "";
         document.getElementById('btn-finalizar').classList.remove('hidden');
@@ -165,66 +127,72 @@
 
     function enviarSolicitud() {
         if(carritoReparaciones.length === 0) return;
-
         const solicitudId = db.ref('solicitudes_reparacion').push().key;
-        const data = {
+        db.ref('solicitudes_reparacion/' + solicitudId).set({
             clienteId: session.uid,
             clienteNombre: session.nombre,
+            clienteTelefono: session.telefono || "Sin número",
             items: carritoReparaciones,
-            estado: 'PENDIENTE', 
+            estado: 'PENDIENTE',
             fecha: new Date().toISOString(),
-            zapateroId: null 
-        };
-
-        db.ref('solicitudes_reparacion/' + solicitudId).set(data)
-            .then(() => {
-                alert("¡Pedido lanzado con éxito! Espera a que un zapatero lo acepte.");
-                carritoReparaciones = [];
-                document.getElementById('lista-previa').innerHTML = "";
-                switchTab('seguimiento');
-            });
+            totalOfertado: 0
+        }).then(() => {
+            alert("¡Pedido en la nube!");
+            carritoReparaciones = [];
+            document.getElementById('lista-previa').innerHTML = "";
+            switchTab('seguimiento');
+        });
     }
 
     function cargarSeguimiento() {
         db.ref('solicitudes_reparacion').orderByChild('clienteId').equalTo(session.uid).on('value', snap => {
             const container = document.getElementById('lista-seguimiento');
             container.innerHTML = "";
-            
-            if(!snap.exists()) {
-                container.innerHTML = "<p style='text-align:center; color:#555; padding:20px;'>No tienes pedidos activos.</p>";
-                return;
-            }
+            if(!snap.exists()) container.innerHTML = "<p style='text-align:center; color:#444;'>No hay pedidos.</p>";
 
             snap.forEach(child => {
                 const s = child.val();
-                const colorEstado = s.estado === 'ACEPTADO' ? '#4caf50' : '#fbc02d';
-                
+                const id = child.key;
+                let negocHtml = "";
+
+                if(s.estado === 'PENDIENTE') {
+                    negocHtml = `<p style="font-size:11px; color:#555;">Esperando zapateros...</p>`;
+                } else if(s.estado === 'NEGOCIACION') {
+                    negocHtml = `
+                        <div class="negoc-box">
+                            <span style="font-size:11px; color:var(--gold)">PROPUESTA DE: ${s.zapateroNombre}</span>
+                            <h2 style="margin:5px 0;">$${s.totalOfertado}</h2>
+                            <div style="display:flex; gap:8px;">
+                                <button class="btn-negoc" style="background:var(--success);" onclick="responder('${id}','ACEPTADO')">ACEPTAR</button>
+                                <button class="btn-negoc" style="background:var(--danger); color:white;" onclick="responder('${id}','REBAJA_SOLICITADA')">REBAJA</button>
+                            </div>
+                            <button onclick="responder('${id}','PENDIENTE')" style="background:transparent; color:#555; border:none; font-size:10px; margin-top:8px;">BUSCAR OTRO ZAPATERO</button>
+                        </div>`;
+                } else if(s.estado === 'ACEPTADO') {
+                    negocHtml = `<button class="btn-send" style="margin-top:10px;" onclick="location.href='chat.html'">CHATEAR CON ZAPATERO</button>`;
+                }
+
                 container.innerHTML += `
-                    <div style="background:var(--card); padding:15px; border-radius:12px; margin-bottom:12px; border: 1px solid #222; border-left: 5px solid ${colorEstado}">
+                    <div class="repa-box" style="border-style:solid; border-left:5px solid var(--gold);">
                         <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <small style="color:#666;">ID: ${child.key.slice(-5).toUpperCase()}</small>
-                            <b style="color:${colorEstado}; font-size:0.75rem; text-transform:uppercase;">${s.estado}</b>
+                            <b>${s.items[0].tipo}</b>
+                            <span style="font-size:10px; background:#222; padding:3px 7px; border-radius:5px;">${s.estado}</span>
                         </div>
-                        <p style="margin:10px 0; font-size:0.9rem;">${s.items.length} artículo(s) en este pedido.</p>
-                        ${s.estado === 'ACEPTADO' ? 
-                            `<button onclick="irAlChat('${s.zapateroId}')" style="background:var(--gold); border:none; padding:10px; border-radius:8px; width:100%; margin-top:10px; font-weight:bold; cursor:pointer;">CHATEAR CON ZAPATERO</button>` : 
-                            `<p style="font-size:0.7rem; color:#555; text-align:center;">Esperando respuesta de zapateros cercanos...</p>`
-                        }
-                    </div>
-                `;
+                        <p style="font-size:12px; color:#888;">${s.items[0].desc}</p>
+                        ${negocHtml}
+                    </div>`;
             });
         });
     }
 
-    function irAlChat(zId) {
-        localStorage.setItem('chat_receptor_id', zId);
-        window.location.href = 'chat.html';
+    async function responder(id, estado) {
+        let update = { estado: estado };
+        if(estado === 'PENDIENTE') { update.zapateroId = null; update.totalOfertado = 0; }
+        await db.ref('solicitudes_reparacion/' + id).update(update);
+        alert("Respuesta enviada.");
     }
 
-    // Asegúrate de llamar a verificarAcceso al inicio
-    if(verificarAcceso()) {
-        // Nada más que hacer por ahora
-    }
+    if(!session) window.location.href = "index.html";
 </script>
 </body>
 </html>
