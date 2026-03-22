@@ -9,28 +9,51 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root { --gold: #fbc02d; --dark: #000; --card: #111; }
-        body { background: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 15px; }
+        body { background: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 15px; padding-bottom: 80px; }
         
         header { display: flex; align-items: center; gap: 15px; padding: 10px 0; border-bottom: 1px solid #222; margin-bottom: 20px; }
         .back-btn { color: var(--gold); text-decoration: none; font-size: 1.2rem; }
 
         /* Estilo Factura / Formulario */
-        .repa-box { background: var(--card); border-radius: 15px; padding: 20px; border: 1px dotted #444; margin-bottom: 20px; }
+        .repa-box { background: var(--card); border-radius: 15px; padding: 20px; border: 1px dotted #444; margin-bottom: 20px; position: relative; }
         .item-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; border-bottom: 1px solid #222; padding-bottom: 10px; }
-        input, select, textarea { background: #1a1a1a; border: 1px solid #333; color: white; padding: 10px; border-radius: 8px; width: 100%; box-sizing: border-box; outline: none; }
-        input:focus { border-color: var(--gold); }
+        input, select, textarea { background: #1a1a1a; border: 1px solid #333; color: white; padding: 12px; border-radius: 8px; width: 100%; box-sizing: border-box; outline: none; font-size: 0.9rem; }
+        input:focus, select:focus, textarea:focus { border-color: var(--gold); }
 
-        .btn-add { background: #222; color: var(--gold); border: 1px dashed var(--gold); width: 100%; padding: 12px; border-radius: 10px; cursor: pointer; margin-top: 10px; font-weight: bold; }
-        .btn-send { background: var(--gold); color: black; border: none; width: 100%; padding: 15px; border-radius: 10px; cursor: pointer; margin-top: 20px; font-weight: bold; font-size: 1rem; }
+        /* EL BOTÓN "+" ESTILO TRABAJOS */
+        .btn-add-circle { 
+            position: absolute; 
+            bottom: -25px; 
+            right: 20px; 
+            background: var(--gold); 
+            color: black; 
+            width: 50px; 
+            height: 50px; 
+            border-radius: 50%; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-size: 1.5rem; 
+            border: 4px solid var(--dark); 
+            cursor: pointer; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5); 
+            transition: 0.2s; 
+            z-index: 10;
+        }
+        .btn-add-circle:active { transform: scale(0.9) translateY(2px); }
+
+        /* Botón Enviar Final */
+        .btn-send { background: var(--gold); color: black; border: none; width: 100%; padding: 15px; border-radius: 10px; cursor: pointer; margin-top: 40px; font-weight: bold; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; }
+        .btn-send:active { transform: scale(0.98); opacity: 0.9; }
 
         /* Lista de Ítems Agregados */
-        .invoice-list { margin-top: 20px; }
-        .invoice-item { background: #0a0a0a; padding: 10px; border-radius: 8px; margin-bottom: 5px; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; border-left: 3px solid var(--gold); }
+        .invoice-list { margin-top: 30px; }
+        .invoice-item { background: #0a0a0a; padding: 12px; border-radius: 8px; margin-bottom: 8px; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; border-left: 3px solid var(--gold); border: 1px solid #222; }
 
         /* Pestañas */
-        .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
-        .tab { flex: 1; padding: 10px; text-align: center; border-radius: 8px; background: #111; color: #555; cursor: pointer; font-size: 0.8rem; font-weight: bold; }
-        .tab.active { background: var(--gold); color: black; }
+        .tabs { display: flex; gap: 10px; margin-bottom: 25px; }
+        .tab { flex: 1; padding: 12px; text-align: center; border-radius: 8px; background: #111; color: #666; cursor: pointer; font-size: 0.8rem; font-weight: bold; text-transform: uppercase; }
+        .tab.active { background: var(--gold); color: black; box-shadow: 0 2px 5px rgba(251,192,45,0.3); }
 
         .hidden { display: none; }
     </style>
@@ -39,7 +62,7 @@
 
 <header>
     <a href="cliente.html" class="back-btn"><i class="fas fa-arrow-left"></i></a>
-    <h2 style="margin:0; font-size: 1.1rem;">Mis Reparaciones</h2>
+    <h2 style="margin:0; font-size: 1.1rem; color: #fff;">Gestión de Reparaciones</h2>
 </header>
 
 <div class="tabs">
@@ -49,7 +72,7 @@
 
 <div id="sec-nueva" class="content-sec">
     <div class="repa-box">
-        <h3 style="color: var(--gold); margin-top:0; font-size: 1rem;"><i class="fas fa-file-invoice"></i> Detalle del Pedido</h3>
+        <h3 style="color: var(--gold); margin-top:0; font-size: 1rem; margin-bottom: 15px;"><i class="fas fa-file-invoice"></i> Detalle del Pedido</h3>
         
         <div class="item-row">
             <select id="tipo">
@@ -61,9 +84,11 @@
             </select>
             <input type="text" id="color" placeholder="Color (Ej: Negro)">
         </div>
-        <textarea id="trabajo" placeholder="¿Qué trabajo necesita? (Ej: Cambio de suela, costura, teñido...)" rows="2"></textarea>
+        <textarea id="trabajo" placeholder="¿Qué trabajo necesita? (Ej: Cambio de suela, costura, teñido...)" rows="3"></textarea>
         
-        <button class="btn-add" onclick="agregarAlCarrito()">+ AÑADIR OTRO ÍTEM</button>
+        <div class="btn-add-circle" onclick="agregarAlCarrito()" title="Añadir este ítem">
+            <i class="fas fa-plus"></i>
+        </div>
     </div>
 
     <div class="invoice-list" id="lista-previa">
@@ -78,6 +103,7 @@
 </div>
 
 <script>
+    // Tu configuración de Firebase sigue igual
     const firebaseConfig = {
         apiKey: "AIzaSyAKPxG1osuR9hsj-PsmwJrzK-3W_XM1UyU",
         authDomain: "jadi-repaiz.firebaseapp.com",
@@ -88,6 +114,15 @@
 
     const session = JSON.parse(localStorage.getItem('session_jadi'));
     let carritoReparaciones = [];
+
+    // Esta función verifica el acceso, asegúrate de tenerla en el init()
+    function verificarAcceso() {
+        if(!session || (session.rolCodigo !== 'CLN' && session.rolCodigo !== 'ADM')) {
+            window.location.href = "index.html";
+            return false;
+        }
+        return true;
+    }
 
     function switchTab(t) {
         document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
@@ -108,7 +143,7 @@
         const color = document.getElementById('color').value;
         const desc = document.getElementById('trabajo').value;
 
-        if(!color || !desc) { alert("Completa el color y la descripción"); return; }
+        if(!color || !desc) { alert("Completa el color y la descripción del trabajo"); return; }
 
         const item = { tipo, color, desc };
         carritoReparaciones.push(item);
@@ -136,14 +171,14 @@
             clienteId: session.uid,
             clienteNombre: session.nombre,
             items: carritoReparaciones,
-            estado: 'PENDIENTE', // Esperando que un zapatero acepte
+            estado: 'PENDIENTE', 
             fecha: new Date().toISOString(),
-            zapateroId: null // Se llena cuando alguien acepta
+            zapateroId: null 
         };
 
         db.ref('solicitudes_reparacion/' + solicitudId).set(data)
             .then(() => {
-                alert("¡Pedido lanzado! Los zapateros cercanos recibirán tu notificación.");
+                alert("¡Pedido lanzado con éxito! Espera a que un zapatero lo acepte.");
                 carritoReparaciones = [];
                 document.getElementById('lista-previa').innerHTML = "";
                 switchTab('seguimiento');
@@ -156,7 +191,7 @@
             container.innerHTML = "";
             
             if(!snap.exists()) {
-                container.innerHTML = "<p style='text-align:center; color:#555;'>No tienes pedidos activos.</p>";
+                container.innerHTML = "<p style='text-align:center; color:#555; padding:20px;'>No tienes pedidos activos.</p>";
                 return;
             }
 
@@ -165,15 +200,15 @@
                 const colorEstado = s.estado === 'ACEPTADO' ? '#4caf50' : '#fbc02d';
                 
                 container.innerHTML += `
-                    <div style="background:var(--card); padding:15px; border-radius:12px; margin-bottom:10px; border-left: 5px solid ${colorEstado}">
-                        <div style="display:flex; justify-content:space-between;">
-                            <small style="color:#666;">ID: ${child.key.slice(-5)}</small>
-                            <b style="color:${colorEstado}">${s.estado}</b>
+                    <div style="background:var(--card); padding:15px; border-radius:12px; margin-bottom:12px; border: 1px solid #222; border-left: 5px solid ${colorEstado}">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <small style="color:#666;">ID: ${child.key.slice(-5).toUpperCase()}</small>
+                            <b style="color:${colorEstado}; font-size:0.75rem; text-transform:uppercase;">${s.estado}</b>
                         </div>
-                        <p style="margin:5px 0; font-size:0.9rem;">${s.items.length} artículo(s) en este pedido.</p>
+                        <p style="margin:10px 0; font-size:0.9rem;">${s.items.length} artículo(s) en este pedido.</p>
                         ${s.estado === 'ACEPTADO' ? 
-                            `<button onclick="irAlChat('${s.zapateroId}')" style="background:var(--gold); border:none; padding:8px; border-radius:5px; width:100%; margin-top:10px; font-weight:bold;">CHATEAR CON ZAPATERO</button>` : 
-                            `<p style="font-size:0.7rem; color:#444;">Esperando respuesta de zapateros...</p>`
+                            `<button onclick="irAlChat('${s.zapateroId}')" style="background:var(--gold); border:none; padding:10px; border-radius:8px; width:100%; margin-top:10px; font-weight:bold; cursor:pointer;">CHATEAR CON ZAPATERO</button>` : 
+                            `<p style="font-size:0.7rem; color:#555; text-align:center;">Esperando respuesta de zapateros cercanos...</p>`
                         }
                     </div>
                 `;
@@ -186,7 +221,10 @@
         window.location.href = 'chat.html';
     }
 
-    init();
+    // Asegúrate de llamar a verificarAcceso al inicio
+    if(verificarAcceso()) {
+        // Nada más que hacer por ahora
+    }
 </script>
 </body>
 </html>
