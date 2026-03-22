@@ -3,73 +3,102 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>J.A.D.I - PANEL MAESTRO</title>
+    <title>J.A.D.I - CONTROL TOTAL</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root { --gold: #fbc02d; --dark: #000; --card: #111; --text: #eee; }
         body { background: var(--dark); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; }
-        header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--gold); padding-bottom: 15px; margin-bottom: 30px; }
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px; }
-        .stat-card { background: var(--card); padding: 20px; border-radius: 15px; border: 1px solid #222; text-align: center; }
-        .stat-card i { color: var(--gold); font-size: 1.5rem; margin-bottom: 10px; }
-        .stat-card h2 { margin: 5px 0; font-size: 2rem; }
-        
-        .grid-modules { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 30px; }
-        .mod-btn { background: #1a1a1a; border: 1px solid #333; color: white; padding: 15px; border-radius: 10px; cursor: pointer; text-decoration: none; text-align: center; font-weight: bold; transition: 0.3s; }
-        .mod-btn:hover { border-color: var(--gold); background: #222; }
+        header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--gold); padding-bottom: 15px; margin-bottom: 25px; }
 
+        /* Estilo para los 5 Pilares Principales */
+        .main-pillars { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; margin-bottom: 30px; }
+        .pillar-card { background: var(--card); padding: 20px; border-radius: 18px; border: 1px solid #222; text-align: center; cursor: pointer; transition: 0.3s; }
+        .pillar-card:hover { border-color: var(--gold); transform: translateY(-5px); background: #1a1a1a; box-shadow: 0 5px 15px rgba(251, 192, 45, 0.1); }
+        .pillar-card i { font-size: 2.2rem; margin-bottom: 10px; display: block; }
+        .pillar-card h3 { margin: 5px 0; font-size: 0.9rem; color: var(--gold); letter-spacing: 1px; }
+        .pillar-card span { font-size: 1.5rem; font-weight: bold; display: block; margin: 5px 0; }
+        .pillar-card p { font-size: 0.7rem; color: #666; margin: 0; }
+
+        /* Estilo para Módulos de Apoyo (Resto de la lista) */
+        .secondary-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-bottom: 40px; }
+        .mod-link { background: #0a0a0a; border: 1px solid #333; color: #bbb; padding: 12px; border-radius: 10px; text-decoration: none; text-align: center; font-size: 0.85rem; display: flex; flex-direction: column; align-items: center; gap: 5px; transition: 0.2s; }
+        .mod-link:hover { border-color: #555; color: white; background: #111; }
+
+        /* Tabla de Usuarios */
         .table-container { background: var(--card); border-radius: 15px; padding: 20px; border: 1px solid #222; overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; color: var(--gold); padding: 12px; border-bottom: 2px solid #222; }
-        td { padding: 12px; border-bottom: 1px solid #222; font-size: 0.9rem; }
-        
-        .role-badge { padding: 4px 8px; border-radius: 5px; font-size: 0.7rem; font-weight: bold; }
+        th { text-align: left; color: var(--gold); padding: 12px; border-bottom: 2px solid #222; font-size: 0.8rem; }
+        td { padding: 12px; border-bottom: 1px solid #222; font-size: 0.85rem; }
+        .role-badge { padding: 3px 7px; border-radius: 4px; font-size: 0.65rem; font-weight: bold; }
         .bg-adm { background: #d32f2f; } .bg-zpt { background: #1976d2; } .bg-cln { background: #388e3c; }
-        
-        select { background: #222; color: white; border: 1px solid #444; padding: 6px; border-radius: 5px; outline: none; }
-        .btn-action { background: var(--gold); color: black; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        #loader { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); display:none; justify-content:center; align-items:center; z-index:1000; }
+
+        #loader { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); display:none; justify-content:center; align-items:center; z-index:1000; }
     </style>
 </head>
 <body>
 
-<div id="loader"><i class="fas fa-spinner fa-spin fa-3x" style="color:var(--gold)"></i></div>
+<div id="loader"><i class="fas fa-circle-notch fa-spin fa-3x" style="color:var(--gold)"></i></div>
 
 <header>
-    <div>
-        <h1 style="color:var(--gold); margin:0; font-size: 1.5rem;">J.A.D.I REPAIZ <span style="color:white">| MAESTRO</span></h1>
-        <p id="welcome-msg" style="margin:5px 0 0 0; color:#888;"></p>
-    </div>
-    <button onclick="logout()" style="background:#333; color:white; border:none; padding:10px 20px; border-radius:20px; cursor:pointer;">Cerrar Sesión</button>
+    <h2 style="color:var(--gold); margin:0;"><i class="fas fa-shield-alt"></i> MASTER CONSOLE</h2>
+    <div id="admin-info" style="font-size: 0.9rem; color: #888;"></div>
+    <button onclick="logout()" style="background:#222; color:white; border:1px solid #444; padding:7px 15px; border-radius:20px; cursor:pointer;">Salir</button>
 </header>
 
-<div class="stats-grid">
-    <div class="stat-card"><i class="fas fa-users"></i><p>Usuarios</p><h2 id="count-users">0</h2></div>
-    <div class="stat-card"><i class="fas fa-shoe-prints"></i><p>Trabajos Hoy</p><h2 id="count-jobs">0</h2></div>
-    <div class="stat-card"><i class="fas fa-cash-register"></i><p>Ingresos Mes</p><h2 id="count-cash">$0</h2></div>
+<div class="main-pillars">
+    <div class="pillar-card" onclick="location.href='cliente.html'">
+        <i class="fas fa-users" style="color:#2196f3;"></i>
+        <h3>CLIENTES</h3>
+        <span id="c-cln">0</span>
+        <p>Base de Datos</p>
+    </div>
+    <div class="pillar-card" onclick="location.href='zapatero.html'">
+        <i class="fas fa-hammer" style="color:#fbc02d;"></i>
+        <h3>ZAPATERO</h3>
+        <span id="c-zpt">0</span>
+        <p>Taller Tareas</p>
+    </div>
+    <div class="pillar-card" onclick="location.href='tienda.html'">
+        <i class="fas fa-store" style="color:#e91e63;"></i>
+        <h3>TIENDA</h3>
+        <span id="c-shp">0</span>
+        <p>Punto de Venta</p>
+    </div>
+    <div class="pillar-card" onclick="location.href='delivery.html'">
+        <i class="fas fa-motorcycle" style="color:#ff9800;"></i>
+        <h3>DELIVERY</h3>
+        <span id="c-dlv">0</span>
+        <p>Logística/Rutas</p>
+    </div>
+    <div class="pillar-card" onclick="location.href='proveedor.html'">
+        <i class="fas fa-truck-loading" style="color:#4caf50;"></i>
+        <h3>PROVEEDOR</h3>
+        <span id="c-prv">0</span>
+        <p>Insumos/Suelas</p>
+    </div>
 </div>
 
-<div class="grid-modules">
-    <a href="trabajos.html" class="mod-btn"><i class="fas fa-hammer"></i> ZAPATERÍA</a>
-    <a href="mensajeria.html" class="mod-btn"><i class="fab fa-whatsapp"></i> MARKETING</a>
-    <a href="inventario.html" class="mod-btn"><i class="fas fa-boxes"></i> INVENTARIO</a>
-    <a href="proveedores.html" class="mod-btn"><i class="fas fa-truck"></i> PROVEEDORES</a>
+<p style="color: #555; font-size: 0.8rem; margin-bottom: 10px; text-transform: uppercase; font-weight: bold;">Módulos de Soporte</p>
+<div class="secondary-grid">
+    <a href="trabajos.html" class="mod-link"><i class="fas fa-clipboard-list"></i> Trabajos</a>
+    <a href="inventario.html" class="mod-link"><i class="fas fa-boxes"></i> Inventario</a>
+    <a href="mensajeris.html" class="mod-link"><i class="fab fa-whatsapp"></i> Mensajería</a>
+    <a href="local.html" class="mod-link"><i class="fas fa-map-marker-alt"></i> Local</a>
+    <a href="chat.html" class="mod-link"><i class="fas fa-comments"></i> Chat Interno</a>
+    <a href="perfil.html" class="mod-link"><i class="fas fa-user-circle"></i> Mi Perfil</a>
+    <a href="clientes.html" class="mod-link"><i class="fas fa-address-book"></i> Directorio</a>
 </div>
 
 <div class="table-container">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-        <h3>GESTIÓN DE ACCESOS</h3>
-        <input type="text" id="search-user" placeholder="Buscar por nombre o celular..." style="padding:8px; border-radius:5px; border:1px solid #333; background:#111; color:white; width:250px;">
-    </div>
+    <h3 style="margin-top:0; color:var(--gold); font-size: 1rem;"><i class="fas fa-user-cog"></i> Gestión de Usuarios</h3>
     <table>
         <thead>
             <tr>
-                <th>NOMBRE / ID</th>
-                <th>CONTACTO</th>
+                <th>NOMBRE</th>
+                <th>TEL / ID</th>
                 <th>ROL</th>
-                <th>EMPRESA</th>
                 <th>ACCIONES</th>
             </tr>
         </thead>
@@ -86,92 +115,66 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // SEGURIDAD DE ACCESO
     const session = JSON.parse(localStorage.getItem('session_jadi'));
     if(!session || session.rolCodigo !== 'ADM') {
-        alert("¡Alto! No tienes permisos de Administrador Maestro.");
         window.location.href = "index.html";
     }
-    document.getElementById('welcome-msg').innerText = "Bienvenido, Maestro " + session.nombre;
+    document.getElementById('admin-info').innerText = "Maestro: " + session.nombre;
 
-    // CARGA DE DATOS Y ESTADÍSTICAS
     function init() {
-        showLoader(true);
-        // Contar Usuarios
+        document.getElementById('loader').style.display = 'flex';
         db.ref('usuarios').on('value', snap => {
-            document.getElementById('count-users').innerText = snap.numChildren();
-            renderUsers(snap);
-        });
+            let z=0, c=0, s=0, d=0, p=0;
+            const tbody = document.getElementById('user-list');
+            tbody.innerHTML = "";
 
-        // Contar Trabajos (Lógica simple para demo)
-        db.ref('trabajos').on('value', snap => {
-            document.getElementById('count-jobs').innerText = snap.numChildren();
+            snap.forEach(child => {
+                const u = child.val();
+                // Contadores para los pilares
+                if(u.rolCodigo === 'ZPT') z++;
+                if(u.rolCodigo === 'CLN') c++;
+                if(u.rolCodigo === 'SHP') s++;
+                if(u.rolCodigo === 'DLV') d++;
+                if(u.rolCodigo === 'PRV') p++;
+
+                // Render de la tabla
+                const badge = u.rolCodigo === 'ADM' ? 'bg-adm' : (u.rolCodigo === 'ZPT' ? 'bg-zpt' : 'bg-cln');
+                tbody.innerHTML += `
+                    <tr>
+                        <td><b>${u.nombre}</b></td>
+                        <td>${u.telefono || u.uid}</td>
+                        <td><span class="role-badge ${badge}">${u.rolCodigo || 'CLN'}</span></td>
+                        <td>
+                            <select onchange="updateRole('${child.key}', this.value)" style="background:#222; color:white; border:none; padding:5px; border-radius:5px;">
+                                <option value="">Rol</option>
+                                <option value="ADM">ADM</option>
+                                <option value="ZPT">ZPT</option>
+                                <option value="CLN">CLN</option>
+                            </select>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('c-zpt').innerText = z;
+            document.getElementById('c-cln').innerText = c;
+            document.getElementById('c-shp').innerText = s;
+            document.getElementById('c-dlv').innerText = d;
+            document.getElementById('c-prv').innerText = p;
+            document.getElementById('loader').style.display = 'none';
         });
-        showLoader(false);
     }
 
-    function renderUsers(snap) {
-        const container = document.getElementById('user-list');
-        container.innerHTML = "";
-        
-        snap.forEach(child => {
-            const u = child.val();
-            const badge = u.rolCodigo === 'ADM' ? 'bg-adm' : (u.rolCodigo === 'ZPT' ? 'bg-zpt' : 'bg-cln');
-            
-            container.innerHTML += `
-                <tr>
-                    <td><b>${u.nombre}</b><br><small style="color:#666">${u.uid}</small></td>
-                    <td>${u.telefono}<br><small>${u.email || ''}</small></td>
-                    <td><span class="role-badge ${badge}">${u.rolCodigo || 'CLN'}</span></td>
-                    <td>${u.empresaNombre || '---'}</td>
-                    <td>
-                        <select onchange="updateRole('${child.key}', this.value)">
-                            <option value="">Cambiar Rango</option>
-                            <option value="ADM">Admin Maestro</option>
-                            <option value="ZPT">Zapatero</option>
-                            <option value="CLN">Cliente</option>
-                            <option value="PRV">Proveedor</option>
-                        </select>
-                        <button onclick="deleteUser('${child.key}')" style="background:none; border:none; color:#ff4444; margin-left:10px; cursor:pointer;"><i class="fas fa-trash"></i></button>
-                    </td>
-                </tr>
-            `;
-        });
-    }
-
-    async function updateRole(uid, newRole) {
-        if(!newRole) return;
-        if(confirm("¿Confirmas el cambio de rango para este usuario?")) {
-            showLoader(true);
-            await db.ref('usuarios/' + uid).update({ rolCodigo: newRole });
-            alert("Rango actualizado correctamente.");
-            showLoader(false);
+    async function updateRole(uid, role) {
+        if(role && confirm("¿Cambiar rol?")) {
+            await db.ref('usuarios/' + uid).update({ rolCodigo: role });
         }
     }
-
-    async function deleteUser(uid) {
-        if(uid === session.uid) return alert("No puedes eliminarte a ti mismo, Maestro.");
-        if(confirm("¿ESTÁS SEGURO? Esta acción eliminará al usuario del ecosistema.")) {
-            await db.ref('usuarios/' + uid).remove();
-        }
-    }
-
-    function showLoader(state) { document.getElementById('loader').style.display = state ? 'flex' : 'none'; }
 
     function logout() {
         localStorage.removeItem('session_jadi');
         window.location.href = "index.html";
     }
-
-    // Búsqueda en tiempo real
-    document.getElementById('search-user').addEventListener('input', (e) => {
-        const val = e.target.value.toLowerCase();
-        const rows = document.querySelectorAll('#user-list tr');
-        rows.forEach(row => {
-            const text = row.innerText.toLowerCase();
-            row.style.display = text.includes(val) ? '' : 'none';
-        });
-    });
 
     init();
 </script>
