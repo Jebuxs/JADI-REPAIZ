@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>J.A.D.I - MULTI-TASK CONSOLE</title>
+    <title>JADI MULTI-TASK - MASTER</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -13,95 +13,107 @@
         
         header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--gold); padding-bottom: 15px; margin-bottom: 25px; }
 
-        /* Módulos Principales (Abrir en nueva pestaña) */
-        .main-pillars { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; margin-bottom: 30px; }
-        .pillar-card { background: var(--card); padding: 20px; border-radius: 18px; border: 1px solid #222; text-align: center; cursor: pointer; transition: 0.3s; text-decoration: none; display: block; }
-        .pillar-card:hover { border-color: var(--gold); transform: scale(1.02); background: #1a1a1a; box-shadow: 0 0 15px rgba(251, 192, 45, 0.2); }
-        .pillar-card i { font-size: 2rem; margin-bottom: 10px; display: block; }
-        .pillar-card h3 { margin: 5px 0; font-size: 0.8rem; color: var(--gold); text-transform: uppercase; }
-        .pillar-card span { font-size: 1.4rem; font-weight: bold; color: white; }
+        /* Pilares Principales */
+        .main-pillars { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 30px; }
+        .pillar-card { background: var(--card); padding: 20px; border-radius: 15px; border: 1px solid #222; text-align: center; cursor: pointer; transition: 0.3s; }
+        .pillar-card:hover { border-color: var(--gold); transform: translateY(-5px); background: #1a1a1a; }
+        .pillar-card i { font-size: 1.8rem; margin-bottom: 10px; display: block; }
+        .pillar-card h3 { margin: 5px 0; font-size: 0.8rem; color: var(--gold); }
+        .pillar-card span { font-size: 1.5rem; font-weight: bold; }
 
-        /* BARRA DE NAVEGACIÓN RÁPIDA (Círculos Flotantes) */
-        .quick-nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(17,17,17,0.9); padding: 10px 20px; border-radius: 50px; border: 1px solid var(--gold); display: flex; gap: 15px; backdrop-filter: blur(10px); z-index: 1000; box-shadow: 0 -5px 20px rgba(0,0,0,0.5); }
-        .nav-circle { width: 45px; height: 45px; border-radius: 50%; background: #222; display: flex; justify-content: center; align-items: center; color: white; text-decoration: none; transition: 0.3s; border: 1px solid #444; position: relative; }
-        .nav-circle:hover { transform: translateY(-10px); border-color: var(--gold); background: var(--gold); color: black; }
-        .nav-circle i { font-size: 1.2rem; }
-        .nav-circle::after { content: attr(data-label); position: absolute; top: -35px; background: var(--gold); color: black; padding: 2px 8px; border-radius: 5px; font-size: 0.7rem; font-weight: bold; opacity: 0; pointer-events: none; transition: 0.3s; white-space: nowrap; }
-        .nav-circle:hover::after { opacity: 1; }
+        /* MÓDULOS DE APOYO (BOTONES PLANOS) */
+        .support-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 40px; }
+        .support-btn { background: #111; border: 1px solid #333; color: #aaa; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-size: 0.85rem; transition: 0.2s; }
+        .support-btn:hover { background: var(--gold); color: #000; border-color: var(--gold); }
 
-        /* Soporte y Tabla */
-        .secondary-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; margin-bottom: 40px; }
-        .mod-link { background: #0a0a0a; border: 1px solid #333; color: #bbb; padding: 10px; border-radius: 8px; text-decoration: none; text-align: center; font-size: 0.8rem; }
+        /* TABLA DE GESTIÓN DE USUARIOS COMPLETA */
+        .user-section { background: var(--card); border-radius: 15px; padding: 20px; border: 1px solid #222; }
+        .user-section h2 { color: var(--gold); font-size: 1.1rem; margin-top: 0; display: flex; align-items: center; gap: 10px; }
         
-        .table-container { background: var(--card); border-radius: 15px; padding: 20px; border: 1px solid #222; }
-        table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; color: var(--gold); padding: 10px; border-bottom: 1px solid #333; font-size: 0.8rem; }
-        td { padding: 10px; border-bottom: 1px solid #222; font-size: 0.85rem; }
+        .table-wrapper { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 800px; }
+        th { text-align: left; color: var(--gold); padding: 12px; border-bottom: 2px solid #222; font-size: 0.75rem; text-transform: uppercase; }
+        td { padding: 12px; border-bottom: 1px solid #222; font-size: 0.85rem; color: #ccc; }
+        
+        .role-badge { padding: 4px 8px; border-radius: 5px; font-size: 0.7rem; font-weight: bold; }
+        .bg-adm { background: #d32f2f; color: white; }
+        .bg-zpt { background: #1976d2; color: white; }
+        .bg-cln { background: #388e3c; color: white; }
+
+        /* Barra Flotante */
+        .quick-nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(15,15,15,0.95); padding: 12px 25px; border-radius: 50px; border: 1px solid var(--gold); display: flex; gap: 20px; backdrop-filter: blur(10px); z-index: 1000; }
+        .nav-item { color: #fff; font-size: 1.2rem; transition: 0.3s; text-decoration: none; }
+        .nav-item:hover { color: var(--gold); transform: scale(1.2); }
     </style>
 </head>
 <body>
 
 <header>
-    <h2 style="color:var(--gold); margin:0;"><i class="fas fa-layer-group"></i> JADI MULTI-TASK</h2>
-    <div id="admin-name" style="color:var(--gold); font-weight: bold;"></div>
+    <h2 style="color:var(--gold); margin:0;">JADI MULTI-TASK</h2>
+    <div id="admin-name" style="font-size: 0.9rem;"></div>
 </header>
 
 <div class="main-pillars">
     <div class="pillar-card" onclick="window.open('cliente.html', '_blank')">
-        <i class="fas fa-user-friends" style="color:#42a5f5;"></i>
-        <h3>CLIENTE</h3>
-        <span id="c-cln">0</span>
+        <i class="fas fa-users" style="color:#2196f3;"></i>
+        <h3>CLIENTE</h3><span id="c-cln">0</span>
     </div>
-
     <div class="pillar-card" onclick="window.open('zapatero.html', '_blank')">
-        <i class="fas fa-tools" style="color:#fbc02d;"></i>
-        <h3>ZAPATERO</h3>
-        <span id="c-zpt">0</span>
+        <i class="fas fa-hammer" style="color:#fbc02d;"></i>
+        <h3>ZAPATERO</h3><span id="c-zpt">0</span>
     </div>
-
     <div class="pillar-card" onclick="window.open('tienda.html', '_blank')">
-        <i class="fas fa-shopping-cart" style="color:#ec407a;"></i>
-        <h3>TIENDA</h3>
-        <span id="c-shp">0</span>
+        <i class="fas fa-store" style="color:#e91e63;"></i>
+        <h3>TIENDA</h3><span id="c-shp">0</span>
     </div>
-
     <div class="pillar-card" onclick="window.open('delivery.html', '_blank')">
-        <i class="fas fa-truck" style="color:#ffa726;"></i>
-        <h3>DELIVERY</h3>
-        <span id="c-dlv">0</span>
+        <i class="fas fa-motorcycle" style="color:#ff9800;"></i>
+        <h3>DELIVERY</h3><span id="c-dlv">0</span>
     </div>
-
     <div class="pillar-card" onclick="window.open('proveedor.html', '_blank')">
-        <i class="fas fa-box-open" style="color:#66bb6a;"></i>
-        <h3>PROVEEDOR</h3>
-        <span id="c-prv">0</span>
+        <i class="fas fa-truck-loading" style="color:#4caf50;"></i>
+        <h3>PROVEEDOR</h3><span id="c-prv">0</span>
+    </div>
+</div>
+
+<p style="color:#555; font-size:0.75rem; font-weight:bold; text-transform:uppercase;">Módulos de Apoyo</p>
+<div class="support-grid">
+    <a href="chat.html" target="_blank" class="support-btn">Chat Interno</a>
+    <a href="clientes.html" target="_blank" class="support-btn">Directorio Clientes</a>
+    <a href="index.html" target="_blank" class="support-btn">Login / Index</a>
+    <a href="inventario.html" target="_blank" class="support-btn">Inventario</a>
+    <a href="local.html" target="_blank" class="support-btn">Ubicación Local</a>
+    <a href="mensajeris.html" target="_blank" class="support-btn">Mensajería</a>
+    <a href="perfil.html" target="_blank" class="support-btn">Mi Perfil</a>
+    <a href="trabajos.html" target="_blank" class="support-btn">Lista Trabajos</a>
+</div>
+
+<div class="user-section">
+    <h2><i class="fas fa-users-cog"></i> GESTIÓN DE USUARIOS REGISTRADOS</h2>
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>Nombre Completo</th>
+                    <th>Teléfono</th>
+                    <th>ID / Cédula</th>
+                    <th>Rol</th>
+                    <th>Email / Usuario</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="user-list">
+                </tbody>
+        </table>
     </div>
 </div>
 
 <div class="quick-nav">
-    <a href="mensajeris.html" target="_blank" class="nav-circle" data-label="WHATSAPP"><i class="fab fa-whatsapp"></i></a>
-    <a href="inventario.html" target="_blank" class="nav-circle" data-label="STOCK"><i class="fas fa-boxes"></i></a>
-    <a href="trabajos.html" target="_blank" class="nav-circle" data-label="PEDIDOS"><i class="fas fa-list-check"></i></a>
-    <a href="chat.html" target="_blank" class="nav-circle" data-label="CHAT"><i class="fas fa-comment-dots"></i></a>
-    <a href="local.html" target="_blank" class="nav-circle" data-label="MAPA"><i class="fas fa-map-marked-alt"></i></a>
-</div>
-
-<p style="color:#555; font-size:0.75rem; text-transform:uppercase; font-weight:bold;">Módulos de Apoyo</p>
-<div class="secondary-grid">
-    <a href="perfil.html" target="_blank" class="mod-link">Perfil Admin</a>
-    <a href="reportes.html" target="_blank" class="mod-link">Reportes</a>
-    <a href="gastos.html" target="_blank" class="mod-link">Gastos</a>
-    <a href="ajustes.html" target="_blank" class="mod-link">Ajustes</a>
-</div>
-
-<div class="table-container">
-    <h3 style="margin:0 0 15px 0; color:var(--gold);"><i class="fas fa-users-cog"></i> Gestión de Usuarios</h3>
-    <table>
-        <thead>
-            <tr><th>USUARIO</th><th>ROL</th><th>ACCIONES</th></tr>
-        </thead>
-        <tbody id="user-list"></tbody>
-    </table>
+    <a href="mensajeris.html" target="_blank" class="nav-item"><i class="fab fa-whatsapp"></i></a>
+    <a href="inventario.html" target="_blank" class="nav-item"><i class="fas fa-boxes"></i></a>
+    <a href="trabajos.html" target="_blank" class="nav-item"><i class="fas fa-list-ul"></i></a>
+    <a href="chat.html" target="_blank" class="nav-item"><i class="fas fa-comments"></i></a>
+    <a href="local.html" target="_blank" class="nav-item"><i class="fas fa-map-marked-alt"></i></a>
 </div>
 
 <script>
@@ -115,29 +127,39 @@
 
     const session = JSON.parse(localStorage.getItem('session_jadi'));
     if(!session || session.rolCodigo !== 'ADM') window.location.href = "index.html";
-    document.getElementById('admin-name').innerText = session.nombre;
+    document.getElementById('admin-name').innerText = "Maestro: " + session.nombre;
 
-    function cargarDatos() {
+    function init() {
         db.ref('usuarios').on('value', snap => {
             let z=0, c=0, s=0, d=0, p=0;
             const tbody = document.getElementById('user-list');
             tbody.innerHTML = "";
+
             snap.forEach(child => {
                 const u = child.val();
+                // Contadores para pilares
                 if(u.rolCodigo === 'ZPT') z++;
                 if(u.rolCodigo === 'CLN') c++;
                 if(u.rolCodigo === 'SHP') s++;
                 if(u.rolCodigo === 'DLV') d++;
                 if(u.rolCodigo === 'PRV') p++;
-                
+
+                // Fila de tabla con TODOS los datos
+                const roleClass = u.rolCodigo === 'ADM' ? 'bg-adm' : (u.rolCodigo === 'ZPT' ? 'bg-zpt' : 'bg-cln');
                 tbody.innerHTML += `
                     <tr>
-                        <td><b>${u.nombre}</b><br><small>${u.telefono}</small></td>
-                        <td>${u.rolCodigo}</td>
-                        <td><button onclick="cambiarRol('${child.key}')" style="background:none; border:1px solid #444; color:white; border-radius:5px; cursor:pointer;">Editar</button></td>
+                        <td><b>${u.nombre || '---'}</b></td>
+                        <td>${u.telefono || '---'}</td>
+                        <td><small>${u.uid || child.key}</small></td>
+                        <td><span class="role-badge ${roleClass}">${u.rolCodigo || 'CLN'}</span></td>
+                        <td>${u.correo || u.usuario || '---'}</td>
+                        <td>
+                            <button onclick="editarRol('${child.key}')" style="background:#222; color:var(--gold); border:1px solid #444; padding:5px 10px; border-radius:5px; cursor:pointer;">Editar</button>
+                        </td>
                     </tr>
                 `;
             });
+
             document.getElementById('c-zpt').innerText = z;
             document.getElementById('c-cln').innerText = c;
             document.getElementById('c-shp').innerText = s;
@@ -146,9 +168,15 @@
         });
     }
 
-    function logout() { localStorage.removeItem('session_jadi'); window.location.href="index.html"; }
+    async function editarRol(uid) {
+        const nuevoRol = prompt("Cambiar rol (ADM, ZPT, CLN, DLV, PRV):");
+        if(nuevoRol) {
+            await db.ref('usuarios/' + uid).update({ rolCodigo: nuevoRol.toUpperCase() });
+            alert("Rol actualizado");
+        }
+    }
 
-    cargarDatos();
+    init();
 </script>
 </body>
 </html>
