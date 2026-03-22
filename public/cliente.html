@@ -60,15 +60,23 @@
 
         const session = JSON.parse(localStorage.getItem('session_jadi'));
 
-        if(!session || session.rolCodigo !== 'CLN') {
+        // --- AJUSTE DE SEGURIDAD (PASE MAESTRO) ---
+        if(!session || (session.rolCodigo !== 'CLN' && session.rolCodigo !== 'ADM')) {
             window.location.href = "index.html";
         }
 
         document.getElementById('user-name').innerText = session.nombre;
 
         function cargarMisReparaciones() {
-            // Buscamos trabajos donde el clienteId sea el UID del usuario logueado
-            db.ref('trabajos').orderByChild('clienteId').equalTo(session.uid).on('value', snap => {
+            // --- AJUSTE DE CONSULTA (EL ADMIN VE TODO) ---
+            let consulta;
+            if(session.rolCodigo === 'ADM') {
+                consulta = db.ref('trabajos');
+            } else {
+                consulta = db.ref('trabajos').orderByChild('clienteId').equalTo(session.uid);
+            }
+
+            consulta.on('value', snap => {
                 const container = document.getElementById('lista-reparaciones');
                 container.innerHTML = "";
 
@@ -107,7 +115,6 @@
         }
 
         async function abrirChat(trabajoId, zapateroId) {
-            // Para que el cliente sepa con quién habla, buscamos el nombre del zapatero
             const snapZ = await db.ref('usuarios/' + zapateroId).once('value');
             const zapateroNombre = snapZ.exists() ? snapZ.val().nombre : "Zapatero";
 
