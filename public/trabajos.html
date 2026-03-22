@@ -17,16 +17,16 @@
         .search-bar { background: #1a1a1a; border: 1px solid #333; padding: 10px; border-radius: 10px; display: flex; align-items: center; }
         .search-bar input { background: transparent; border: none; color: white; margin-left: 10px; width: 100%; outline: none; }
 
-        /* SECCIÓN NUBE Y ALERTAS DE REBAJA */
+        /* SECCIÓN NUBE */
         .cloud-section { padding: 0 15px; margin-bottom: 20px; }
         .cloud-title { color: var(--gold); font-size: 0.7rem; font-weight: bold; letter-spacing: 1px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
-        .cloud-card { background: #1a1500; border: 1px solid #443300; border-radius: 12px; padding: 15px; margin-bottom: 10px; border-left: 4px solid var(--gold); }
+        .cloud-card { background: #1a1500; border: 1px solid #443300; border-radius: 12px; padding: 15px; margin-bottom: 10px; border-left: 4px solid var(--gold); cursor: pointer; }
+        .cloud-card:active { transform: scale(0.98); }
         .btn-take { background: var(--gold); color: black; border: none; padding: 8px 15px; border-radius: 6px; font-weight: bold; font-size: 11px; cursor: pointer; margin-top: 10px; width: 100%; }
         
         .rebaja-alert { background: #220000; border: 1px solid #ff4444; border-left-width: 5px; }
         .rebaja-alert b { color: #ff4444; font-size: 10px; display: block; margin-bottom: 5px; }
 
-        /* Estilos de Lista */
         .orders-container { padding: 0 15px; }
         .order-card { background: var(--card); border-radius: 15px; padding: 15px; margin-bottom: 15px; border: 1px solid #222; }
         .order-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
@@ -35,13 +35,11 @@
         .tag-recibido { background: #444; color: white; }
         .tag-proceso { background: var(--blue); color: white; }
         .tag-listo { background: #00cc66; color: black; }
-        .tag-negociacion { background: #a1887f; color: white; }
         
         .order-price { font-weight: bold; color: white; display: flex; justify-content: space-between; border-top: 1px solid #222; padding-top: 10px; font-size: 12px; }
         .order-actions { display: flex; gap: 8px; margin-top: 15px; }
         .btn-status { flex: 1; padding: 8px; border-radius: 8px; border: 1px solid #333; background: #1a1a1a; color: white; font-size: 11px; cursor: pointer; }
 
-        /* Modal */
         #modal-orden { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark); z-index: 300; padding: 20px; box-sizing: border-box; overflow-y: auto; }
         input, select, textarea { width: 100%; padding: 12px; margin-bottom: 12px; background: #111; border: 1px solid #333; color: white; border-radius: 8px; box-sizing: border-box; outline: none; }
         label { font-size: 11px; color: var(--gold); margin-bottom: 5px; display: block; }
@@ -75,11 +73,11 @@
     <div id="modal-orden">
         <h2 id="modal-titulo" style="color: var(--gold); margin-top: 0;">Nueva Orden de Trabajo</h2>
         <label>CLIENTE (CELULAR)</label>
-        <input type="tel" id="cli-celular" placeholder="Número Celular" onkeyup="detectarCliente(this.value)">
+        <input type="tel" id="cli-celular" placeholder="Número Celular">
         <input type="text" id="cli-nombre" placeholder="Nombre completo">
         
         <div class="item-table" style="background: #080808; border-radius: 10px; padding: 10px; margin-bottom: 15px; border: 1px dashed #333;">
-            <label>TRABAJOS / PROFORMA</label>
+            <label>EDITAR TRABAJO SELECCIONADO</label>
             <div style="display:flex; gap:5px; margin-bottom:10px;">
                 <input type="text" id="item-cant" value="1" style="flex:0.6;">
                 <input type="text" id="item-tipo" placeholder="Tipo" style="flex:1.2;">
@@ -123,21 +121,21 @@
 
                 snap.forEach(child => {
                     const s = child.val();
-                    // Solo ver solicitudes PENDIENTES o si piden REBAJA a este zapatero
                     if(s.estado === 'PENDIENTE' || (s.estado === 'REBAJA_SOLICITADA' && s.zapateroId === session.uid)) {
                         count++;
                         const esRebaja = s.estado === 'REBAJA_SOLICITADA';
+                        // Al hacer clic en el texto (cloud-card), se carga al formulario
                         container.innerHTML += `
-                            <div class="cloud-card ${esRebaja ? 'rebaja-alert' : ''}">
-                                ${esRebaja ? '<b>¡SOLICITAN MEJORAR PRECIO!</b>' : ''}
-                                <div style="display:flex; justify-content:space-between; align-items:center;">
-                                    <b style="font-size:13px;">${s.clienteNombre}</b>
-                                    <span style="font-size:9px; color:#777;">${s.items.length} ARTÍCULOS</span>
+                            <div class="cloud-card ${esRebaja ? 'rebaja-alert' : ''}" onclick="aceptarSolicitudNube('${child.key}')">
+                                ${esRebaja ? '<b>¡SOLICITAN REBAJA!</b>' : ''}
+                                <div style="display:flex; justify-content:space-between;">
+                                    <b style="font-size:13px; color:var(--gold);">${s.clienteNombre}</b>
+                                    <span style="font-size:9px; color:#777;">${s.items.length} ART.</span>
                                 </div>
-                                <p style="font-size:11px; color:#aaa; margin:5px 0;">${s.items[0].tipo}: ${s.items[0].desc} ${esRebaja ? '(Oferta anterior: $'+s.totalOfertado+')' : ''}</p>
-                                <button class="btn-take" onclick="aceptarSolicitudNube('${child.key}')">
-                                    ${esRebaja ? 'RE-NEGOCIAR PRECIO' : 'ACEPTAR Y ENVIAR PROFORMA'}
-                                </button>
+                                <p style="font-size:11px; color:#eee; margin:5px 0;">
+                                    ${s.items[0].cant} | ${s.items[0].tipo} - ${s.items[0].desc}
+                                </p>
+                                <small style="font-size:9px; color:#555;">Clic para editar y enviar proforma</small>
                             </div>
                         `;
                     }
@@ -149,13 +147,23 @@
         function aceptarSolicitudNube(id) {
             db.ref('solicitudes_reparacion/' + id).once('value', snap => {
                 const s = snap.val();
+                if(!s) return;
                 solicitudActualId = id;
                 abrirModal();
-                document.getElementById('modal-titulo').innerText = "Negociar Proforma";
+                
+                document.getElementById('modal-titulo').innerText = "Editar Solicitud Cliente";
                 document.getElementById('btn-guardar-main').innerText = "ENVIAR PROFORMA";
                 document.getElementById('cli-nombre').value = s.clienteNombre;
                 document.getElementById('cli-celular').value = s.clienteTelefono || "";
                 
+                // Cargamos el primer ítem directamente en los inputs de edición
+                if(s.items && s.items.length > 0) {
+                    document.getElementById('item-cant').value = s.items[0].cant;
+                    document.getElementById('item-tipo').value = s.items[0].tipo;
+                    document.getElementById('item-desc').value = s.items[0].desc;
+                    document.getElementById('item-precio').value = s.items[0].precio || "";
+                }
+
                 itemsTemporales = [];
                 s.items.forEach(it => {
                     itemsTemporales.push({ cant: it.cant || 1, tipo: it.tipo, desc: it.desc, precio: it.precio || 0 });
@@ -179,6 +187,8 @@
             solicitudActualId = null; 
             document.getElementById('cli-nombre').value = "";
             document.getElementById('cli-celular').value = "";
+            document.getElementById('item-desc').value = "";
+            document.getElementById('item-precio').value = "";
         }
 
         function agregarItemALista() {
@@ -187,6 +197,10 @@
             const desc = document.getElementById('item-desc').value;
             const precio = parseFloat(document.getElementById('item-precio').value) || 0;
             if(!tipo || !desc) return alert("Completa los datos");
+            
+            // Si venía de la nube, reemplazamos el primer ítem si el zapatero lo editó
+            if(solicitudActualId) itemsTemporales = []; 
+            
             itemsTemporales.push({ cant, tipo, desc, precio });
             renderItems();
         }
@@ -197,8 +211,9 @@
             let suma = 0;
             itemsTemporales.forEach((it) => {
                 suma += it.precio;
-                container.innerHTML += `<div style="display:flex; justify-content:space-between; font-size:12px; padding:5px 0; border-bottom:1px solid #1a1a1a; color:#888;">
-                    <span>${it.cant} | ${it.tipo} - ${it.desc}</span><span>$${it.precio.toFixed(2)}</span>
+                container.innerHTML += `<div style="display:flex; justify-content:space-between; font-size:12px; padding:8px 0; border-bottom:1px solid #1a1a1a; color:#888;">
+                    <span><b>${it.cant}</b> | ${it.tipo} - ${it.desc}</span>
+                    <span style="color:var(--gold)">$${it.precio.toFixed(2)}</span>
                 </div>`;
             });
             document.getElementById('precio-total').value = suma.toFixed(2);
@@ -213,8 +228,6 @@
 
         async function guardarOrden() {
             const total = document.getElementById('precio-total').value;
-            
-            // Si es una negociación de la Nube
             if(solicitudActualId) {
                 await db.ref('solicitudes_reparacion/' + solicitudActualId).update({
                     estado: 'NEGOCIACION',
@@ -223,24 +236,19 @@
                     totalOfertado: total,
                     items: itemsTemporales
                 });
-                alert("Proforma enviada al cliente. Esperando su aceptación.");
+                alert("Proforma enviada al cliente.");
             } else {
-                // Registro normal en el mostrador
                 const snapT = await db.ref('contadores/TRB').once('value');
                 let numT = (snapT.val() || 0) + 1;
                 const trbID = 'TRB-' + numT.toString().padStart(5, '0');
-
                 await db.ref('trabajos').push({
-                    ordenID: trbID,
-                    zapateroId: session.uid,
+                    ordenID: trbID, zapateroId: session.uid,
                     cliente: document.getElementById('cli-nombre').value,
                     telefono: document.getElementById('cli-celular').value,
-                    items: itemsTemporales,
-                    precio: total,
+                    items: itemsTemporales, precio: total,
                     abono: document.getElementById('abono-inicial').value,
                     saldo: document.getElementById('saldo-pendiente').value,
-                    estado: 'Recibido',
-                    timestamp: Date.now()
+                    estado: 'Recibido', timestamp: Date.now()
                 });
                 await db.ref('contadores/TRB').set(numT);
                 alert("Orden guardada localmente.");
