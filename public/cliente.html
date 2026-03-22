@@ -3,17 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mis Reparaciones - J.A.D.I</title>
+    <title>Panel de Seguimiento - J.A.D.I</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root { --gold: #fbc02d; --dark: #000; --card: #111; }
-        body { background: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding-bottom: 20px; }
+        body { background: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding-bottom: 20px; opacity: 0; transition: opacity 0.5s; }
         .header { padding: 20px; background: #050505; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
         .user-welcome h2 { margin: 0; font-size: 1.2rem; color: var(--gold); }
         .user-welcome p { margin: 0; font-size: 0.8rem; color: #666; }
         .container { padding: 15px; }
+        .section-title { font-size: 0.9rem; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; }
         .order-card { background: var(--card); border-radius: 15px; padding: 18px; margin-bottom: 15px; border: 1px solid #222; position: relative; overflow: hidden; }
         .order-card::before { content: ""; position: absolute; left: 0; top: 0; height: 100%; width: 4px; background: var(--gold); }
         .status-badge { float: right; font-size: 10px; padding: 5px 10px; border-radius: 20px; font-weight: bold; text-transform: uppercase; }
@@ -21,7 +22,7 @@
         .status-proceso { background: #0056b3; color: white; }
         .status-listo { background: #28a745; color: white; }
         .price { font-size: 1.2rem; font-weight: bold; color: white; }
-        .btn-chat { background: transparent; color: var(--gold); border: 1px solid var(--gold); padding: 8px 15px; border-radius: 8px; font-size: 0.8rem; cursor: pointer; }
+        .btn-chat { background: transparent; color: var(--gold); border: 1px solid var(--gold); padding: 8px 15px; border-radius: 8px; font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; gap: 8px; }
         .empty-state { text-align: center; padding: 50px 20px; color: #444; }
     </style>
 </head>
@@ -29,87 +30,119 @@
 
     <div class="header">
         <div class="user-welcome">
-            <p>Bienvenido,</p>
-            <h2 id="user-name">Cargando...</h2>
+            <p>Estatus: <span id="user-role" style="color:var(--gold)">Verificando...</span></p>
+            <h2 id="user-name">Cargando perfil...</h2>
         </div>
         <button onclick="cerrarSesion()" style="background:none; border:none; color:#555; cursor:pointer;"><i class="fas fa-sign-out-alt fa-lg"></i></button>
     </div>
 
     <div class="container">
-        <h3 style="color:#888; font-size:0.9rem; text-transform:uppercase;">Mis Reparaciones</h3>
+        <h3 class="section-title" id="main-title">Mis Reparaciones</h3>
         <div id="lista-reparaciones">
-             <p style="text-align:center; color:#555;">Buscando trabajos...</p>
+            <div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Cargando base de datos...</p></div>
         </div>
     </div>
 
     <script>
-        // 1. CONFIGURACIÓN COMPLETA (Igual al Admin Panel)
+        // 1. Configuración de Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyAKPxG1osuR9hsj-PsmwJrzK-3W_XM1UyU",
             authDomain: "jadi-repaiz.firebaseapp.com",
-            databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com",
+            databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com"
         };
-        
-        // Inicializar Firebase con protección de duplicados
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // 2. RECUPERAR SESIÓN
-        const session = JSON.parse(localStorage.getItem('session_jadi'));
+        // 2. Lógica de Seguridad Reforzada
+        function inicializarModulo() {
+            const session = JSON.parse(localStorage.getItem('session_jadi'));
 
-        // 3. VALIDACIÓN MULTI-ROL (ADM y CLN)
-        if(!session || (session.rolCodigo !== 'CLN' && session.rolCodigo !== 'ADM')) {
-            console.error("Acceso denegado. Redirigiendo...");
-            window.location.href = "index.html";
-        } else {
+            // Si no hay sesión tras el tiempo de espera, regresamos
+            if (!session) {
+                console.warn("Sesión no encontrada");
+                window.location.href = "index.html";
+                return;
+            }
+
+            // Validamos que sea Cliente o Admin
+            const esValido = (session.rolCodigo === 'CLN' || session.rolCodigo === 'ADM');
+
+            if (!esValido) {
+                console.error("Rol no autorizado:", session.rolCodigo);
+                window.location.href = "index.html";
+                return;
+            }
+
+            // Si llegamos aquí, el acceso es correcto
+            document.body.style.opacity = "1";
             document.getElementById('user-name').innerText = session.nombre;
-            cargarMisReparaciones();
+            document.getElementById('user-role').innerText = (session.rolCodigo === 'ADM' ? "ADMINISTRADOR" : "CLIENTE");
+            
+            if(session.rolCodigo === 'ADM') {
+                document.getElementById('main-title').innerText = "PANEL GLOBAL DE TRABAJOS";
+            }
+
+            cargarDatos(session);
         }
 
-        function cargarMisReparaciones() {
-            // Lógica: Si eres ADM ves todo, si eres CLN solo lo tuyo
-            let refTrabajos = (session.rolCodigo === 'ADM') 
+        function cargarDatos(session) {
+            // Si es Admin ve todo, si es Cliente solo lo suyo
+            const ref = (session.rolCodigo === 'ADM') 
                 ? db.ref('trabajos') 
                 : db.ref('trabajos').orderByChild('clienteId').equalTo(session.uid);
 
-            refTrabajos.on('value', snap => {
+            ref.on('value', snap => {
                 const container = document.getElementById('lista-reparaciones');
                 container.innerHTML = "";
 
                 if(snap.exists()) {
                     snap.forEach(child => {
                         const t = child.val();
+                        const id = child.key;
                         const statusClass = t.estado ? t.estado.toLowerCase().replace(/\s/g, "") : "recibido";
 
                         container.innerHTML += `
                             <div class="order-card">
                                 <span class="status-badge status-${statusClass}">${t.estado || 'RECIBIDO'}</span>
-                                <div style="margin-bottom:10px;">
-                                    <h3 style="margin:0;">${t.calzado || 'Calzado'}</h3>
-                                    <p style="color:#aaa; font-size:0.9rem; margin:5px 0;">${t.descripcion || ''}</p>
-                                    <small style="color:#666;">Entrega: ${t.entrega || '--'}</small>
+                                <div class="order-info">
+                                    <h3>${t.calzado || 'Calzado'}</h3>
+                                    <p>${t.descripcion || 'Sin descripción'}</p>
+                                    <p style="font-size: 0.8rem; margin-top:5px;"><i class="far fa-calendar-alt"></i> Entrega: ${t.entrega || 'Pendiente'}</p>
                                 </div>
-                                <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #222; padding-top:10px;">
-                                    <div class="price">$${t.precio || '0'}</div>
-                                    <button class="btn-chat" onclick="window.open('chat.html','_blank')">CHAT</button>
+                                <div class="order-footer">
+                                    <div class="price">S/ ${t.precio || '0'}</div>
+                                    <button class="btn-chat" onclick="abrirChat('${id}', '${t.zapateroId}')">
+                                        <i class="fas fa-comment-dots"></i> ${session.rolCodigo === 'ADM' ? 'VER CHAT' : 'CONSULTAR'}
+                                    </button>
                                 </div>
                             </div>
                         `;
                     });
                 } else {
-                    container.innerHTML = '<div class="empty-state"><p>No hay trabajos registrados.</p></div>';
+                    container.innerHTML = `<div class="empty-state"><i class="fas fa-shoe-prints"></i><p>No hay trabajos registrados.</p></div>`;
                 }
-            }, error => {
-                console.error("Error de Firebase:", error);
             });
+        }
+
+        async function abrirChat(trabajoId, zapateroId) {
+            if(!zapateroId) return alert("Aún no se asigna un zapatero.");
+            const snapZ = await db.ref('usuarios/' + zapateroId).once('value');
+            const zapateroNombre = snapZ.exists() ? snapZ.val().nombre : "Zapatero";
+
+            const datosChat = { id: trabajoId, nombre: zapateroNombre, rol: 'Zapatero' };
+            localStorage.setItem('chat_activo', JSON.stringify(datosChat));
+            window.location.href = 'chat.html';
         }
 
         function cerrarSesion() {
             localStorage.removeItem('session_jadi');
             window.location.href = "index.html";
         }
+
+        // --- EL TRUCO FINAL ---
+        // Esperamos 400ms antes de validar para que el navegador asiente los datos
+        setTimeout(inicializarModulo, 400);
+
     </script>
 </body>
 </html>
