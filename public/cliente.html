@@ -3,151 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Directorio de Clientes - J.A.D.I</title>
+    <title>Panel de Cliente - J.A.D.I</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --gold: #fbc02d; --dark: #000; --card: #111; --text: #eee; }
-        body { background: var(--dark); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; }
+        :root { --gold: #fbc02d; --dark: #000; --card: #111; }
+        body { background: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; text-align: center; }
         
-        header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--gold); padding-bottom: 15px; margin-bottom: 25px; }
-        .back-link { color: var(--gold); text-decoration: none; font-size: 0.9rem; }
+        header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--gold); padding-bottom: 15px; margin-bottom: 40px; text-align: left; }
+        .user-meta h2 { margin: 0; color: var(--gold); font-size: 1.2rem; }
+        .user-meta p { margin: 0; font-size: 0.8rem; color: #666; }
 
-        /* Buscador */
-        .search-box { background: var(--card); border: 1px solid #333; padding: 10px 15px; border-radius: 10px; display: flex; align-items: center; margin-bottom: 20px; }
-        .search-box input { background: none; border: none; color: white; width: 100%; margin-left: 10px; outline: none; }
+        /* Contenedor de Botones Tipo Admin */
+        .client-grid { display: grid; grid-template-columns: 1fr; gap: 20px; max-width: 400px; margin: 0 auto; }
+        
+        .menu-card { 
+            background: var(--card); 
+            border: 1px solid #222; 
+            border-radius: 20px; 
+            padding: 35px 20px; 
+            cursor: pointer; 
+            transition: 0.3s; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            gap: 15px; 
+        }
+        .menu-card:hover { border-color: var(--gold); transform: translateY(-5px); background: #151515; }
+        .menu-card i { font-size: 3rem; }
+        .menu-card h3 { margin: 0; font-size: 1.2rem; letter-spacing: 1px; color: var(--gold); }
+        .menu-card p { margin: 0; font-size: 0.85rem; color: #777; }
 
-        /* Tabla Estilo J.A.D.I */
-        .table-container { background: var(--card); border-radius: 15px; padding: 20px; border: 1px solid #222; overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; min-width: 850px; }
-        th { text-align: left; color: var(--gold); padding: 12px; border-bottom: 2px solid #222; font-size: 0.75rem; text-transform: uppercase; }
-        td { padding: 15px 12px; border-bottom: 1px solid #222; font-size: 0.85rem; color: #ccc; }
-        
-        .client-info b { color: #fff; display: block; }
-        .client-info small { color: #666; font-family: monospace; }
-        
-        .badge-count { background: #222; color: var(--gold); padding: 3px 8px; border-radius: 5px; font-weight: bold; border: 1px solid #333; }
-        
-        .btn-wa { background: #25d366; color: white; padding: 6px 10px; border-radius: 5px; text-decoration: none; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 5px; }
-        .btn-action { background: transparent; border: 1px solid #444; color: #888; padding: 6px; border-radius: 5px; cursor: pointer; transition: 0.3s; }
-        .btn-action:hover { border-color: var(--gold); color: var(--gold); }
-
-        .loader { text-align: center; padding: 40px; color: #444; }
+        .btn-logout { margin-top: 50px; background: none; border: 1px solid #333; color: #555; padding: 10px 20px; border-radius: 8px; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <header>
-    <div>
-        <a href="admin_panel.html" class="back-link"><i class="fas fa-chevron-left"></i> Volver al Panel</a>
-        <h2 style="margin: 5px 0 0; color: var(--gold);">Directorio de Clientes</h2>
+    <div class="user-meta">
+        <p>Bienvenido a J.A.D.I</p>
+        <h2 id="client-name">Cargando...</h2>
     </div>
-    <div id="total-clients" class="badge-count">Total: 0</div>
+    <i class="fas fa-user-circle fa-2x" style="color: #333;"></i>
 </header>
 
-<div class="search-box">
-    <i class="fas fa-search" style="color:#555"></i>
-    <input type="text" id="filterInput" placeholder="Buscar cliente por nombre, cédula o teléfono..." onkeyup="filtrarTabla()">
+<div class="client-grid">
+    <div class="menu-card" onclick="window.location.href='tiendas.html'">
+        <i class="fas fa-store" style="color: #e91e63;"></i>
+        <h3>TIENDAS</h3>
+        <p>Ver locales y comprar productos</p>
+    </div>
+
+    <div class="menu-card" onclick="window.location.href='reparar.html'">
+        <i class="fas fa-tools" style="color: #2196f3;"></i>
+        <h3>REPARACIONES</h3>
+        <p>Solicitar nueva o ver seguimiento</p>
+    </div>
 </div>
 
-<div class="table-container">
-    <table>
-        <thead>
-            <tr>
-                <th>Cliente / ID</th>
-                <th>Contacto</th>
-                <th>Correo</th>
-                <th>Reparaciones</th>
-                <th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody id="client-table-body">
-            <tr><td colspan="5" class="loader"><i class="fas fa-spinner fa-spin"></i> Cargando base de datos...</td></tr>
-        </tbody>
-    </table>
-</div>
+<button class="btn-logout" onclick="cerrarSesion()">Cerrar Sesión</button>
 
 <script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyAKPxG1osuR9hsj-PsmwJrzK-3W_XM1UyU",
-        authDomain: "jadi-repaiz.firebaseapp.com",
-        databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com",
-    };
-    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+    const session = JSON.parse(localStorage.getItem('session_jadi'));
 
     function init() {
-        // Obtenemos todos los usuarios pero filtramos los que son CLN (Clientes)
-        db.ref('usuarios').orderByChild('rolCodigo').equalTo('CLN').on('value', snap => {
-            const tbody = document.getElementById('client-table-body');
-            tbody.innerHTML = "";
-            let count = 0;
-
-            if(!snap.exists()) {
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:30px;">No hay clientes registrados.</td></tr>';
-                return;
-            }
-
-            snap.forEach(child => {
-                const c = child.val();
-                count++;
-                
-                // Formateamos el link de WhatsApp
-                const waLink = c.telefono ? `https://wa.me/${c.telefono.replace(/\s+/g, '')}` : "#";
-
-                tbody.innerHTML += `
-                    <tr>
-                        <td class="client-info">
-                            <b>${c.nombre || 'Sin Nombre'}</b>
-                            <small>${child.key}</small>
-                        </td>
-                        <td>
-                            ${c.telefono || '---'}<br>
-                            <a href="${waLink}" target="_blank" class="btn-wa">
-                                <i class="fab fa-whatsapp"></i> Chat
-                            </a>
-                        </td>
-                        <td>${c.email || c.usuario || '---'}</td>
-                        <td>
-                            <span class="badge-count">Activo</span>
-                        </td>
-                        <td>
-                            <div style="display:flex; gap:10px;">
-                                <button class="btn-action" title="Ver Historial" onclick="verHistorial('${child.key}')">
-                                    <i class="fas fa-history"></i>
-                                </button>
-                                <button class="btn-action" title="Editar Perfil" onclick="editarCliente('${child.key}')">
-                                    <i class="fas fa-user-edit"></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                `;
-            });
-
-            document.getElementById('total-clients').innerText = "Total: " + count;
-        });
+        if(!session) { window.location.href = "index.html"; return; }
+        document.getElementById('client-name').innerText = session.nombre;
     }
 
-    function filtrarTabla() {
-        let input = document.getElementById('filterInput').value.toLowerCase();
-        let rows = document.getElementById('client-table-body').getElementsByTagName('tr');
-        
-        for (let i = 0; i < rows.length; i++) {
-            let text = rows[i].innerText.toLowerCase();
-            rows[i].style.display = text.includes(input) ? "" : "none";
-        }
-    }
-
-    function verHistorial(uid) {
-        // Guardamos el ID para usarlo en el módulo de trabajos
-        localStorage.setItem('filtro_cliente_id', uid);
-        window.location.href = 'trabajos.html';
-    }
-
-    function editarCliente(uid) {
-        alert("Función para editar perfil del cliente: " + uid);
+    function cerrarSesion() {
+        localStorage.removeItem('session_jadi');
+        window.location.href = "index.html";
     }
 
     init();
