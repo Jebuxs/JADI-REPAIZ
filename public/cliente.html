@@ -3,136 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mis Reparaciones - J.A.D.I</title>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>PRUEBA J.A.D.I</title>
     <style>
-        :root { --gold: #fbc02d; --dark: #000; --card: #111; }
-        body { background: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding-bottom: 20px; }
-        
-        .header { padding: 20px; background: #050505; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; sticky; top: 0; z-index: 100; }
-        .user-welcome h2 { margin: 0; font-size: 1.2rem; color: var(--gold); }
-        .user-welcome p { margin: 0; font-size: 0.8rem; color: #666; }
-
-        .container { padding: 15px; }
-        .section-title { font-size: 0.9rem; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; }
-
-        .order-card { background: var(--card); border-radius: 15px; padding: 18px; margin-bottom: 15px; border: 1px solid #222; position: relative; overflow: hidden; }
-        .order-card::before { content: ""; position: absolute; left: 0; top: 0; height: 100%; width: 4px; background: var(--gold); }
-        
-        .status-badge { float: right; font-size: 10px; padding: 5px 10px; border-radius: 20px; font-weight: bold; text-transform: uppercase; }
-        .status-recibido { background: #333; color: #ccc; }
-        .status-proceso { background: #0056b3; color: white; }
-        .status-listo { background: #28a745; color: white; }
-
-        .order-info h3 { margin: 0 0 5px 0; font-size: 1.1rem; }
-        .order-info p { margin: 0; color: #aaa; font-size: 0.9rem; line-height: 1.4; }
-        
-        .order-footer { margin-top: 15px; padding-top: 15px; border-top: 1px solid #222; display: flex; justify-content: space-between; align-items: center; }
-        .price { font-size: 1.2rem; font-weight: bold; color: white; }
-        .btn-chat { background: transparent; color: var(--gold); border: 1px solid var(--gold); padding: 8px 15px; border-radius: 8px; font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; gap: 8px; }
-
-        .empty-state { text-align: center; padding: 50px 20px; color: #444; }
-        .empty-state i { font-size: 3rem; margin-bottom: 10px; }
+        body { 
+            background: #000; 
+            color: #fbc02d; 
+            font-family: sans-serif; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            margin: 0; 
+            text-align: center;
+        }
+        .box { border: 2px solid #fbc02d; padding: 40px; border-radius: 20px; }
+        button { background: #fbc02d; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-top: 20px; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <div class="user-welcome">
-            <p>Bienvenido,</p>
-            <h2 id="user-name">Cargando...</h2>
-        </div>
-        <button onclick="cerrarSesion()" style="background:none; border:none; color:#555;"><i class="fas fa-sign-out-alt"></i></button>
-    </div>
-
-    <div class="container">
-        <h3 class="section-title">Mis Reparaciones</h3>
-        <div id="lista-reparaciones">
-            </div>
+    <div class="box">
+        <h1 id="mensaje">Verificando sesión...</h1>
+        <p id="detalle"></p>
+        <button onclick="window.location.href='admin_panel.html'">VOLVER AL PANEL</button>
     </div>
 
     <script>
-        const firebaseConfig = { databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com" };
-        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-
+        // 1. Recuperamos lo que hay en la memoria del navegador
         const session = JSON.parse(localStorage.getItem('session_jadi'));
 
-        // --- AJUSTE DE SEGURIDAD (PASE MAESTRO) ---
-        if(!session || (session.rolCodigo !== 'CLN' && session.rolCodigo !== 'ADM')) {
-            window.location.href = "index.html";
+        const texto = document.getElementById('mensaje');
+        const detalle = document.getElementById('detalle');
+
+        // 2. Verificamos qué encontró
+        if (!session) {
+            texto.innerText = "❌ NO HAY SESIÓN";
+            detalle.innerText = "El navegador no encontró tus datos. Ve al index e inicia sesión.";
+            detalle.style.color = "red";
+        } else {
+            // 3. Si hay sesión, mostramos los datos reales
+            texto.innerText = "¡BIENVENIDO, " + session.nombre + "!";
+            detalle.innerHTML = `
+                Tu ID es: <b>${session.uid}</b><br>
+                Tu Rol es: <b>${session.rolCodigo}</b>
+            `;
+            detalle.style.color = "#aaa";
+            console.log("Datos completos:", session);
         }
-
-        document.getElementById('user-name').innerText = session.nombre;
-
-        function cargarMisReparaciones() {
-            // --- AJUSTE DE CONSULTA (EL ADMIN VE TODO) ---
-            let consulta;
-            if(session.rolCodigo === 'ADM') {
-                consulta = db.ref('trabajos');
-            } else {
-                consulta = db.ref('trabajos').orderByChild('clienteId').equalTo(session.uid);
-            }
-
-            consulta.on('value', snap => {
-                const container = document.getElementById('lista-reparaciones');
-                container.innerHTML = "";
-
-                if(snap.exists()) {
-                    snap.forEach(child => {
-                        const t = child.val();
-                        const id = child.key;
-                        const statusClass = t.estado.toLowerCase().replace(/\s/g, "");
-
-                        container.innerHTML += `
-                            <div class="order-card">
-                                <span class="status-badge status-${statusClass}">${t.estado}</span>
-                                <div class="order-info">
-                                    <h3>${t.calzado}</h3>
-                                    <p>${t.descripcion}</p>
-                                    <p style="font-size: 0.8rem; margin-top:5px;"><i class="far fa-calendar-alt"></i> Entrega: ${t.entrega}</p>
-                                </div>
-                                <div class="order-footer">
-                                    <div class="price">$${t.precio}</div>
-                                    <button class="btn-chat" onclick="abrirChat('${id}', '${t.zapateroId}')">
-                                        <i class="fas fa-comment-dots"></i> CHAT ZAPATERO
-                                    </button>
-                                </div>
-                            </div>
-                        `;
-                    });
-                } else {
-                    container.innerHTML = `
-                        <div class="empty-state">
-                            <i class="fas fa-shoe-prints"></i>
-                            <p>Aún no tienes reparaciones registradas.</p>
-                        </div>
-                    `;
-                }
-            });
-        }
-
-        async function abrirChat(trabajoId, zapateroId) {
-            const snapZ = await db.ref('usuarios/' + zapateroId).once('value');
-            const zapateroNombre = snapZ.exists() ? snapZ.val().nombre : "Zapatero";
-
-            const datosChat = { 
-                id: trabajoId, 
-                nombre: zapateroNombre,
-                rol: 'Zapatero'
-            };
-            localStorage.setItem('chat_activo', JSON.stringify(datosChat));
-            window.location.href = 'chat.html';
-        }
-
-        function cerrarSesion() {
-            localStorage.removeItem('session_jadi');
-            window.location.href = "index.html";
-        }
-
-        window.onload = cargarMisReparaciones;
     </script>
 </body>
 </html>
