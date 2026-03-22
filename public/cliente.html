@@ -3,146 +3,142 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Seguimiento - J.A.D.I</title>
+    <title>Mi Panel J.A.D.I - Cliente</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --gold: #fbc02d; --dark: #000; --card: #111; }
-        body { background: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding-bottom: 20px; opacity: 0; transition: opacity 0.5s; }
-        .header { padding: 20px; background: #050505; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
-        .user-welcome h2 { margin: 0; font-size: 1.2rem; color: var(--gold); }
-        .user-welcome p { margin: 0; font-size: 0.8rem; color: #666; }
-        .container { padding: 15px; }
-        .section-title { font-size: 0.9rem; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; }
-        .order-card { background: var(--card); border-radius: 15px; padding: 18px; margin-bottom: 15px; border: 1px solid #222; position: relative; overflow: hidden; }
-        .order-card::before { content: ""; position: absolute; left: 0; top: 0; height: 100%; width: 4px; background: var(--gold); }
-        .status-badge { float: right; font-size: 10px; padding: 5px 10px; border-radius: 20px; font-weight: bold; text-transform: uppercase; }
-        .status-recibido { background: #333; color: #ccc; }
-        .status-proceso { background: #0056b3; color: white; }
-        .status-listo { background: #28a745; color: white; }
-        .price { font-size: 1.2rem; font-weight: bold; color: white; }
-        .btn-chat { background: transparent; color: var(--gold); border: 1px solid var(--gold); padding: 8px 15px; border-radius: 8px; font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; gap: 8px; }
-        .empty-state { text-align: center; padding: 50px 20px; color: #444; }
+        :root { --gold: #fbc02d; --dark: #000; --card: #111; --text: #eee; }
+        body { background: var(--dark); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; padding: 15px; padding-bottom: 30px; opacity: 0; transition: opacity 0.5s; }
+        
+        header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; padding-bottom: 15px; margin-bottom: 20px; }
+        .user-info h2 { margin: 0; font-size: 1.1rem; color: var(--gold); }
+        .user-info p { margin: 0; font-size: 0.75rem; color: #666; }
+
+        /* Pilares de Acceso para Cliente */
+        .client-pillars { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 25px; }
+        .p-card { background: var(--card); padding: 15px; border-radius: 12px; border: 1px solid #222; text-align: center; cursor: pointer; }
+        .p-card i { font-size: 1.5rem; margin-bottom: 8px; display: block; }
+        .p-card h3 { margin: 0; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* Sección de Gestión Dinámica */
+        .section-title { font-size: 0.85rem; color: var(--gold); text-transform: uppercase; margin-bottom: 15px; border-left: 3px solid var(--gold); padding-left: 10px; }
+        
+        .order-card { background: var(--card); border-radius: 15px; padding: 15px; margin-bottom: 12px; border: 1px solid #222; }
+        .card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+        .status { font-size: 0.65rem; padding: 4px 8px; border-radius: 4px; font-weight: bold; text-transform: uppercase; }
+        
+        /* Colores de estado */
+        .st-proceso { background: #0d47a1; color: white; }
+        .st-listo { background: #1b5e20; color: white; }
+        .st-pendiente { background: #333; color: #aaa; }
+
+        .price-row { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; padding-top: 10px; border-top: 1px solid #222; }
+        .btn-action { background: transparent; border: 1px solid var(--gold); color: var(--gold); padding: 6px 12px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; }
+
+        .empty { text-align: center; padding: 40px; color: #444; }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <div class="user-welcome">
-            <p>Estatus: <span id="user-role" style="color:var(--gold)">Verificando...</span></p>
-            <h2 id="user-name">Cargando perfil...</h2>
-        </div>
-        <button onclick="cerrarSesion()" style="background:none; border:none; color:#555; cursor:pointer;"><i class="fas fa-sign-out-alt fa-lg"></i></button>
+<header>
+    <div class="user-info">
+        <p>Bienvenido,</p>
+        <h2 id="user-name">Cargando...</h2>
     </div>
+    <button onclick="cerrarSesion()" style="background:none; border:none; color:#555;"><i class="fas fa-sign-out-alt fa-lg"></i></button>
+</header>
 
-    <div class="container">
-        <h3 class="section-title" id="main-title">Mis Reparaciones</h3>
-        <div id="lista-reparaciones">
-            <div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Cargando base de datos...</p></div>
-        </div>
+<div class="client-pillars">
+    <div class="p-card" onclick="window.location.href='tienda.html'">
+        <i class="fas fa-shopping-bag" style="color:#e91e63;"></i>
+        <h3>Ir a Tienda</h3>
     </div>
+    <div class="p-card" onclick="window.location.href='perfil.html'">
+        <i class="fas fa-user-circle" style="color:#2196f3;"></i>
+        <h3>Mi Perfil</h3>
+    </div>
+</div>
 
-    <script>
-        // 1. Configuración de Firebase
-        const firebaseConfig = {
-            apiKey: "AIzaSyAKPxG1osuR9hsj-PsmwJrzK-3W_XM1UyU",
-            authDomain: "jadi-repaiz.firebaseapp.com",
-            databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com"
-        };
-        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
+<div class="user-section">
+    <h3 class="section-title" id="gestion-titulo">Mis Reparaciones</h3>
+    <div id="lista-actividades">
+        <div class="empty">Buscando registros...</div>
+    </div>
+</div>
 
-        // 2. Lógica de Seguridad Reforzada
-        function inicializarModulo() {
-            const session = JSON.parse(localStorage.getItem('session_jadi'));
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyAKPxG1osuR9hsj-PsmwJrzK-3W_XM1UyU",
+        authDomain: "jadi-repaiz.firebaseapp.com",
+        databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com",
+    };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
-            // Si no hay sesión tras el tiempo de espera, regresamos
-            if (!session) {
-                console.warn("Sesión no encontrada");
-                window.location.href = "index.html";
-                return;
-            }
+    const session = JSON.parse(localStorage.getItem('session_jadi'));
 
-            // Validamos que sea Cliente o Admin
-            const esValido = (session.rolCodigo === 'CLN' || session.rolCodigo === 'ADM');
-
-            if (!esValido) {
-                console.error("Rol no autorizado:", session.rolCodigo);
-                window.location.href = "index.html";
-                return;
-            }
-
-            // Si llegamos aquí, el acceso es correcto
-            document.body.style.opacity = "1";
-            document.getElementById('user-name').innerText = session.nombre;
-            document.getElementById('user-role').innerText = (session.rolCodigo === 'ADM' ? "ADMINISTRADOR" : "CLIENTE");
-            
-            if(session.rolCodigo === 'ADM') {
-                document.getElementById('main-title').innerText = "PANEL GLOBAL DE TRABAJOS";
-            }
-
-            cargarDatos(session);
-        }
-
-        function cargarDatos(session) {
-            // Si es Admin ve todo, si es Cliente solo lo suyo
-            const ref = (session.rolCodigo === 'ADM') 
-                ? db.ref('trabajos') 
-                : db.ref('trabajos').orderByChild('clienteId').equalTo(session.uid);
-
-            ref.on('value', snap => {
-                const container = document.getElementById('lista-reparaciones');
-                container.innerHTML = "";
-
-                if(snap.exists()) {
-                    snap.forEach(child => {
-                        const t = child.val();
-                        const id = child.key;
-                        const statusClass = t.estado ? t.estado.toLowerCase().replace(/\s/g, "") : "recibido";
-
-                        container.innerHTML += `
-                            <div class="order-card">
-                                <span class="status-badge status-${statusClass}">${t.estado || 'RECIBIDO'}</span>
-                                <div class="order-info">
-                                    <h3>${t.calzado || 'Calzado'}</h3>
-                                    <p>${t.descripcion || 'Sin descripción'}</p>
-                                    <p style="font-size: 0.8rem; margin-top:5px;"><i class="far fa-calendar-alt"></i> Entrega: ${t.entrega || 'Pendiente'}</p>
-                                </div>
-                                <div class="order-footer">
-                                    <div class="price">S/ ${t.precio || '0'}</div>
-                                    <button class="btn-chat" onclick="abrirChat('${id}', '${t.zapateroId}')">
-                                        <i class="fas fa-comment-dots"></i> ${session.rolCodigo === 'ADM' ? 'VER CHAT' : 'CONSULTAR'}
-                                    </button>
-                                </div>
-                            </div>
-                        `;
-                    });
-                } else {
-                    container.innerHTML = `<div class="empty-state"><i class="fas fa-shoe-prints"></i><p>No hay trabajos registrados.</p></div>`;
-                }
-            });
-        }
-
-        async function abrirChat(trabajoId, zapateroId) {
-            if(!zapateroId) return alert("Aún no se asigna un zapatero.");
-            const snapZ = await db.ref('usuarios/' + zapateroId).once('value');
-            const zapateroNombre = snapZ.exists() ? snapZ.val().nombre : "Zapatero";
-
-            const datosChat = { id: trabajoId, nombre: zapateroNombre, rol: 'Zapatero' };
-            localStorage.setItem('chat_activo', JSON.stringify(datosChat));
-            window.location.href = 'chat.html';
-        }
-
-        function cerrarSesion() {
-            localStorage.removeItem('session_jadi');
+    function inicializar() {
+        if(!session || (session.rolCodigo !== 'CLN' && session.rolCodigo !== 'ADM')) {
             window.location.href = "index.html";
+            return;
         }
 
-        // --- EL TRUCO FINAL ---
-        // Esperamos 400ms antes de validar para que el navegador asiente los datos
-        setTimeout(inicializarModulo, 400);
+        document.body.style.opacity = "1";
+        document.getElementById('user-name').innerText = session.nombre;
+        
+        cargarActividad();
+    }
 
-    </script>
+    function cargarActividad() {
+        // Consultamos trabajos (reparaciones)
+        // Si el cliente realiza una compra, podríamos consultar también una tabla 'compras'
+        db.ref('trabajos').orderByChild('clienteId').equalTo(session.uid).on('value', snap => {
+            const container = document.getElementById('lista-actividades');
+            container.innerHTML = "";
+
+            if(snap.exists()) {
+                document.getElementById('gestion-titulo').innerText = "Gestión de Reparaciones";
+                snap.forEach(child => {
+                    const data = child.val();
+                    const statusClass = data.estado ? data.estado.toLowerCase().replace(/\s/g, "") : "pendiente";
+                    
+                    container.innerHTML += `
+                        <div class="order-card">
+                            <div class="card-top">
+                                <div>
+                                    <h4 style="margin:0; font-size:1rem;">${data.calzado}</h4>
+                                    <small style="color:#666;">ID: ${child.key.slice(-6)}</small>
+                                </div>
+                                <span class="status st-${statusClass}">${data.estado || 'Recibido'}</span>
+                            </div>
+                            <p style="font-size:0.85rem; color:#aaa; margin:5px 0;">${data.descripcion}</p>
+                            <div class="price-row">
+                                <b style="color:white;">S/ ${data.precio}</b>
+                                <button class="btn-action" onclick="abrirChat('${child.key}')">
+                                    <i class="fas fa-comments"></i> Chat Zapatero
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                container.innerHTML = `<div class="empty"><i class="fas fa-history fa-2x"></i><p>No tienes reparaciones o compras activas.</p></div>`;
+            }
+        });
+    }
+
+    function abrirChat(id) {
+        localStorage.setItem('chat_trabajo_id', id);
+        window.location.href = 'chat.html';
+    }
+
+    function cerrarSesion() {
+        localStorage.removeItem('session_jadi');
+        window.location.href = "index.html";
+    }
+
+    setTimeout(inicializar, 400);
+</script>
 </body>
 </html>
