@@ -21,17 +21,18 @@
         .pillar-card h3 { margin: 5px 0; font-size: 0.8rem; color: var(--gold); }
         .pillar-card span { font-size: 1.5rem; font-weight: bold; }
 
-        /* MÓDULOS DE APOYO */
+        /* MÓDULOS DE APOYO (BOTONES PLANOS) */
         .support-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 40px; }
-        .support-btn { background: #111; border: 1px solid #333; color: #aaa; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-size: 0.85rem; transition: 0.2s; }
+        .support-btn { background: #111; border: 1px solid #333; color: #aaa; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-size: 0.85rem; transition: 0.2s; display: flex; align-items: center; gap: 8px; }
         .support-btn:hover { background: var(--gold); color: #000; border-color: var(--gold); }
+        .support-btn i { font-size: 0.9rem; }
 
         /* TABLA DE GESTIÓN DE USUARIOS */
         .user-section { background: var(--card); border-radius: 15px; padding: 20px; border: 1px solid #222; }
-        .user-section h2 { color: var(--gold); font-size: 1.1rem; margin-top: 0; display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+        .user-section h2 { color: var(--gold); font-size: 1.1rem; margin-top: 0; display: flex; align-items: center; gap: 10px; }
         
         .table-wrapper { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; min-width: 900px; }
+        table { width: 100%; border-collapse: collapse; min-width: 800px; }
         th { text-align: left; color: var(--gold); padding: 12px; border-bottom: 2px solid #222; font-size: 0.75rem; text-transform: uppercase; }
         td { padding: 12px; border-bottom: 1px solid #222; font-size: 0.85rem; color: #ccc; }
         
@@ -39,10 +40,6 @@
         .bg-adm { background: #d32f2f; color: white; }
         .bg-zpt { background: #1976d2; color: white; }
         .bg-cln { background: #388e3c; color: white; }
-        
-        .verify-tag { font-size: 0.7rem; margin-left: 5px; }
-        .text-success { color: #4caf50; }
-        .text-danger { color: #f44336; }
 
         /* Barra Flotante */
         .quick-nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(15,15,15,0.95); padding: 12px 25px; border-radius: 50px; border: 1px solid var(--gold); display: flex; gap: 20px; backdrop-filter: blur(10px); z-index: 1000; }
@@ -80,16 +77,19 @@
     </div>
 </div>
 
-<p style="color:#555; font-size:0.75rem; font-weight:bold; text-transform:uppercase;">Módulos de Apoyo</p>
+<p style="color:#555; font-size:0.75rem; font-weight:bold; text-transform:uppercase;">Módulos de Apoyo y Visualización</p>
 <div class="support-grid">
-    <a href="chat.html" target="_blank" class="support-btn">Chat Interno</a>
-    <a href="clientes.html" target="_blank" class="support-btn">Directorio Clientes</a>
-    <a href="index.html" target="_blank" class="support-btn">Login / Index</a>
-    <a href="inventario.html" target="_blank" class="support-btn">Inventario</a>
-    <a href="local.html" target="_blank" class="support-btn">Ubicación Local</a>
-    <a href="mensajeris.html" target="_blank" class="support-btn">Mensajería</a>
-    <a href="perfil.html" target="_blank" class="support-btn">Mi Perfil</a>
-    <a href="trabajos.html" target="_blank" class="support-btn">Lista Trabajos</a>
+    <a href="tiendas.html" target="_blank" class="support-btn"><i class="fas fa-store-alt"></i> Directorio Tiendas</a>
+    <a href="catalogo.html" target="_blank" class="support-btn"><i class="fas fa-book-open"></i> Catálogo Global</a>
+    
+    <a href="chat.html" target="_blank" class="support-btn"><i class="fas fa-comments"></i> Chat Interno</a>
+    <a href="clientes.html" target="_blank" class="support-btn"><i class="fas fa-address-book"></i> Directorio Clientes</a>
+    <a href="index.html" target="_blank" class="support-btn"><i class="fas fa-door-open"></i> Login / Index</a>
+    <a href="inventario.html" target="_blank" class="support-btn"><i class="fas fa-boxes"></i> Inventario</a>
+    <a href="local.html" target="_blank" class="support-btn"><i class="fas fa-map-marker-alt"></i> Ubicación Local</a>
+    <a href="mensajeris.html" target="_blank" class="support-btn"><i class="fas fa-paper-plane"></i> Mensajería</a>
+    <a href="perfil.html" target="_blank" class="support-btn"><i class="fas fa-user"></i> Mi Perfil</a>
+    <a href="trabajos.html" target="_blank" class="support-btn"><i class="fas fa-tasks"></i> Lista Trabajos</a>
 </div>
 
 <div class="user-section">
@@ -98,17 +98,15 @@
         <table>
             <thead>
                 <tr>
-                    <th>Nombre y Empresa</th>
+                    <th>Nombre Completo</th>
                     <th>Teléfono</th>
-                    <th>UID / Cédula</th>
+                    <th>ID / Cédula</th>
                     <th>Rol</th>
-                    <th>Correo Electrónico</th>
-                    <th>Estado</th>
+                    <th>Email / Usuario</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
-            <tbody id="user-list">
-                </tbody>
+            <tbody id="user-list"></tbody>
         </table>
     </div>
 </div>
@@ -127,7 +125,7 @@
         authDomain: "jadi-repaiz.firebaseapp.com",
         databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com",
     };
-    firebase.initializeApp(firebaseConfig);
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
     const session = JSON.parse(localStorage.getItem('session_jadi'));
@@ -150,25 +148,16 @@
                 if(u.rolCodigo === 'DLV') d++;
                 if(u.rolCodigo === 'PRV') p++;
 
-                // Lógica de visualización para la tabla
                 const roleClass = u.rolCodigo === 'ADM' ? 'bg-adm' : (u.rolCodigo === 'ZPT' ? 'bg-zpt' : 'bg-cln');
-                const verificadoIcon = u.verificado ? '<i class="fas fa-check-circle text-success verify-tag"></i>' : '<i class="fas fa-times-circle text-danger verify-tag"></i>';
-                
                 tbody.innerHTML += `
                     <tr>
-                        <td>
-                            <b>${u.nombre || 'Sin Nombre'}</b><br>
-                            <small style="color:#666">${u.empresaNombre || 'Personal'}</small>
-                        </td>
+                        <td><b>${u.nombre || '---'}</b></td>
                         <td>${u.telefono || '---'}</td>
-                        <td><code style="color:var(--gold)">${u.uid || child.key}</code></td>
+                        <td><small>${u.uid || child.key}</small></td>
                         <td><span class="role-badge ${roleClass}">${u.rolCodigo || 'CLN'}</span></td>
-                        <td>${u.email || u.usuario || '---'}</td>
-                        <td>${verificadoIcon} ${u.verificado ? 'Verificado' : 'Pendiente'}</td>
+                        <td>${u.correo || u.usuario || '---'}</td>
                         <td>
-                            <button onclick="editarRol('${child.key}')" style="background:#222; color:var(--gold); border:1px solid #444; padding:5px 10px; border-radius:5px; cursor:pointer;">
-                                <i class="fas fa-edit"></i>
-                            </button>
+                            <button onclick="editarRol('${child.key}')" style="background:#222; color:var(--gold); border:1px solid #444; padding:5px 10px; border-radius:5px; cursor:pointer;"><i class="fas fa-edit"></i></button>
                         </td>
                     </tr>
                 `;
@@ -183,10 +172,10 @@
     }
 
     async function editarRol(uid) {
-        const nuevoRol = prompt("Cambiar rol (ADM, ZPT, CLN, DLV, PRV):");
+        const nuevoRol = prompt("Cambiar rol (ADM, ZPT, CLN, SHP, DLV, PRV):");
         if(nuevoRol) {
             await db.ref('usuarios/' + uid).update({ rolCodigo: nuevoRol.toUpperCase() });
-            alert("Rol actualizado correctamente");
+            alert("Rol actualizado");
         }
     }
 
