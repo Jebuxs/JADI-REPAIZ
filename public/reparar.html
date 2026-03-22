@@ -15,7 +15,12 @@
         .back-btn { color: var(--gold); text-decoration: none; font-size: 1.2rem; }
 
         .repa-box { background: var(--card); border-radius: 15px; padding: 20px; border: 1px dotted #444; margin-bottom: 20px; position: relative; }
-        .item-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+        
+        /* NUEVA GRID PARA COINCIDIR CON TRABAJOS */
+        .item-row-main { display: flex; gap: 10px; margin-bottom: 10px; }
+        .col-cant { flex: 0.5; }
+        .col-tipo { flex: 1.5; }
+        
         input, select, textarea { background: #1a1a1a; border: 1px solid #333; color: white; padding: 12px; border-radius: 8px; width: 100%; box-sizing: border-box; outline: none; font-size: 0.9rem; }
         input:focus, select:focus, textarea:focus { border-color: var(--gold); }
 
@@ -35,7 +40,6 @@
         .tab { flex: 1; padding: 12px; text-align: center; border-radius: 8px; background: #111; color: #666; cursor: pointer; font-size: 0.8rem; font-weight: bold; }
         .tab.active { background: var(--gold); color: black; }
 
-        /* Estilos de Negociación */
         .negoc-box { background: #1a1500; border: 1px solid var(--gold); padding: 12px; border-radius: 10px; margin-top: 10px; text-align: center; }
         .btn-negoc { border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; flex: 1; font-size: 0.8rem; }
         
@@ -56,20 +60,28 @@
 
 <div id="sec-nueva" class="content-sec">
     <div class="repa-box">
-        <h3 style="color: var(--gold); margin-top:0; font-size: 1rem; margin-bottom: 15px;"><i class="fas fa-file-invoice"></i> Detalle del Pedido</h3>
-        <div class="item-row">
-            <select id="tipo">
-                <option value="Zapatillas">Zapatillas</option>
-                <option value="Zapatos">Zapatos</option>
-                <option value="Mochila">Mochila</option>
-                <option value="Chompa">Chompa</option>
-                <option value="Otro">Otro</option>
-            </select>
-            <input type="text" id="color" placeholder="Color">
+        <h3 style="color: var(--gold); margin-top:0; font-size: 0.9rem; margin-bottom: 15px;"><i class="fas fa-plus-circle"></i> Agregar Ítem de Reparación</h3>
+        
+        <div class="item-row-main">
+            <div class="col-cant">
+                <input type="number" id="cant" value="1" placeholder="Cant">
+            </div>
+            <div class="col-tipo">
+                <select id="tipo">
+                    <option value="Zapatillas">Zapatillas</option>
+                    <option value="Zapatos">Zapatos</option>
+                    <option value="Mochila">Mochila</option>
+                    <option value="Chompa">Chompa</option>
+                    <option value="Otro">Otro</option>
+                </select>
+            </div>
         </div>
-        <textarea id="trabajo" placeholder="¿Qué trabajo necesita? (Ej: Cambio de suela, costura...)" rows="3"></textarea>
+        
+        <textarea id="detalle" placeholder="Detalle: (Ej: Color negro, cambio de suela, costura lateral...)" rows="3"></textarea>
+        
         <div class="btn-add-circle" onclick="agregarAlCarrito()"><i class="fas fa-plus"></i></div>
     </div>
+
     <div class="invoice-list" id="lista-previa"></div>
     <button id="btn-finalizar" class="btn-send hidden" onclick="enviarSolicitud()">LANZAR PEDIDO A RED JADI</button>
 </div>
@@ -99,45 +111,50 @@
         }
     }
 
+    // --- AQUÍ ESTÁ LA MAGIA: COINCIDE CON TRABAJOS.HTML ---
     function agregarAlCarrito() {
+        const cant = document.getElementById('cant').value;
         const tipo = document.getElementById('tipo').value;
-        const color = document.getElementById('color').value;
-        const desc = document.getElementById('trabajo').value;
-        if(!color || !desc) return alert("Completa los datos");
+        const desc = document.getElementById('detalle').value;
 
-        // Estructura sincronizada para 'trabajos.html'
+        if(!desc) return alert("Por favor escribe el detalle del trabajo");
+
+        // Estructura idéntica a la que el zapatero usa en el mostrador
         const item = { 
-            cant: 1, 
+            cant: cant, 
             tipo: tipo, 
-            desc: `${color} | ${desc}`, 
-            precio: 0 
+            desc: desc, 
+            precio: 0 // El zapatero lo llenará en su proforma
         };
+        
         carritoReparaciones.push(item);
 
         document.getElementById('lista-previa').innerHTML += `
             <div class="invoice-item">
-                <span><b>${tipo}</b> - ${item.desc}</span>
+                <span><b>${cant}</b> | ${tipo} - <small>${desc}</small></span>
                 <i class="fas fa-check-circle" style="color:var(--gold)"></i>
             </div>`;
         
-        document.getElementById('color').value = "";
-        document.getElementById('trabajo').value = "";
+        // Limpiamos campos
+        document.getElementById('cant').value = "1";
+        document.getElementById('detalle').value = "";
         document.getElementById('btn-finalizar').classList.remove('hidden');
     }
 
     function enviarSolicitud() {
         if(carritoReparaciones.length === 0) return;
         const solicitudId = db.ref('solicitudes_reparacion').push().key;
+        
         db.ref('solicitudes_reparacion/' + solicitudId).set({
             clienteId: session.uid,
             clienteNombre: session.nombre,
-            clienteTelefono: session.telefono || "Sin número",
-            items: carritoReparaciones,
+            clienteTelefono: session.telefono || "09xxxxxxx",
+            items: carritoReparaciones, // Aquí va el array con cant, tipo y desc
             estado: 'PENDIENTE',
             fecha: new Date().toISOString(),
             totalOfertado: 0
         }).then(() => {
-            alert("¡Pedido en la nube!");
+            alert("¡Pedido enviado! Los zapateros cercanos recibirán tu solicitud.");
             carritoReparaciones = [];
             document.getElementById('lista-previa').innerHTML = "";
             switchTab('seguimiento');
@@ -148,7 +165,7 @@
         db.ref('solicitudes_reparacion').orderByChild('clienteId').equalTo(session.uid).on('value', snap => {
             const container = document.getElementById('lista-seguimiento');
             container.innerHTML = "";
-            if(!snap.exists()) container.innerHTML = "<p style='text-align:center; color:#444;'>No hay pedidos.</p>";
+            if(!snap.exists()) container.innerHTML = "<p style='text-align:center; color:#444;'>No tienes solicitudes activas.</p>";
 
             snap.forEach(child => {
                 const s = child.val();
@@ -156,12 +173,12 @@
                 let negocHtml = "";
 
                 if(s.estado === 'PENDIENTE') {
-                    negocHtml = `<p style="font-size:11px; color:#555;">Esperando zapateros...</p>`;
+                    negocHtml = `<p style="font-size:11px; color:#555; text-align:center;">Esperando proformas...</p>`;
                 } else if(s.estado === 'NEGOCIACION') {
                     negocHtml = `
                         <div class="negoc-box">
                             <span style="font-size:11px; color:var(--gold)">PROPUESTA DE: ${s.zapateroNombre}</span>
-                            <h2 style="margin:5px 0;">$${s.totalOfertado}</h2>
+                            <h2 style="margin:5px 0;">$${parseFloat(s.totalOfertado).toFixed(2)}</h2>
                             <div style="display:flex; gap:8px;">
                                 <button class="btn-negoc" style="background:var(--success);" onclick="responder('${id}','ACEPTADO')">ACEPTAR</button>
                                 <button class="btn-negoc" style="background:var(--danger); color:white;" onclick="responder('${id}','REBAJA_SOLICITADA')">REBAJA</button>
@@ -176,9 +193,9 @@
                     <div class="repa-box" style="border-style:solid; border-left:5px solid var(--gold);">
                         <div style="display:flex; justify-content:space-between; align-items:center;">
                             <b>${s.items[0].tipo}</b>
-                            <span style="font-size:10px; background:#222; padding:3px 7px; border-radius:5px;">${s.estado}</span>
+                            <span style="font-size:10px; background:#222; padding:3px 7px; border-radius:5px; text-transform:uppercase;">${s.estado}</span>
                         </div>
-                        <p style="font-size:12px; color:#888;">${s.items[0].desc}</p>
+                        <p style="font-size:12px; color:#888;">${s.items[0].cant} unidad(es) - ${s.items[0].desc}</p>
                         ${negocHtml}
                     </div>`;
             });
@@ -187,9 +204,13 @@
 
     async function responder(id, estado) {
         let update = { estado: estado };
-        if(estado === 'PENDIENTE') { update.zapateroId = null; update.totalOfertado = 0; }
+        if(estado === 'PENDIENTE') { 
+            update.zapateroId = null; 
+            update.totalOfertado = 0; 
+            update.zapateroNombre = null;
+        }
         await db.ref('solicitudes_reparacion/' + id).update(update);
-        alert("Respuesta enviada.");
+        alert("Respuesta enviada correctamente.");
     }
 
     if(!session) window.location.href = "index.html";
