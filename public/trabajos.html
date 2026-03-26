@@ -44,6 +44,10 @@
         input, select, textarea { width: 100%; padding: 12px; margin-bottom: 12px; background: #111; border: 1px solid #333; color: white; border-radius: 8px; box-sizing: border-box; outline: none; }
         label { font-size: 11px; color: var(--gold); margin-bottom: 5px; display: block; }
         .fab { position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; background: var(--gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: black; font-size: 24px; border: none; cursor: pointer; box-shadow: 0 4px 15px rgba(255,215,0,0.4); z-index: 200; }
+        
+        /* Estilos para la tabla visual de items acumulados */
+        .item-row { display: flex; justify-content: space-between; align-items: center; font-size: 12px; padding: 8px 0; border-bottom: 1px solid #1a1a1a; color: #ccc; }
+        .item-row b { color: var(--gold); }
     </style>
 </head>
 <body>
@@ -124,7 +128,6 @@
                     if(s.estado === 'PENDIENTE' || (s.estado === 'REBAJA_SOLICITADA' && s.zapateroId === session.uid)) {
                         count++;
                         const esRebaja = s.estado === 'REBAJA_SOLICITADA';
-                        // Al hacer clic en el texto (cloud-card), se carga al formulario
                         container.innerHTML += `
                             <div class="cloud-card ${esRebaja ? 'rebaja-alert' : ''}" onclick="aceptarSolicitudNube('${child.key}')">
                                 ${esRebaja ? '<b>¡SOLICITAN REBAJA!</b>' : ''}
@@ -156,14 +159,6 @@
                 document.getElementById('cli-nombre').value = s.clienteNombre;
                 document.getElementById('cli-celular').value = s.clienteTelefono || "";
                 
-                // Cargamos el primer ítem directamente en los inputs de edición
-                if(s.items && s.items.length > 0) {
-                    document.getElementById('item-cant').value = s.items[0].cant;
-                    document.getElementById('item-tipo').value = s.items[0].tipo;
-                    document.getElementById('item-desc').value = s.items[0].desc;
-                    document.getElementById('item-precio').value = s.items[0].precio || "";
-                }
-
                 itemsTemporales = [];
                 s.items.forEach(it => {
                     itemsTemporales.push({ cant: it.cant || 1, tipo: it.tipo, desc: it.desc, precio: it.precio || 0 });
@@ -189,19 +184,35 @@
             document.getElementById('cli-celular').value = "";
             document.getElementById('item-desc').value = "";
             document.getElementById('item-precio').value = "";
+            itemsTemporales = [];
+            renderItems();
         }
 
+        // --- FUNCIÓN MEJORADA PARA JADI REPAIZ: ACUMULACIÓN DE DETALLES ---
         function agregarItemALista() {
             const cant = document.getElementById('item-cant').value;
-            const tipo = document.getElementById('item-tipo').value;
-            const desc = document.getElementById('item-desc').value;
+            const tipo = document.getElementById('item-tipo').value.trim();
+            const desc = document.getElementById('item-desc').value.trim();
             const precio = parseFloat(document.getElementById('item-precio').value) || 0;
+
             if(!tipo || !desc) return alert("Completa los datos");
             
-            // Si venía de la nube, reemplazamos el primer ítem si el zapatero lo editó
-            if(solicitudActualId) itemsTemporales = []; 
+            // Buscamos si ya existe ese tipo de calzado en nuestra lista actual para acumular
+            let itemExistente = itemsTemporales.find(it => it.tipo.toLowerCase() === tipo.toLowerCase());
+
+            if(itemExistente) {
+                // Si existe, le sumamos el detalle y el precio
+                itemExistente.desc += `, ${desc}`;
+                itemExistente.precio += precio;
+            } else {
+                // Si no existe, lo agregamos como un ítem nuevo
+                itemsTemporales.push({ cant, tipo, desc, precio });
+            }
+
+            // Limpiamos los campos de Detalle y Precio para seguir anotando en el mismo zapato
+            document.getElementById('item-desc').value = "";
+            document.getElementById('item-precio').value = "";
             
-            itemsTemporales.push({ cant, tipo, desc, precio });
             renderItems();
         }
 
@@ -209,15 +220,24 @@
             const container = document.getElementById('tabla-items-visual');
             container.innerHTML = "";
             let suma = 0;
-            itemsTemporales.forEach((it) => {
+            itemsTemporales.forEach((it, index) => {
                 suma += it.precio;
-                container.innerHTML += `<div style="display:flex; justify-content:space-between; font-size:12px; padding:8px 0; border-bottom:1px solid #1a1a1a; color:#888;">
-                    <span><b>${it.cant}</b> | ${it.tipo} - ${it.desc}</span>
-                    <span style="color:var(--gold)">$${it.precio.toFixed(2)}</span>
-                </div>`;
+                container.innerHTML += `
+                    <div class="item-row">
+                        <span><b>${it.cant}</b> | ${it.tipo} - ${it.desc}</span>
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <span style="color:var(--gold); font-weight:bold;">$${it.precio.toFixed(2)}</span>
+                            <i class="fas fa-trash-alt" onclick="eliminarItemTemporales(${index})" style="color:#ff4444; cursor:pointer;"></i>
+                        </div>
+                    </div>`;
             });
             document.getElementById('precio-total').value = suma.toFixed(2);
             calcularSaldo();
+        }
+
+        function eliminarItemTemporales(index) {
+            itemsTemporales.splice(index, 1);
+            renderItems();
         }
 
         function calcularSaldo() {
@@ -228,6 +248,8 @@
 
         async function guardarOrden() {
             const total = document.getElementById('precio-total').value;
+            if(itemsTemporales.length === 0) return alert("Agrega al menos un ítem a la lista");
+
             if(solicitudActualId) {
                 await db.ref('solicitudes_reparacion/' + solicitudActualId).update({
                     estado: 'NEGOCIACION',
