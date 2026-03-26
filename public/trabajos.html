@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión JADI REPAIZ</title>
+    <title>Gestión de Trabajos - JADI REPAIZ</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -11,10 +11,9 @@
         :root { --gold: #FFD700; --dark: #000; --card: #111; }
         body { background: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding-bottom: 80px; }
         
-        .header { padding: 15px; border-bottom: 1px solid #222; display: flex; align-items: center; background: #050505; justify-content: space-between; }
+        .header { padding: 15px; border-bottom: 1px solid #222; display: flex; align-items: center; background: #050505; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
         .btn-back { color: var(--gold); text-decoration: none; }
 
-        /* BUSCADOR */
         .search-container { padding: 15px; }
         .search-bar { background: #1a1a1a; border: 1px solid #333; padding: 10px; border-radius: 10px; display: flex; align-items: center; }
         .search-bar input { background: transparent; border: none; color: white; margin-left: 10px; width: 100%; outline: none; }
@@ -24,28 +23,27 @@
 
         /* MODAL */
         #modal-orden { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark); z-index: 300; padding: 20px; box-sizing: border-box; overflow-y: auto; }
-        input { width: 100%; padding: 12px; margin-bottom: 12px; background: #111; border: 1px solid #333; color: white; border-radius: 8px; box-sizing: border-box; outline: none; }
+        input { width: 100%; padding: 12px; margin-bottom: 12px; background: #111; border: 1px solid #333; color: white; border-radius: 8px; box-sizing: border-box; outline: none; font-size: 16px; }
         label { font-size: 11px; color: var(--gold); margin-bottom: 5px; display: block; }
         
-        /* DISEÑO DE FORMULARIO DE ITEMS */
-        .item-form-box { background: #080808; border-radius: 12px; padding: 12px; border: 1px dashed #444; margin-bottom: 15px; }
         .row-flex { display: flex; gap: 8px; margin-bottom: 10px; align-items: center; }
-        
         .btn-mini-plus { background: #222; color: var(--gold); border: 1px solid var(--gold); border-radius: 8px; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
         
-        /* ESTILO DE LISTA PARA EL CLIENTE */
-        .preview-item { border-bottom: 1px solid #222; padding: 10px 0; }
-        .preview-main { display: flex; justify-content: space-between; font-weight: bold; color: var(--gold); }
-        .preview-sub { padding-left: 25px; font-size: 12px; color: #aaa; font-style: italic; }
+        /* BOTÓN INVITAR */
+        #btn-invitar { display: none; background: #0066ff; color: white; border: none; padding: 10px; border-radius: 8px; width: 100%; font-weight: bold; margin-bottom: 15px; }
 
-        .fab { position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; background: var(--gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: black; font-size: 24px; border: none; box-shadow: 0 4px 15px rgba(255,215,0,0.4); z-index: 200; }
+        .fab { position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; background: var(--gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: black; font-size: 24px; border: none; z-index: 200; }
+        
+        .item-listado { border-bottom: 1px solid #222; padding: 10px 0; font-size: 14px; }
+        .item-listado b { color: var(--gold); }
+        .item-listado div { font-size: 12px; color: #888; padding-left: 15px; white-space: pre-wrap; }
     </style>
 </head>
 <body>
 
     <div class="header">
         <a href="zapatero.html" class="btn-back"><i class="fas fa-arrow-left"></i></a>
-        <h2 style="margin:0; font-size: 1.1rem;">JADI REPAIZ</h2>
+        <h2 style="margin:0; font-size: 1.1rem;">Panel JADI REPAIZ</h2>
         <i class="fas fa-sync-alt" onclick="location.reload()" style="color: var(--gold);"></i>
     </div>
 
@@ -62,43 +60,49 @@
 
     <div id="modal-orden">
         <h2 style="color: var(--gold); margin-top: 0;">Nueva Orden</h2>
-        <input type="text" id="cli-nombre" placeholder="Nombre del cliente">
         
-        <div class="item-form-box">
-            <label>DATOS DEL ARTÍCULO</label>
+        <label>CELULAR CLIENTE</label>
+        <input type="tel" id="cli-celular" placeholder="Ej: 0987654321" onkeyup="verificarCliente(this.value)">
+        
+        <button id="btn-invitar" onclick="invitarCliente()">USUARIO NO REGISTRADO - ¿INVITAR?</button>
+
+        <label>NOMBRE CLIENTE</label>
+        <input type="text" id="cli-nombre" placeholder="Nombre completo">
+        
+        <div style="background: #080808; border-radius: 10px; padding: 12px; border: 1px dashed #444;">
             <div class="row-flex">
-                <input type="number" id="item-cant" value="1" style="flex:0.5; margin-bottom:0;">
-                <input type="text" id="item-tipo" placeholder="Ej: Mochila" style="flex:2; margin-bottom:0;">
+                <input type="number" id="item-cant" value="1" style="flex:0.4;">
+                <input type="text" id="item-tipo" placeholder="Zapato, Mochila..." style="flex:2;">
             </div>
 
-            <label>TRABAJOS A REALIZAR (Usa + para añadir varios)</label>
+            <label>DETALLES (Usa + para añadir líneas)</label>
             <div class="row-flex">
-                <input type="text" id="item-desc-input" placeholder="Ej: Cambio cierre" style="flex:1; margin-bottom:0;">
-                <div class="btn-mini-plus" onclick="añadirSubTrabajo()"><i class="fas fa-plus"></i></div>
+                <input type="text" id="item-desc-input" placeholder="Ej: Cambio de suela" style="flex:1;">
+                <div class="btn-mini-plus" onclick="acumularEnTexto()"><i class="fas fa-plus"></i></div>
             </div>
             
-            <div id="sub-trabajos-lista" style="font-size: 11px; color: #777; margin-bottom: 10px; padding-left: 5px;"></div>
+            <textarea id="item-detalles-final" style="width:100%; background:#111; color:#aaa; border:1px solid #222; border-radius:8px; padding:10px; font-size:12px; margin-bottom:10px; min-height:60px;" placeholder="Los detalles aparecerán aquí..."></textarea>
 
             <div class="row-flex">
-                <input type="number" id="item-precio" placeholder="Precio $" style="flex:1; margin-bottom:0;">
-                <button onclick="bajarItemAListaGeneral()" style="background:var(--gold); border:none; border-radius:8px; height:45px; width:60px; color:black;">
+                <input type="number" id="item-precio" placeholder="Precio $">
+                <button onclick="bajarItem()" style="background:var(--gold); border:none; border-radius:8px; height:45px; width:60px; color:black;">
                     <i class="fas fa-arrow-down"></i>
                 </button>
             </div>
         </div>
 
-        <div id="tabla-items-visual"></div>
+        <div id="visor-items" style="margin-top:15px;"></div>
 
         <div style="background: #0a0a0a; padding: 15px; border-radius: 12px; margin-top:15px; border: 1px solid #222;">
             <label>TOTAL $</label>
             <input type="number" id="precio-total" value="0">
             <label>ABONO $</label>
-            <input type="number" id="abono-inicial" value="0">
+            <input type="number" id="abono-inicial" value="0" onfocus="if(this.value=='0')this.value='';" onblur="if(this.value=='')this.value='0';">
         </div>
 
         <div style="display: flex; gap: 10px; margin-top: 20px;">
             <button onclick="cerrarModal()" style="flex:1; background:transparent; color:white; border:1px solid #444; padding:15px; border-radius:10px;">CANCELAR</button>
-            <button onclick="guardarOrden()" style="flex:1; background:var(--gold); color:black; border:none; padding:15px; border-radius:10px; font-weight:bold;">GUARDAR</button>
+            <button onclick="guardarOrdenFinal()" style="flex:1; background:var(--gold); color:black; border:none; padding:15px; border-radius:10px; font-weight:bold;">GUARDAR ORDEN</button>
         </div>
     </div>
 
@@ -108,82 +112,88 @@
         const db = firebase.database();
         const session = JSON.parse(localStorage.getItem('session_jadi')) || { uid: "ZAP-TEMP" };
 
-        let itemsTemporales = [];
-        let subTrabajosActuales = []; // Aquí guardamos la lista de "Costura", "Suela", etc.
+        let itemsParaGuardar = [];
 
         function abrirModal() { 
             document.getElementById('modal-orden').style.display = 'block'; 
-            itemsTemporales = []; 
-            subTrabajosActuales = [];
-            renderItems(); 
+            itemsParaGuardar = []; 
+            document.getElementById('visor-items').innerHTML = "";
+            document.getElementById('cli-celular').value = "";
+            document.getElementById('cli-nombre').value = "";
+            document.getElementById('btn-invitar').style.display = "none";
         }
 
         function cerrarModal() { document.getElementById('modal-orden').style.display = 'none'; }
 
-        // Función del botón (+) junto al detalle
-        function añadirSubTrabajo() {
+        // 1 y 2. Verificar si el usuario existe y mostrar botón invitar
+        function verificarCliente(tel) {
+            if(tel.length < 9) return;
+            db.ref('usuarios').orderByChild('telefono').equalTo(tel).once('value', snap => {
+                const btnInvitar = document.getElementById('btn-invitar');
+                if(snap.exists()){
+                    const u = Object.values(snap.val())[0];
+                    document.getElementById('cli-nombre').value = u.nombre;
+                    btnInvitar.style.display = "none";
+                } else {
+                    btnInvitar.style.display = "block";
+                }
+            });
+        }
+
+        function invitarCliente() {
+            const tel = document.getElementById('cli-celular').value;
+            const nom = document.getElementById('cli-nombre').value;
+            if(!nom) return alert("Escribe el nombre para registrarlo");
+            db.ref('usuarios').push({ nombre: nom, telefono: tel, tipo: 'CLIENTE' });
+            alert("Cliente registrado en la base de datos.");
+            document.getElementById('btn-invitar').style.display = "none";
+        }
+
+        // 6. Acumular detalles en el TextBox directamente (sin arrays raros)
+        function acumularEnTexto() {
             const input = document.getElementById('item-desc-input');
-            const valor = input.value.trim();
-            if(!valor) return;
+            const visor = document.getElementById('item-detalles-final');
+            if(!input.value.trim()) return;
             
-            subTrabajosActuales.push(valor);
-            document.getElementById('sub-trabajos-lista').innerHTML = "Incluye: " + subTrabajosActuales.join(", ");
+            // Añadimos el detalle con un salto de línea
+            visor.value += (visor.value ? "\n" : "") + "- " + input.value.trim();
             input.value = "";
             input.focus();
         }
 
-        // Función del botón (Flecha abajo) para bajar el zapato a la orden
-        function bajarItemAListaGeneral() {
+        function bajarItem() {
             const cant = document.getElementById('item-cant').value;
             const tipo = document.getElementById('item-tipo').value;
+            const detalles = document.getElementById('item-detalles-final').value;
             const precio = parseFloat(document.getElementById('item-precio').value) || 0;
-            
-            // Si el usuario escribió algo en el input pero no le dio al (+), lo agregamos igual
-            const extra = document.getElementById('item-desc-input').value.trim();
-            if(extra) subTrabajosActuales.push(extra);
 
-            if(!tipo || subTrabajosActuales.length === 0) return alert("Falta el tipo o los detalles");
+            if(!tipo) return alert("Escribe qué artículo es");
 
-            itemsTemporales.push({
-                cant: cant,
-                tipo: tipo,
-                detalles: subTrabajosActuales, // Guardamos la lista completa
-                precio: precio
-            });
+            itemsParaGuardar.push({ cant, tipo, detalles, precio });
 
-            // Limpiamos para el siguiente artículo
-            subTrabajosActuales = [];
+            // Mostrar en el visor del modal
+            document.getElementById('visor-items').innerHTML += `
+                <div class="item-listado">
+                    <b>${cant} ${tipo}</b> - $${precio}
+                    <div>${detalles}</div>
+                </div>`;
+
+            // Limpiar campos del item
             document.getElementById('item-tipo').value = "";
-            document.getElementById('item-desc-input').value = "";
+            document.getElementById('item-detalles-final').value = "";
             document.getElementById('item-precio').value = "";
-            document.getElementById('sub-trabajos-lista').innerHTML = "";
-            renderItems();
+            actualizarTotal();
         }
 
-        function renderItems() {
-            const container = document.getElementById('tabla-items-visual');
-            container.innerHTML = "";
-            let suma = 0;
-
-            itemsTemporales.forEach((it) => {
-                suma += it.precio;
-                let htmlDetalles = it.detalles.map(d => `<div class="preview-sub">${d}</div>`).join("");
-                
-                container.innerHTML += `
-                    <div class="preview-item">
-                        <div class="preview-main">
-                            <span>${it.cant}, ${it.tipo}</span>
-                            <span>$${it.precio}</span>
-                        </div>
-                        ${htmlDetalles}
-                    </div>`;
-            });
-
-            document.getElementById('precio-total').value = suma;
+        function actualizarTotal() {
+            let total = 0;
+            itemsParaGuardar.forEach(i => total += i.precio);
+            document.getElementById('precio-total').value = total;
         }
 
-        async function guardarOrden() {
-            if(itemsTemporales.length === 0) return alert("Agrega artículos");
+        async function guardarOrdenFinal() {
+            if(itemsParaGuardar.length === 0) return alert("Agrega al menos un artículo");
+            
             const snapT = await db.ref('contadores/TRB').once('value');
             let numT = (snapT.val() || 0) + 1;
             const trbID = 'TRB-' + numT.toString().padStart(5, '0');
@@ -192,14 +202,16 @@
                 ordenID: trbID,
                 zapateroId: session.uid,
                 cliente: document.getElementById('cli-nombre').value,
-                items: itemsTemporales, // Se guarda la estructura con sub-ítems
-                precio: document.getElementById('precio-total').value,
+                telefono: document.getElementById('cli-celular').value,
+                items: itemsParaGuardar, // Se guarda plano y limpio
+                precioTotal: document.getElementById('precio-total').value,
                 abono: document.getElementById('abono-inicial').value,
-                timestamp: Date.now()
+                timestamp: Date.now(),
+                estado: 'Recibido'
             });
 
             await db.ref('contadores/TRB').set(numT);
-            alert("Orden Guardada");
+            alert("Orden guardada con éxito.");
             cerrarModal();
         }
 
@@ -212,8 +224,8 @@
                     container.innerHTML += `
                         <div class="order-card">
                             <h3 style="color:var(--gold); margin:0;">${o.cliente}</h3>
-                            <small>ID: ${o.ordenID}</small>
-                            <div style="text-align:right; font-weight:bold;">Total: $${o.precio}</div>
+                            <div style="font-size:12px; margin-bottom:5px;">ID: ${o.ordenID} | Tel: ${o.telefono}</div>
+                            <div style="text-align:right; font-weight:bold;">Total: $${o.precioTotal}</div>
                         </div>`;
                 });
             });
