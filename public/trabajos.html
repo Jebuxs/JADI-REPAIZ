@@ -23,20 +23,26 @@
 
         /* MODAL */
         #modal-orden { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark); z-index: 300; padding: 20px; box-sizing: border-box; overflow-y: auto; }
-        input { width: 100%; padding: 12px; margin-bottom: 12px; background: #111; border: 1px solid #333; color: white; border-radius: 8px; box-sizing: border-box; outline: none; font-size: 16px; }
+        input, textarea { width: 100%; padding: 12px; margin-bottom: 12px; background: #111; border: 1px solid #333; color: white; border-radius: 8px; box-sizing: border-box; outline: none; font-size: 16px; }
         label { font-size: 11px; color: var(--gold); margin-bottom: 5px; display: block; }
         
         .row-flex { display: flex; gap: 8px; margin-bottom: 10px; align-items: center; }
         .btn-mini-plus { background: #222; color: var(--gold); border: 1px solid var(--gold); border-radius: 8px; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
         
-        /* BOTÓN INVITAR */
         #btn-invitar { display: none; background: #0066ff; color: white; border: none; padding: 10px; border-radius: 8px; width: 100%; font-weight: bold; margin-bottom: 15px; }
 
         .fab { position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; background: var(--gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: black; font-size: 24px; border: none; z-index: 200; }
         
-        .item-listado { border-bottom: 1px solid #222; padding: 10px 0; font-size: 14px; }
+        /* ESTILOS DE LA LISTA EDITABLE */
+        .item-listado { border-bottom: 1px solid #222; padding: 10px; font-size: 14px; display: flex; justify-content: space-between; align-items: flex-start; transition: 0.3s; }
+        .item-listado:active { background: #1a1a1a; }
+        .item-info { flex: 1; cursor: pointer; }
         .item-listado b { color: var(--gold); }
-        .item-listado div { font-size: 12px; color: #888; padding-left: 15px; white-space: pre-wrap; }
+        .item-listado .detalles-texto { font-size: 12px; color: #888; padding-left: 5px; white-space: pre-wrap; margin-top: 4px; }
+        .btn-eliminar-item { color: #ff4444; background: transparent; border: none; font-size: 18px; padding: 5px 10px; cursor: pointer; }
+
+        /* Indicador visual de edición */
+        .editando-ahora { border: 1px solid var(--gold) !important; box-shadow: 0 0 10px rgba(255,215,0,0.2); }
     </style>
 </head>
 <body>
@@ -69,7 +75,7 @@
         <label>NOMBRE CLIENTE</label>
         <input type="text" id="cli-nombre" placeholder="Nombre completo">
         
-        <div style="background: #080808; border-radius: 10px; padding: 12px; border: 1px dashed #444;">
+        <div id="form-item-caja" style="background: #080808; border-radius: 10px; padding: 12px; border: 1px dashed #444;">
             <div class="row-flex">
                 <input type="number" id="item-cant" value="1" style="flex:0.4;">
                 <input type="text" id="item-tipo" placeholder="Zapato, Mochila..." style="flex:2;">
@@ -77,21 +83,21 @@
 
             <label>DETALLES (Usa + para añadir líneas)</label>
             <div class="row-flex">
-                <input type="text" id="item-desc-input" placeholder="Ej: Cambio de suela" style="flex:1;">
+                <input type="text" id="item-desc-input" placeholder="Ej: Cambio de suela" style="flex:1; margin-bottom:0;">
                 <div class="btn-mini-plus" onclick="acumularEnTexto()"><i class="fas fa-plus"></i></div>
             </div>
             
-            <textarea id="item-detalles-final" style="width:100%; background:#111; color:#aaa; border:1px solid #222; border-radius:8px; padding:10px; font-size:12px; margin-bottom:10px; min-height:60px;" placeholder="Los detalles aparecerán aquí..."></textarea>
+            <textarea id="item-detalles-final" style="min-height:60px;" placeholder="Los detalles aparecerán aquí..."></textarea>
 
             <div class="row-flex">
-                <input type="number" id="item-precio" placeholder="Precio $">
-                <button onclick="bajarItem()" style="background:var(--gold); border:none; border-radius:8px; height:45px; width:60px; color:black;">
-                    <i class="fas fa-arrow-down"></i>
+                <input type="number" id="item-precio" placeholder="Precio $" style="margin-bottom:0;">
+                <button id="btn-bajar-item" onclick="bajarItem()" style="background:var(--gold); border:none; border-radius:8px; height:45px; width:60px; color:black;">
+                    <i class="fas fa-arrow-down" id="icono-bajar"></i>
                 </button>
             </div>
         </div>
 
-        <div id="visor-items" style="margin-top:15px;"></div>
+        <div id="visor-items" style="margin-top:15px; background: #050505; border-radius: 10px;"></div>
 
         <div style="background: #0a0a0a; padding: 15px; border-radius: 12px; margin-top:15px; border: 1px solid #222;">
             <label>TOTAL $</label>
@@ -113,19 +119,23 @@
         const session = JSON.parse(localStorage.getItem('session_jadi')) || { uid: "ZAP-TEMP" };
 
         let itemsParaGuardar = [];
+        let indiceEditando = -1;
 
         function abrirModal() { 
             document.getElementById('modal-orden').style.display = 'block'; 
             itemsParaGuardar = []; 
-            document.getElementById('visor-items').innerHTML = "";
+            indiceEditando = -1;
+            renderizarLista();
             document.getElementById('cli-celular').value = "";
             document.getElementById('cli-nombre').value = "";
             document.getElementById('btn-invitar').style.display = "none";
+            document.getElementById('precio-total').value = 0;
+            document.getElementById('abono-inicial').value = 0;
+            limpiarCamposItem();
         }
 
         function cerrarModal() { document.getElementById('modal-orden').style.display = 'none'; }
 
-        // 1 y 2. Verificar si el usuario existe y mostrar botón invitar
         function verificarCliente(tel) {
             if(tel.length < 9) return;
             db.ref('usuarios').orderByChild('telefono').equalTo(tel).once('value', snap => {
@@ -149,13 +159,10 @@
             document.getElementById('btn-invitar').style.display = "none";
         }
 
-        // 6. Acumular detalles en el TextBox directamente (sin arrays raros)
         function acumularEnTexto() {
             const input = document.getElementById('item-desc-input');
             const visor = document.getElementById('item-detalles-final');
             if(!input.value.trim()) return;
-            
-            // Añadimos el detalle con un salto de línea
             visor.value += (visor.value ? "\n" : "") + "- " + input.value.trim();
             input.value = "";
             input.focus();
@@ -169,20 +176,71 @@
 
             if(!tipo) return alert("Escribe qué artículo es");
 
-            itemsParaGuardar.push({ cant, tipo, detalles, precio });
+            if(indiceEditando > -1) {
+                // Estamos editando uno existente
+                itemsParaGuardar[indiceEditando] = { cant, tipo, detalles, precio };
+                indiceEditando = -1;
+                document.getElementById('form-item-caja').classList.remove('editando-ahora');
+                document.getElementById('icono-bajar').className = "fas fa-arrow-down";
+            } else {
+                // Es uno nuevo
+                itemsParaGuardar.push({ cant, tipo, detalles, precio });
+            }
 
-            // Mostrar en el visor del modal
-            document.getElementById('visor-items').innerHTML += `
-                <div class="item-listado">
-                    <b>${cant} ${tipo}</b> - $${precio}
-                    <div>${detalles}</div>
-                </div>`;
+            renderizarLista();
+            limpiarCamposItem();
+        }
 
-            // Limpiar campos del item
+        function renderizarLista() {
+            const visor = document.getElementById('visor-items');
+            visor.innerHTML = "";
+            itemsParaGuardar.forEach((it, index) => {
+                visor.innerHTML += `
+                    <div class="item-listado">
+                        <div class="item-info" onclick="cargarParaEditar(${index})">
+                            <b>${it.cant} ${it.tipo}</b> - $${it.precio}
+                            <div class="detalles-texto">${it.detalles}</div>
+                        </div>
+                        <button class="btn-eliminar-item" onclick="eliminarItem(${index})">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>`;
+            });
+            actualizarTotal();
+        }
+
+        function cargarParaEditar(index) {
+            const it = itemsParaGuardar[index];
+            document.getElementById('item-cant').value = it.cant;
+            document.getElementById('item-tipo').value = it.tipo;
+            document.getElementById('item-detalles-final').value = it.detalles;
+            document.getElementById('item-precio').value = it.precio;
+            
+            indiceEditando = index;
+            document.getElementById('form-item-caja').classList.add('editando-ahora');
+            document.getElementById('icono-bajar').className = "fas fa-sync-alt"; // Icono de actualizar
+            document.getElementById('item-tipo').focus();
+        }
+
+        function eliminarItem(index) {
+            if(confirm("¿Quitar este artículo de la lista?")) {
+                itemsParaGuardar.splice(index, 1);
+                if(indiceEditando === index) {
+                    indiceEditando = -1;
+                    document.getElementById('form-item-caja').classList.remove('editando-ahora');
+                    limpiarCamposItem();
+                }
+                renderizarLista();
+            }
+        }
+
+        function limpiarCamposItem() {
+            document.getElementById('item-cant').value = "1";
             document.getElementById('item-tipo').value = "";
+            document.getElementById('item-desc-input').value = "";
             document.getElementById('item-detalles-final').value = "";
             document.getElementById('item-precio').value = "";
-            actualizarTotal();
+            document.getElementById('icono-bajar').className = "fas fa-arrow-down";
         }
 
         function actualizarTotal() {
@@ -193,7 +251,6 @@
 
         async function guardarOrdenFinal() {
             if(itemsParaGuardar.length === 0) return alert("Agrega al menos un artículo");
-            
             const snapT = await db.ref('contadores/TRB').once('value');
             let numT = (snapT.val() || 0) + 1;
             const trbID = 'TRB-' + numT.toString().padStart(5, '0');
@@ -203,7 +260,7 @@
                 zapateroId: session.uid,
                 cliente: document.getElementById('cli-nombre').value,
                 telefono: document.getElementById('cli-celular').value,
-                items: itemsParaGuardar, // Se guarda plano y limpio
+                items: itemsParaGuardar,
                 precioTotal: document.getElementById('precio-total').value,
                 abono: document.getElementById('abono-inicial').value,
                 timestamp: Date.now(),
@@ -213,6 +270,14 @@
             await db.ref('contadores/TRB').set(numT);
             alert("Orden guardada con éxito.");
             cerrarModal();
+        }
+
+        function filtrarTrabajos() {
+            const bus = document.getElementById('inputBusqueda').value.toLowerCase();
+            document.querySelectorAll('.order-card').forEach(c => {
+                const t = c.innerText.toLowerCase();
+                c.style.display = t.includes(bus) ? "block" : "none";
+            });
         }
 
         function cargarTrabajos() {
