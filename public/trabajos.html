@@ -3,64 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Trabajos - JADI REPAIZ</title>
+    <title>Gestión JADI REPAIZ</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --gold: #FFD700; --dark: #000; --card: #111; --blue: #0066ff; }
+        :root { --gold: #FFD700; --dark: #000; --card: #111; }
         body { background: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding-bottom: 80px; }
         
-        .header { padding: 15px; border-bottom: 1px solid #222; display: flex; align-items: center; background: #050505; position: sticky; top: 0; z-index: 100; justify-content: space-between; }
-        .btn-back { color: var(--gold); text-decoration: none; font-size: 1.2rem; }
+        .header { padding: 15px; border-bottom: 1px solid #222; display: flex; align-items: center; background: #050505; justify-content: space-between; }
+        .btn-back { color: var(--gold); text-decoration: none; }
+
+        /* BUSCADOR */
         .search-container { padding: 15px; }
         .search-bar { background: #1a1a1a; border: 1px solid #333; padding: 10px; border-radius: 10px; display: flex; align-items: center; }
         .search-bar input { background: transparent; border: none; color: white; margin-left: 10px; width: 100%; outline: none; }
 
-        .cloud-section { padding: 0 15px; margin-bottom: 20px; }
-        .cloud-title { color: var(--gold); font-size: 0.7rem; font-weight: bold; letter-spacing: 1px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
-        .cloud-card { background: #1a1500; border: 1px solid #443300; border-radius: 12px; padding: 15px; margin-bottom: 10px; border-left: 4px solid var(--gold); cursor: pointer; }
-        
         .orders-container { padding: 0 15px; }
         .order-card { background: var(--card); border-radius: 15px; padding: 15px; margin-bottom: 15px; border: 1px solid #222; }
-        .order-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
-        .order-header h3 { margin: 0; font-size: 16px; color: var(--gold); }
-        .status-tag { font-size: 10px; padding: 4px 8px; border-radius: 5px; text-transform: uppercase; font-weight: bold; }
-        .tag-recibido { background: #444; color: white; }
-        
-        .order-price { font-weight: bold; color: white; display: flex; justify-content: space-between; border-top: 1px solid #222; padding-top: 10px; font-size: 12px; }
-        .order-actions { display: flex; gap: 8px; margin-top: 15px; }
-        .btn-status { flex: 1; padding: 8px; border-radius: 8px; border: 1px solid #333; background: #1a1a1a; color: white; font-size: 11px; cursor: pointer; }
 
+        /* MODAL */
         #modal-orden { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark); z-index: 300; padding: 20px; box-sizing: border-box; overflow-y: auto; }
-        input, select { width: 100%; padding: 12px; margin-bottom: 12px; background: #111; border: 1px solid #333; color: white; border-radius: 8px; box-sizing: border-box; outline: none; }
+        input { width: 100%; padding: 12px; margin-bottom: 12px; background: #111; border: 1px solid #333; color: white; border-radius: 8px; box-sizing: border-box; outline: none; }
         label { font-size: 11px; color: var(--gold); margin-bottom: 5px; display: block; }
         
-        /* BOTÓN "+" PEQUEÑO PARA DETALLES */
-        .btn-mini-plus { background: #333; color: var(--gold); border: 1px solid var(--gold); border-radius: 5px; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-        .btn-mini-plus:active { background: var(--gold); color: black; }
+        /* DISEÑO DE FORMULARIO DE ITEMS */
+        .item-form-box { background: #080808; border-radius: 12px; padding: 12px; border: 1px dashed #444; margin-bottom: 15px; }
+        .row-flex { display: flex; gap: 8px; margin-bottom: 10px; align-items: center; }
+        
+        .btn-mini-plus { background: #222; color: var(--gold); border: 1px solid var(--gold); border-radius: 8px; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        
+        /* ESTILO DE LISTA PARA EL CLIENTE */
+        .preview-item { border-bottom: 1px solid #222; padding: 10px 0; }
+        .preview-main { display: flex; justify-content: space-between; font-weight: bold; color: var(--gold); }
+        .preview-sub { padding-left: 25px; font-size: 12px; color: #aaa; font-style: italic; }
 
-        .fab { position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; background: var(--gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: black; font-size: 24px; border: none; cursor: pointer; box-shadow: 0 4px 15px rgba(255,215,0,0.4); z-index: 200; }
+        .fab { position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; background: var(--gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: black; font-size: 24px; border: none; box-shadow: 0 4px 15px rgba(255,215,0,0.4); z-index: 200; }
     </style>
 </head>
 <body>
 
     <div class="header">
         <a href="zapatero.html" class="btn-back"><i class="fas fa-arrow-left"></i></a>
-        <h2 style="margin:0; font-size: 1.1rem;">Panel de Órdenes</h2>
-        <i class="fas fa-sync-alt" onclick="location.reload()" style="color: var(--gold); cursor: pointer;"></i>
+        <h2 style="margin:0; font-size: 1.1rem;">JADI REPAIZ</h2>
+        <i class="fas fa-sync-alt" onclick="location.reload()" style="color: var(--gold);"></i>
     </div>
 
     <div class="search-container">
         <div class="search-bar">
-            <i class="fas fa-search" style="color: #555;"></i>
+            <i class="fas fa-search"></i>
             <input type="text" id="inputBusqueda" onkeyup="filtrarTrabajos()" placeholder="Buscar cliente...">
         </div>
-    </div>
-
-    <div class="cloud-section" id="seccion-nube" style="display:none;">
-        <div class="cloud-title"><i class="fas fa-cloud-download-alt"></i> SOLICITUDES</div>
-        <div id="contenedor-nube"></div>
     </div>
 
     <div class="orders-container" id="lista-trabajos"></div>
@@ -68,48 +61,44 @@
     <button class="fab" onclick="abrirModal()"><i class="fas fa-plus"></i></button>
 
     <div id="modal-orden">
-        <h2 id="modal-titulo" style="color: var(--gold); margin-top: 0;">Nueva Orden</h2>
-        <label>CLIENTE (CELULAR)</label>
-        <input type="tel" id="cli-celular" placeholder="Número Celular">
-        <input type="text" id="cli-nombre" placeholder="Nombre completo">
+        <h2 style="color: var(--gold); margin-top: 0;">Nueva Orden</h2>
+        <input type="text" id="cli-nombre" placeholder="Nombre del cliente">
         
-        <div class="item-table" style="background: #080808; border-radius: 10px; padding: 10px; margin-bottom: 15px; border: 1px dashed #333;">
-            <label>EDITAR TRABAJO SELECCIONADO</label>
+        <div class="item-form-box">
+            <label>DATOS DEL ARTÍCULO</label>
+            <div class="row-flex">
+                <input type="number" id="item-cant" value="1" style="flex:0.5; margin-bottom:0;">
+                <input type="text" id="item-tipo" placeholder="Ej: Mochila" style="flex:2; margin-bottom:0;">
+            </div>
+
+            <label>TRABAJOS A REALIZAR (Usa + para añadir varios)</label>
+            <div class="row-flex">
+                <input type="text" id="item-desc-input" placeholder="Ej: Cambio cierre" style="flex:1; margin-bottom:0;">
+                <div class="btn-mini-plus" onclick="añadirSubTrabajo()"><i class="fas fa-plus"></i></div>
+            </div>
             
-            <div style="display:flex; gap:5px; margin-bottom:10px;">
-                <input type="text" id="item-cant" value="1" style="flex:0.6;">
-                <input type="text" id="item-tipo" placeholder="Tipo" style="flex:1.2;">
-            </div>
+            <div id="sub-trabajos-lista" style="font-size: 11px; color: #777; margin-bottom: 10px; padding-left: 5px;"></div>
 
-            <div style="display:flex; gap:5px; margin-bottom:10px; align-items: center;">
-                <input type="text" id="item-desc" placeholder="Detalle (Costura, Suela...)" style="flex:1; margin-bottom:0;">
-                <div class="btn-mini-plus" onclick="acumularDetalle()" title="Añadir detalle al mismo zapato">
-                    <i class="fas fa-plus"></i>
-                </div>
-            </div>
-
-            <div style="display:flex; gap:5px;">
-                <input type="number" id="item-precio" placeholder="Precio $" style="flex:1;">
-                <button onclick="agregarItemAListaFinal()" style="background:var(--gold); border:none; border-radius:8px; width:45px; height:42px; color:black;">
-                    <i class="fas fa-check"></i>
+            <div class="row-flex">
+                <input type="number" id="item-precio" placeholder="Precio $" style="flex:1; margin-bottom:0;">
+                <button onclick="bajarItemAListaGeneral()" style="background:var(--gold); border:none; border-radius:8px; height:45px; width:60px; color:black;">
+                    <i class="fas fa-arrow-down"></i>
                 </button>
             </div>
-
-            <div id="tabla-items-visual" style="margin-top:10px;"></div>
         </div>
 
-        <div style="background: #0a0a0a; padding: 12px; border-radius: 10px; border: 1px solid #222;">
-            <label>TOTAL NEGOCIADO $</label>
-            <input type="number" id="precio-total" onkeyup="calcularSaldo()">
-            <label>ABONO INICIAL $</label>
-            <input type="number" id="abono-inicial" onkeyup="calcularSaldo()">
-            <label>SALDO PENDIENTE $</label>
-            <input type="number" id="saldo-pendiente" readonly style="color:#ff4444; border:none; background:transparent;">
+        <div id="tabla-items-visual"></div>
+
+        <div style="background: #0a0a0a; padding: 15px; border-radius: 12px; margin-top:15px; border: 1px solid #222;">
+            <label>TOTAL $</label>
+            <input type="number" id="precio-total" value="0">
+            <label>ABONO $</label>
+            <input type="number" id="abono-inicial" value="0">
         </div>
 
         <div style="display: flex; gap: 10px; margin-top: 20px;">
             <button onclick="cerrarModal()" style="flex:1; background:transparent; color:white; border:1px solid #444; padding:15px; border-radius:10px;">CANCELAR</button>
-            <button onclick="guardarOrden()" style="flex:1; background:var(--gold); color:black; border:none; padding:15px; border-radius:10px; font-weight:bold;">GUARDAR ORDEN</button>
+            <button onclick="guardarOrden()" style="flex:1; background:var(--gold); color:black; border:none; padding:15px; border-radius:10px; font-weight:bold;">GUARDAR</button>
         </div>
     </div>
 
@@ -120,42 +109,54 @@
         const session = JSON.parse(localStorage.getItem('session_jadi')) || { uid: "ZAP-TEMP" };
 
         let itemsTemporales = [];
+        let subTrabajosActuales = []; // Aquí guardamos la lista de "Costura", "Suela", etc.
 
-        function abrirModal() { document.getElementById('modal-orden').style.display = 'block'; itemsTemporales = []; renderItems(); }
-        function cerrarModal() { document.getElementById('modal-orden').style.display = 'none'; }
-
-        // ESTA FUNCIÓN ES EL "+" JUNTO A DETALLES
-        function acumularDetalle() {
-            const descInput = document.getElementById('item-desc');
-            const nuevoDetalle = descInput.value.trim();
-            if(!nuevoDetalle) return;
-
-            // Si ya hay algo escrito, le pone un " + " antes de lo nuevo
-            if(descInput.value.includes(nuevoDetalle)) {
-                // Si el usuario simplemente está escribiendo, lo dejamos así
-            }
-            descInput.value = descInput.value.replace(nuevoDetalle, "") + nuevoDetalle + " + ";
-            descInput.focus();
+        function abrirModal() { 
+            document.getElementById('modal-orden').style.display = 'block'; 
+            itemsTemporales = []; 
+            subTrabajosActuales = [];
+            renderItems(); 
         }
 
-        // ESTA FUNCIÓN ES EL BOTÓN DE "CHECK" (EL MÁS ANTERIOR) PARA BAJAR EL TRABAJO A LA LISTA
-        function agregarItemAListaFinal() {
+        function cerrarModal() { document.getElementById('modal-orden').style.display = 'none'; }
+
+        // Función del botón (+) junto al detalle
+        function añadirSubTrabajo() {
+            const input = document.getElementById('item-desc-input');
+            const valor = input.value.trim();
+            if(!valor) return;
+            
+            subTrabajosActuales.push(valor);
+            document.getElementById('sub-trabajos-lista').innerHTML = "Incluye: " + subTrabajosActuales.join(", ");
+            input.value = "";
+            input.focus();
+        }
+
+        // Función del botón (Flecha abajo) para bajar el zapato a la orden
+        function bajarItemAListaGeneral() {
             const cant = document.getElementById('item-cant').value;
             const tipo = document.getElementById('item-tipo').value;
-            let desc = document.getElementById('item-desc').value.trim();
             const precio = parseFloat(document.getElementById('item-precio').value) || 0;
-
-            if(!tipo || !desc) return alert("Completa tipo y detalle");
-
-            // Limpiar el "+" final si quedó sobrando
-            if(desc.endsWith("+")) desc = desc.slice(0, -1).trim();
-
-            itemsTemporales.push({ cant, tipo, desc, precio });
             
-            // Limpiar todo para un nuevo zapato
+            // Si el usuario escribió algo en el input pero no le dio al (+), lo agregamos igual
+            const extra = document.getElementById('item-desc-input').value.trim();
+            if(extra) subTrabajosActuales.push(extra);
+
+            if(!tipo || subTrabajosActuales.length === 0) return alert("Falta el tipo o los detalles");
+
+            itemsTemporales.push({
+                cant: cant,
+                tipo: tipo,
+                detalles: subTrabajosActuales, // Guardamos la lista completa
+                precio: precio
+            });
+
+            // Limpiamos para el siguiente artículo
+            subTrabajosActuales = [];
             document.getElementById('item-tipo').value = "";
-            document.getElementById('item-desc').value = "";
+            document.getElementById('item-desc-input').value = "";
             document.getElementById('item-precio').value = "";
+            document.getElementById('sub-trabajos-lista').innerHTML = "";
             renderItems();
         }
 
@@ -163,40 +164,42 @@
             const container = document.getElementById('tabla-items-visual');
             container.innerHTML = "";
             let suma = 0;
-            itemsTemporales.forEach((it, index) => {
-                suma += it.precio;
-                container.innerHTML += `<div style="display:flex; justify-content:space-between; font-size:12px; padding:8px 0; border-bottom:1px solid #1a1a1a;">
-                    <span><b>${it.cant}</b> | ${it.tipo} - ${it.desc}</span>
-                    <span style="color:var(--gold)">$${it.precio.toFixed(2)}</span>
-                </div>`;
-            });
-            document.getElementById('precio-total').value = suma.toFixed(2);
-            calcularSaldo();
-        }
 
-        function calcularSaldo() {
-            const total = parseFloat(document.getElementById('precio-total').value) || 0;
-            const abono = parseFloat(document.getElementById('abono-inicial').value) || 0;
-            document.getElementById('saldo-pendiente').value = (total - abono).toFixed(2);
+            itemsTemporales.forEach((it) => {
+                suma += it.precio;
+                let htmlDetalles = it.detalles.map(d => `<div class="preview-sub">${d}</div>`).join("");
+                
+                container.innerHTML += `
+                    <div class="preview-item">
+                        <div class="preview-main">
+                            <span>${it.cant}, ${it.tipo}</span>
+                            <span>$${it.precio}</span>
+                        </div>
+                        ${htmlDetalles}
+                    </div>`;
+            });
+
+            document.getElementById('precio-total').value = suma;
         }
 
         async function guardarOrden() {
-            if(itemsTemporales.length === 0) return alert("Agrega trabajos");
+            if(itemsTemporales.length === 0) return alert("Agrega artículos");
             const snapT = await db.ref('contadores/TRB').once('value');
             let numT = (snapT.val() || 0) + 1;
             const trbID = 'TRB-' + numT.toString().padStart(5, '0');
 
             await db.ref('trabajos').push({
-                ordenID: trbID, zapateroId: session.uid,
+                ordenID: trbID,
+                zapateroId: session.uid,
                 cliente: document.getElementById('cli-nombre').value,
-                telefono: document.getElementById('cli-celular').value,
-                items: itemsTemporales, precio: document.getElementById('precio-total').value,
+                items: itemsTemporales, // Se guarda la estructura con sub-ítems
+                precio: document.getElementById('precio-total').value,
                 abono: document.getElementById('abono-inicial').value,
-                saldo: document.getElementById('saldo-pendiente').value,
-                estado: 'Recibido', timestamp: Date.now()
+                timestamp: Date.now()
             });
+
             await db.ref('contadores/TRB').set(numT);
-            alert("Orden guardada");
+            alert("Orden Guardada");
             cerrarModal();
         }
 
@@ -208,11 +211,9 @@
                     const o = child.val();
                     container.innerHTML += `
                         <div class="order-card">
-                            <div class="order-header">
-                                <h3>${o.cliente} <small style="color:#444">#${o.ordenID}</small></h3>
-                                <span class="status-tag tag-recibido">${o.estado}</span>
-                            </div>
-                            <div class="order-price"><span>TOTAL: $${o.precio}</span><span style="color:var(--gold)">DEBE: $${o.saldo}</span></div>
+                            <h3 style="color:var(--gold); margin:0;">${o.cliente}</h3>
+                            <small>ID: ${o.ordenID}</small>
+                            <div style="text-align:right; font-weight:bold;">Total: $${o.precio}</div>
                         </div>`;
                 });
             });
