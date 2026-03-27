@@ -19,7 +19,7 @@
         .search-bar input { background: transparent; border: none; color: white; margin-left: 10px; width: 100%; outline: none; }
 
         .orders-container { padding: 0 15px; }
-        .order-card { background: var(--card); border-radius: 15px; padding: 15px; margin-bottom: 15px; border: 1px solid #222; }
+        .order-card { background: var(--card); border-radius: 15px; padding: 15px; margin-bottom: 15px; border: 1px solid #222; display: flex; justify-content: space-between; align-items: center; }
 
         /* MODAL */
         #modal-orden { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark); z-index: 300; padding: 20px; box-sizing: border-box; overflow-y: auto; }
@@ -41,6 +41,9 @@
         .item-listado .detalles-texto { font-size: 12px; color: #888; padding-left: 5px; white-space: pre-wrap; margin-top: 4px; }
         .btn-eliminar-item { color: #ff4444; background: transparent; border: none; font-size: 18px; padding: 5px 10px; cursor: pointer; }
 
+        /* Botón Editar en la tarjeta */
+        .btn-edit-order { background: #222; border: 1px solid #444; color: var(--gold); width: 45px; height: 45px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+
         /* Indicador visual de edición */
         .editando-ahora { border: 1px solid var(--gold) !important; box-shadow: 0 0 10px rgba(255,215,0,0.2); }
     </style>
@@ -56,7 +59,7 @@
     <div class="search-container">
         <div class="search-bar">
             <i class="fas fa-search"></i>
-            <input type="text" id="inputBusqueda" onkeyup="filtrarTrabajos()" placeholder="Buscar cliente...">
+            <input type="text" id="inputBusqueda" onkeyup="filtrarTrabajos()" placeholder="Buscar cliente o ID...">
         </div>
     </div>
 
@@ -65,7 +68,7 @@
     <button class="fab" onclick="abrirModal()"><i class="fas fa-plus"></i></button>
 
     <div id="modal-orden">
-        <h2 style="color: var(--gold); margin-top: 0;">Nueva Orden</h2>
+        <h2 id="titulo-modal" style="color: var(--gold); margin-top: 0;">Nueva Orden</h2>
         
         <label>CELULAR CLIENTE</label>
         <input type="tel" id="cli-celular" placeholder="Ej: 0987654321" onkeyup="verificarCliente(this.value)">
@@ -108,7 +111,7 @@
 
         <div style="display: flex; gap: 10px; margin-top: 20px;">
             <button onclick="cerrarModal()" style="flex:1; background:transparent; color:white; border:1px solid #444; padding:15px; border-radius:10px;">CANCELAR</button>
-            <button onclick="guardarOrdenFinal()" style="flex:1; background:var(--gold); color:black; border:none; padding:15px; border-radius:10px; font-weight:bold;">GUARDAR ORDEN</button>
+            <button id="btn-guardar-principal" onclick="guardarOrdenFinal()" style="flex:1; background:var(--gold); color:black; border:none; padding:15px; border-radius:10px; font-weight:bold;">GUARDAR ORDEN</button>
         </div>
     </div>
 
@@ -120,8 +123,14 @@
 
         let itemsParaGuardar = [];
         let indiceEditando = -1;
+        let idFirebaseActual = null; // Para saber si estamos editando una orden ya guardada
+        let trbIDActual = null; // Guardamos el ID de trabajo (TRB-0000x)
 
         function abrirModal() { 
+            idFirebaseActual = null;
+            trbIDActual = null;
+            document.getElementById('titulo-modal').innerText = "Nueva Orden";
+            document.getElementById('btn-guardar-principal').innerText = "GUARDAR ORDEN";
             document.getElementById('modal-orden').style.display = 'block'; 
             itemsParaGuardar = []; 
             indiceEditando = -1;
@@ -135,6 +144,27 @@
         }
 
         function cerrarModal() { document.getElementById('modal-orden').style.display = 'none'; }
+
+        // Cargar orden existente para añadir más trabajos
+        async function cargarOrdenParaEditar(key) {
+            const snap = await db.ref('trabajos/' + key).once('value');
+            if(!snap.exists()) return;
+            const o = snap.val();
+            
+            idFirebaseActual = key;
+            trbIDActual = o.ordenID;
+            document.getElementById('titulo-modal').innerText = "Editando " + trbIDActual;
+            document.getElementById('btn-guardar-principal').innerText = "ACTUALIZAR ORDEN";
+            
+            document.getElementById('cli-celular').value = o.telefono;
+            document.getElementById('cli-nombre').value = o.cliente;
+            document.getElementById('precio-total').value = o.precioTotal;
+            document.getElementById('abono-inicial').value = o.abono;
+            
+            itemsParaGuardar = o.items || [];
+            renderizarLista();
+            document.getElementById('modal-orden').style.display = 'block';
+        }
 
         function verificarCliente(tel) {
             if(tel.length < 9) return;
@@ -177,13 +207,11 @@
             if(!tipo) return alert("Escribe qué artículo es");
 
             if(indiceEditando > -1) {
-                // Estamos editando uno existente
                 itemsParaGuardar[indiceEditando] = { cant, tipo, detalles, precio };
                 indiceEditando = -1;
                 document.getElementById('form-item-caja').classList.remove('editando-ahora');
                 document.getElementById('icono-bajar').className = "fas fa-arrow-down";
             } else {
-                // Es uno nuevo
                 itemsParaGuardar.push({ cant, tipo, detalles, precio });
             }
 
@@ -197,7 +225,7 @@
             itemsParaGuardar.forEach((it, index) => {
                 visor.innerHTML += `
                     <div class="item-listado">
-                        <div class="item-info" onclick="cargarParaEditar(${index})">
+                        <div class="item-info" onclick="cargarItemParaEditar(${index})">
                             <b>${it.cant} ${it.tipo}</b> - $${it.precio}
                             <div class="detalles-texto">${it.detalles}</div>
                         </div>
@@ -209,7 +237,7 @@
             actualizarTotal();
         }
 
-        function cargarParaEditar(index) {
+        function cargarItemParaEditar(index) {
             const it = itemsParaGuardar[index];
             document.getElementById('item-cant').value = it.cant;
             document.getElementById('item-tipo').value = it.tipo;
@@ -218,18 +246,13 @@
             
             indiceEditando = index;
             document.getElementById('form-item-caja').classList.add('editando-ahora');
-            document.getElementById('icono-bajar').className = "fas fa-sync-alt"; // Icono de actualizar
+            document.getElementById('icono-bajar').className = "fas fa-sync-alt";
             document.getElementById('item-tipo').focus();
         }
 
         function eliminarItem(index) {
             if(confirm("¿Quitar este artículo de la lista?")) {
                 itemsParaGuardar.splice(index, 1);
-                if(indiceEditando === index) {
-                    indiceEditando = -1;
-                    document.getElementById('form-item-caja').classList.remove('editando-ahora');
-                    limpiarCamposItem();
-                }
                 renderizarLista();
             }
         }
@@ -251,12 +274,19 @@
 
         async function guardarOrdenFinal() {
             if(itemsParaGuardar.length === 0) return alert("Agrega al menos un artículo");
-            const snapT = await db.ref('contadores/TRB').once('value');
-            let numT = (snapT.val() || 0) + 1;
-            const trbID = 'TRB-' + numT.toString().padStart(5, '0');
+            
+            let finalTrbID = trbIDActual;
 
-            await db.ref('trabajos').push({
-                ordenID: trbID,
+            if(!idFirebaseActual) {
+                // Generar nuevo ID solo si es orden nueva
+                const snapT = await db.ref('contadores/TRB').once('value');
+                let numT = (snapT.val() || 0) + 1;
+                finalTrbID = 'TRB-' + numT.toString().padStart(5, '0');
+                await db.ref('contadores/TRB').set(numT);
+            }
+
+            const dataOrden = {
+                ordenID: finalTrbID,
                 zapateroId: session.uid,
                 cliente: document.getElementById('cli-nombre').value,
                 telefono: document.getElementById('cli-celular').value,
@@ -265,9 +295,16 @@
                 abono: document.getElementById('abono-inicial').value,
                 timestamp: Date.now(),
                 estado: 'Recibido'
-            });
+            };
 
-            await db.ref('contadores/TRB').set(numT);
+            if(idFirebaseActual) {
+                // Actualizar orden existente
+                await db.ref('trabajos/' + idFirebaseActual).update(dataOrden);
+            } else {
+                // Crear nueva
+                await db.ref('trabajos').push(dataOrden);
+            }
+
             alert("Orden guardada con éxito.");
             cerrarModal();
         }
@@ -276,7 +313,7 @@
             const bus = document.getElementById('inputBusqueda').value.toLowerCase();
             document.querySelectorAll('.order-card').forEach(c => {
                 const t = c.innerText.toLowerCase();
-                c.style.display = t.includes(bus) ? "block" : "none";
+                c.style.display = t.includes(bus) ? "flex" : "none";
             });
         }
 
@@ -286,11 +323,17 @@
                 container.innerHTML = "";
                 snap.forEach(child => {
                     const o = child.val();
+                    const key = child.key;
                     container.innerHTML += `
                         <div class="order-card">
-                            <h3 style="color:var(--gold); margin:0;">${o.cliente}</h3>
-                            <div style="font-size:12px; margin-bottom:5px;">ID: ${o.ordenID} | Tel: ${o.telefono}</div>
-                            <div style="text-align:right; font-weight:bold;">Total: $${o.precioTotal}</div>
+                            <div style="flex:1;">
+                                <h3 style="color:var(--gold); margin:0;">${o.cliente}</h3>
+                                <div style="font-size:11px; color:#aaa;">ID: ${o.ordenID} | Tel: ${o.telefono}</div>
+                                <div style="font-weight:bold; margin-top:5px;">Total: $${o.precioTotal}</div>
+                            </div>
+                            <button class="btn-edit-order" onclick="cargarOrdenParaEditar('${key}')">
+                                <i class="fas fa-edit"></i>
+                            </button>
                         </div>`;
                 });
             });
