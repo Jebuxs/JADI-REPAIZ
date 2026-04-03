@@ -3,33 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sincronizador de Módulos - JADI</title>
+    <title>Sincronizador JADI</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root { --gold: #fbc02d; --dark: #000; }
         body { background: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; padding-bottom: 90px; }
-        
         .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; border-bottom: 1px solid #222; padding-bottom: 15px; }
         .back-btn { color: var(--gold); text-decoration: none; border: 1px solid #333; padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; }
-
         .search-box { display: flex; gap: 10px; margin-bottom: 20px; }
         #search-input { flex-grow: 1; padding: 12px; background: #111; border: 1px solid #333; color: white; border-radius: 8px; }
         .btn-scan { background: #238636; color: white; border: none; padding: 0 20px; border-radius: 8px; cursor: pointer; font-weight: bold; }
-
-        .modules-container { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; overflow: hidden; }
-        .module-row { 
-            display: flex; align-items: center; padding: 12px 15px; border-bottom: 1px solid #21262d; 
-            cursor: pointer; transition: 0.2s;
-        }
+        .modules-container { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; overflow: hidden; min-height: 200px; }
+        .module-row { display: flex; align-items: center; padding: 12px 15px; border-bottom: 1px solid #21262d; cursor: pointer; }
         .module-row:hover { background: #161b22; }
-        .module-row input[type="checkbox"] { margin-right: 15px; width: 18px; height: 18px; accent-color: var(--gold); cursor: pointer; }
-        .module-row i { color: #8b949e; margin-right: 12px; font-size: 1.1rem; }
+        .module-row input[type="checkbox"] { margin-right: 15px; width: 18px; height: 18px; accent-color: var(--gold); }
         .module-row span { font-size: 0.9rem; color: #c9d1d9; flex-grow: 1; }
-
         .footer-action { position: fixed; bottom: 0; left: 0; right: 0; background: #161b22; padding: 15px; border-top: 1px solid var(--gold); text-align: center; }
-        .btn-save { background: var(--gold); border: none; padding: 12px 50px; border-radius: 8px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(251,192,45,0.2); }
+        .btn-save { background: var(--gold); border: none; padding: 12px 50px; border-radius: 8px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -44,10 +36,9 @@
     <button class="btn-scan" onclick="escanear()"><i class="fas fa-sync-alt"></i> ESCANEAR REPO</button>
 </div>
 
-<div class="modules-container" id="lista-archivos">
+<div id="lista-archivos" class="modules-container">
     <div style="padding: 40px; text-align: center; color: #555;">
-        <i class="fab fa-github fa-3x" style="margin-bottom: 15px;"></i><br>
-        Presiona el botón verde para leer tus archivos de GitHub
+        Presiona ESCANEAR para conectar con tu cuenta de Jebuxs
     </div>
 </div>
 
@@ -56,9 +47,9 @@
 </div>
 
 <script>
-    // DATOS YA INTEGRADOS SEGÚN TUS CAPTURAS
-    const GITHUB_USER = "Jadi-Repaiz"; 
-    const GITHUB_REPO = "Repaiz-Jadi"; 
+    // CORREGIDO SEGÚN TUS IMÁGENES
+    const GITHUB_USER = "Jebuxs"; 
+    const GITHUB_REPO = "JADI-REPAIZ"; 
 
     const firebaseConfig = {
         apiKey: "AIzaSyAKPxG1osuR9hsj-PsmwJrzK-3W_XM1UyU",
@@ -70,34 +61,43 @@
 
     async function escanear() {
         const list = document.getElementById('lista-archivos');
-        list.innerHTML = "<div style='padding:20px; text-align:center;'>Conectando con GitHub...</div>";
+        list.innerHTML = "<div style='padding:20px; text-align:center;'>Buscando en JADI-REPAIZ...</div>";
 
         try {
-            // Buscamos en la rama 'main' de forma recursiva
+            // Buscamos dentro de la carpeta 'public' que es donde tienes todo
             const url = `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/git/trees/main?recursive=1`;
             const res = await fetch(url);
             const data = await res.json();
 
-            if(!data.tree) throw new Error("No se pudo leer el repo");
+            if(!data.tree) throw new Error("Error de conexión");
 
-            // Filtramos solo archivos HTML y descartamos carpetas pesadas si las hubiera
-            const htmlFiles = data.tree.filter(file => file.path.endsWith('.html'));
+            // Solo mostramos los archivos .html que están dentro de /public
+            const htmlFiles = data.tree.filter(file => 
+                file.path.startsWith('public/') && file.path.endsWith('.html')
+            );
 
             list.innerHTML = "";
+            if(htmlFiles.length === 0) {
+                list.innerHTML = "<div style='padding:20px; text-align:center;'>No se encontraron archivos HTML en /public</div>";
+                return;
+            }
+
             htmlFiles.forEach(file => {
+                // Limpiamos la ruta para que solo se vea desde public en adelante
+                const cleanPath = file.path.replace('public/', '');
                 list.innerHTML += `
                     <label class="module-row">
-                        <input type="checkbox" class="mod-check" data-path="${file.path}">
-                        <i class="far fa-file-code"></i>
-                        <span>${file.path}</span>
+                        <input type="checkbox" class="mod-check" data-path="${cleanPath}">
+                        <i class="far fa-file-code" style="margin-right:10px; color:#8b949e;"></i>
+                        <span>${cleanPath}</span>
                     </label>
                 `;
             });
 
         } catch (e) {
             list.innerHTML = `<div style="padding:20px; color:#ff4444; text-align:center;">
-                Error: No se pudo conectar con el repositorio.<br>
-                <small>Asegúrate de que el repositorio sea público o que los nombres sean correctos.</small>
+                Error: No se pudo conectar.<br>
+                <small>Asegúrate de que el repo sea PÚBLICO.</small>
             </div>`;
         }
     }
@@ -108,7 +108,6 @@
 
         seleccionados.forEach(item => {
             const path = item.getAttribute('data-path');
-            // Creamos un nombre limpio quitando la ruta y la extensión
             const name = path.split('/').pop().replace('.html', '').toUpperCase();
 
             db.ref('modulos_disponibles').push({
@@ -118,7 +117,7 @@
             });
         });
 
-        alert("¡Módulos activados con éxito en Firebase!");
+        alert("¡Módulos agregados!");
         window.location.href = "dashboard.html";
     }
 
