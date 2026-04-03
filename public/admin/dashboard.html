@@ -3,113 +3,125 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Control - JADI Master</title>
-    
+    <title>JADI MASTER - Dashboard</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --gold: #fbc02d; --dark: #000; --card: #0d1117; --border: #30363d; }
+        :root { --gold: #fbc02d; --dark: #000; --card: #0d1117; }
         body { background: var(--dark); color: #c9d1d9; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; }
+        .grid { display: grid; grid-template-columns: 1fr 380px; gap: 20px; max-width: 1400px; margin: auto; }
+        .card { background: var(--card); border: 1px solid #30363d; border-radius: 8px; padding: 20px; margin-bottom: 20px; }
+        h3 { color: var(--gold); border-bottom: 1px solid #222; padding-bottom: 10px; margin-top: 0; display: flex; align-items: center; gap: 10px; }
         
-        .grid-container { display: grid; grid-template-columns: 1fr 380px; gap: 20px; max-width: 1400px; margin: auto; }
-        .card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-bottom: 20px; }
-        h3 { color: var(--gold); margin-top: 0; font-size: 1.1rem; border-bottom: 1px solid #222; padding-bottom: 10px; display: flex; align-items: center; gap: 10px; }
+        /* Estilo Lista Root */
+        .file-list { background: #000; border: 1px solid #222; border-radius: 6px; min-height: 50px; }
+        .file-row { display: flex; align-items: center; justify-content: space-between; padding: 10px; border-bottom: 1px solid #111; }
+        .file-row a { color: #58a6ff; text-decoration: none; font-size: 0.85rem; display: flex; align-items: center; gap: 8px; }
+        .badge { font-size: 0.6rem; background: #23863622; color: #3fb950; padding: 2px 6px; border-radius: 4px; border: 1px solid #23863644; }
+        .delete-btn { color: #444; cursor: pointer; font-size: 0.8rem; }
 
-        /* Estilo Estructura Root */
-        .file-list { background: #000; border-radius: 6px; border: 1px solid #222; max-height: 400px; overflow-y: auto; }
-        .file-row { 
-            display: flex; align-items: center; justify-content: space-between; 
-            padding: 10px 15px; border-bottom: 1px solid #161b22; 
-        }
-        .file-row:hover { background: #161b22; }
-        .file-row a { text-decoration: none; color: #58a6ff; font-size: 0.85rem; display: flex; align-items: center; gap: 10px; flex-grow: 1; }
-        .badge-name { font-size: 0.65rem; background: #23863622; color: #3fb950; padding: 2px 8px; border-radius: 10px; border: 1px solid #23863644; text-transform: uppercase; }
-        .btn-delete { color: #444; cursor: pointer; margin-left: 15px; transition: 0.2s; }
-        .btn-delete:hover { color: #f85149; }
-
-        /* Métricas */
-        .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 10px; }
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
         .stat-box { background: #161b22; padding: 15px; border-radius: 8px; text-align: center; border: 1px solid #222; }
-        .stat-box span { display: block; font-size: 1.6rem; font-weight: bold; color: white; }
-        .stat-box label { font-size: 0.65rem; color: #8b949e; text-transform: uppercase; letter-spacing: 1px; }
-
-        .btn-sync { display: block; text-align: center; background: #21262d; color: var(--gold); text-decoration: none; padding: 10px; border-radius: 6px; font-size: 0.8rem; margin-top: 15px; border: 1px solid var(--border); font-weight: bold; }
-        
-        /* Listas de datos */
-        .data-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-        .data-table th { text-align: left; color: #8b949e; padding: 10px; border-bottom: 1px solid #222; }
-        .data-table td { padding: 10px; border-bottom: 1px solid #111; }
-
-        @media (max-width: 950px) { .grid-container { grid-template-columns: 1fr; } }
+        .stat-box span { display: block; font-size: 1.5rem; font-weight: bold; color: white; }
     </style>
 </head>
 <body>
 
-<div class="grid-container">
-    
-    <div class="main-content">
+<div class="grid">
+    <div class="main">
         <div class="card">
-            <h3><i class="fas fa-chart-pie"></i> Resumen Operativo JADI</h3>
+            <h3><i class="fas fa-chart-line"></i> Resumen JADI - ZAPATERIA CHIMBORAZO</h3>
             <div class="stat-grid">
-                <div class="stat-box"><span id="val-usuarios">--</span><label>Clientes</label></div>
-                <div class="stat-box"><span id="val-pedidos">--</span><label>Pedidos</label></div>
-                <div class="stat-box"><span id="val-ingresos">--</span><label>Ventas</label></div>
+                <div class="stat-box"><span>12</span><small>Usuarios</small></div>
+                <div class="stat-box"><span>45</span><small>Pedidos</small></div>
+                <div class="stat-box"><span>$340</span><small>Ventas</small></div>
             </div>
         </div>
-
+        
         <div class="card">
             <h3><i class="fas fa-history"></i> Actividad Reciente</h3>
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Usuario</th>
-                        <th>Acción</th>
-                        <th>Estado</th>
-                    </tr>
-                </thead>
-                <tbody id="lista-actividad">
-                    <tr><td colspan="3" style="text-align:center; padding:20px; color:#444;">No hay actividad reciente registrada.</td></tr>
-                </tbody>
-            </table>
+            <div id="actividad" style="font-size:0.8rem; color:#555; text-align:center; padding:20px;">
+                Cargando datos de Jesús Eduardo...
+            </div>
         </div>
     </div>
 
     <div class="sidebar">
-        <div id="github-explorer" class="card">
-            <h3><i class="fab fa-github"></i> Estructura Root (GitHub)</h3>
-            <div id="archivos-dinamicos" class="file-list">
-                <div style="padding:20px; text-align:center; color:#444; font-size:0.8rem;">Conectando con Firebase...</div>
+        <div class="card">
+            <h3><i class="fab fa-github"></i> Estructura Root</h3>
+            <div id="contenedor-root" class="file-list">
+                <div style="padding:20px; text-align:center; font-size:0.8rem; color:#444;">Sincronizando módulos...</div>
             </div>
-            <a href="modulos.html" class="btn-sync"><i class="fas fa-external-link-alt"></i> SINCRONIZAR NUEVOS MÓDULOS</a>
+            <a href="modulos.html" style="display:block; text-align:center; margin-top:15px; color:var(--gold); text-decoration:none; font-size:0.8rem; border:1px solid #333; padding:8px; border-radius:6px;">
+                <i class="fas fa-sync"></i> ADMINISTRAR MÓDULOS
+            </a>
         </div>
 
         <div class="card">
-            <h3><i class="fas fa-id-badge"></i> Sesión Master</h3>
-            <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
-                <div style="width:40px; height:40px; background:var(--gold); border-radius:50%; display:flex; align-items:center; justify-content:center; color:black; font-weight:bold;">J</div>
-                <div>
-                    <div id="admin-email" style="font-size:0.85rem; font-weight:bold;">Cargando...</div>
-                    <div style="font-size:0.7rem; color:#238636;">● Administrador Activo</div>
-                </div>
-            </div>
-            <button onclick="cerrarSesion()" style="width:100%; padding:10px; background:#f8514911; color:#f85149; border:1px solid #f8514933; border-radius:6px; cursor:pointer; font-weight:bold;">SALIR DEL SISTEMA</button>
+            <h3><i class="fas fa-user-shield"></i> Perfil Master</h3>
+            <div style="font-size:0.9rem; margin-bottom:5px; color:white;">Jesus Eduardo Villa Orozco</div>
+            <div style="font-size:0.75rem; color:var(--gold);">ADM000000001</div>
+            <hr style="border:0; border-top:1px solid #222; margin:15px 0;">
+            <button onclick="window.location.href='../login.html'" style="width:100%; padding:8px; background:#f8514911; color:#f85149; border:1px solid #f8514933; border-radius:6px; cursor:pointer;">SALIR</button>
         </div>
     </div>
-
 </div>
 
 <script>
-    // CONFIGURACIÓN FIREBASE
+    // CONFIGURACIÓN (Tu Database URL exacta)
     const firebaseConfig = {
-        apiKey: "AIzaSyAKPxG1osuR9hsj-PsmwJrzK-3W_XM1UyU",
-        authDomain: "jadi-repaiz.firebaseapp.com",
         databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com",
     };
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    const auth = firebase.auth();
 
-    // 1. CARGAR ESTRUCTURA ROOT DES
+    // TU ID DE ADMINISTRADOR SEGÚN FIREBASE
+    const MY_ADMIN_ID = "ADM000000001";
+
+    // CARGAR MÓDULOS DESDE LA RAMA DONDE EL OTRO ARCHIVO GUARDA
+    function cargarModulosActivados() {
+        const contenedor = document.getElementById('contenedor-root');
+        
+        db.ref('modulos_disponibles').on('value', snap => {
+            contenedor.innerHTML = "";
+            
+            if(!snap.exists()) {
+                contenedor.innerHTML = "<div style='padding:20px; text-align:center; font-size:0.75rem; color:#555;'>No hay módulos activos.</div>";
+                return;
+            }
+
+            snap.forEach(child => {
+                const data = child.val();
+                const key = child.key;
+                
+                // Creamos la fila para cada archivo activado
+                contenedor.innerHTML += `
+                    <div class="file-row">
+                        <a href="../${data.url}">
+                            <i class="far fa-file-code"></i>
+                            <span>${data.url}</span>
+                        </a>
+                        <span class="badge">${data.nombre}</span>
+                        <i class="fas fa-trash-alt delete-btn" onclick="eliminar('${key}')"></i>
+                    </div>
+                `;
+            });
+        });
+    }
+
+    function eliminar(key) {
+        if(confirm("¿Quitar de la lista?")) {
+            db.ref('modulos_disponibles').child(key).remove();
+        }
+    }
+
+    // Al cargar la página, verificamos el usuario y cargamos los módulos
+    window.onload = () => {
+        // Como ya estás logueado en tu sistema, disparamos la carga
+        cargarModulosActivados();
+        console.log("Sistema JADI para Jesus Eduardo cargado.");
+    };
+</script>
+</body>
+</html>
