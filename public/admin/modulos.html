@@ -2,113 +2,139 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Selector Maestro de Módulos - JADI</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Directorio de Módulos - JADI Master</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --gold: #fbc02d; --dark: #0d1117; }
-        body { background: #000; color: #eee; font-family: sans-serif; padding: 20px; }
+        :root { --gold: #fbc02d; --dark: #000; --card: #111; }
+        body { background: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; padding-bottom: 100px; }
         
-        .panel { background: var(--dark); border: 1px solid #30363d; border-radius: 8px; padding: 20px; }
-        h2 { color: var(--gold); border-bottom: 1px solid #333; padding-bottom: 10px; }
+        .header { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #222; padding-bottom: 15px; margin-bottom: 25px; }
+        .back-btn { color: var(--gold); text-decoration: none; font-size: 0.8rem; border: 1px solid #333; padding: 5px 15px; border-radius: 20px; }
 
-        /* LISTADO DE GITHUB */
-        .github-list { margin: 20px 0; max-height: 400px; overflow-y: auto; border: 1px solid #222; border-radius: 5px; }
-        .file-item { 
-            display: flex; align-items: center; padding: 10px; border-bottom: 1px solid #21262d; 
-            transition: 0.2s; cursor: pointer;
+        /* BUSCADOR Y BOTÓN ESCANEAR */
+        .controls { display: flex; gap: 10px; margin-bottom: 20px; }
+        #search-input { flex-grow: 1; padding: 12px; background: #161b22; border: 1px solid #30363d; border-radius: 6px; color: white; }
+        .btn-scan { background: #238636; color: white; border: none; padding: 0 20px; border-radius: 6px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 8px; }
+
+        /* LISTA DE MÓDULOS ESTILO GITHUB */
+        .modules-list { background: #0d1117; border: 1px solid #30363d; border-radius: 6px; overflow: hidden; }
+        .module-item { 
+            display: flex; align-items: center; padding: 12px 15px; border-bottom: 1px solid #21262d; 
+            color: #c9d1d9; transition: 0.2s;
         }
-        .file-item:hover { background: #161b22; }
-        .file-item input[type="checkbox"] { margin-right: 15px; transform: scale(1.3); }
-        .file-item i { margin-right: 10px; color: #8b949e; }
+        .module-item:hover { background: #161b22; }
+        .module-item input[type="checkbox"] { margin-right: 15px; transform: scale(1.2); cursor: pointer; }
+        .module-item i { width: 25px; color: #8b949e; }
+        .module-item .info { flex-grow: 1; font-size: 0.85rem; }
 
-        .btn-sync { background: #238636; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        .btn-save { background: var(--gold); color: black; border: none; padding: 12px 25px; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 20px; }
+        /* BOTÓN DE ACCIÓN FLOTANTE */
+        .save-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #161b22; padding: 15px; border-top: 1px solid var(--gold); display: flex; justify-content: center; }
+        .btn-add { background: var(--gold); border: none; padding: 12px 40px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.9rem; }
     </style>
 </head>
 <body>
 
-<div class="panel">
-    <h2><i class="fab fa-github"></i> Sincronizador JADI/GitHub</h2>
-    <p style="font-size: 0.8rem; color: #8b949e;">Selecciona los archivos que quieres activar en tu Dashboard:</p>
-    
-    <button class="btn-sync" onclick="escanearGitHub()"><i class="fas fa-sync"></i> Escanear mi GitHub</button>
-
-    <div class="github-list" id="contenedor-archivos">
-        <div style="padding: 20px; color: #555;">Dale al botón de escanear para ver tus archivos...</div>
+<div class="header">
+    <div>
+        <a href="dashboard.html" class="back-btn"><i class="fas fa-arrow-left"></i> VOLVER</a>
+        <h1 style="margin: 10px 0 0 0; font-size: 1.2rem;">Sincronizar GitHub</h1>
     </div>
+    <i class="fab fa-github fa-2x" style="color: #333;"></i>
+</div>
 
-    <button class="btn-save" onclick="guardarSeleccionados()"><i class="fas fa-check"></i> ACTIVAR MÓDULOS SELECCIONADOS</button>
+<div class="controls">
+    <input type="text" id="search-input" placeholder="Filtrar archivos encontrados..." onkeyup="filtrar()">
+    <button class="btn-scan" onclick="escanearRepo()"><i class="fas fa-sync"></i> ESCANEAR</button>
+</div>
+
+<div class="modules-list" id="lista-archivos">
+    <div style="padding: 30px; text-align: center; color: #444;">
+        <i class="fas fa-cloud-download-alt fa-2x"></i><br><br>
+        Presiona ESCANEAR para leer tu repositorio de GitHub
+    </div>
+</div>
+
+<div class="save-bar">
+    <button class="btn-add" onclick="activarSeleccionados()">ACTIVAR MÓDULOS SELECCIONADOS</button>
 </div>
 
 <script>
-    // Tu config de Firebase
+    // CONFIGURACIÓN DE TU REPO (CAMBIA ESTO)
+    const GITHUB_USER = "TU_USUARIO_AQUI"; 
+    const GITHUB_REPO = "NOMBRE_DE_TU_PROYECTO";
+
     const firebaseConfig = {
+        apiKey: "AIzaSyAKPxG1osuR9hsj-PsmwJrzK-3W_XM1UyU",
+        authDomain: "jadi-repaiz.firebaseapp.com",
         databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com",
     };
-    firebase.initializeApp(firebaseConfig);
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // AQUÍ PONES TUS DATOS DE GITHUB
-    const USER = "tu-usuario-github"; // Cambia por tu usuario
-    const REPO = "tu-repositorio";    // Cambia por el nombre de tu repo
-
-    async function escanearGitHub() {
-        const container = document.getElementById('contenedor-archivos');
-        container.innerHTML = "<div style='padding:20px'>Escaneando carpetas...</div>";
+    async function escanearRepo() {
+        const container = document.getElementById('lista-archivos');
+        container.innerHTML = "<div style='padding:20px; text-align:center;'>Buscando archivos en GitHub...</div>";
 
         try {
-            // Buscamos archivos en la raíz y en /admin
-            const rutas = ['', 'admin']; 
-            let todosLosArchivos = [];
+            // Escaneamos Raíz y carpeta Admin
+            const rutas = ['', 'admin'];
+            let encontrados = [];
 
-            for (const ruta of rutas) {
-                const response = await fetch(`https://api.github.com/repos/${USER}/${REPO}/contents/${ruta}`);
-                const data = await response.json();
+            for (const r of rutas) {
+                const res = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/${r}`);
+                const data = await res.json();
                 if(Array.isArray(data)) {
                     data.forEach(item => {
                         if(item.name.endsWith('.html')) {
-                            todosLosArchivos.push({ nombre: item.name, ruta: item.path });
+                            encontrados.push({ nombre: item.name, path: item.path });
                         }
                     });
                 }
             }
 
             container.innerHTML = "";
-            todosLosArchivos.forEach(file => {
+            encontrados.forEach(f => {
                 container.innerHTML += `
-                    <div class="file-item">
-                        <input type="checkbox" class="modulo-check" data-name="${file.nombre}" data-url="${file.ruta}">
+                    <label class="module-item">
+                        <input type="checkbox" class="check-mod" data-url="${f.path}" data-name="${f.nombre}">
                         <i class="far fa-file-code"></i>
-                        <span>${file.ruta}</span>
-                    </div>
+                        <div class="info">${f.path}</div>
+                    </label>
                 `;
             });
 
-        } catch (error) {
-            container.innerHTML = "<div style='color:red; padding:20px'>Error al conectar con GitHub. Verifica el usuario/repo.</div>";
+        } catch (e) {
+            container.innerHTML = "<div style='padding:20px; color:red;'>Error: Verifica el nombre de usuario y el repo en el código.</div>";
         }
     }
 
-    async function guardarSeleccionados() {
-        const checks = document.querySelectorAll('.modulo-check:checked');
-        if(checks.length === 0) return alert("Selecciona al menos un archivo");
+    function activarSeleccionados() {
+        const seleccionados = document.querySelectorAll('.check-mod:checked');
+        if(seleccionados.length === 0) return alert("Selecciona al menos un archivo");
 
-        const promesas = [];
-        checks.forEach(check => {
-            const data = {
-                nombre: check.getAttribute('data-name').replace('.html', '').toUpperCase(),
-                url: check.getAttribute('data-url'),
+        seleccionados.forEach(ch => {
+            const path = ch.getAttribute('data-url');
+            const name = ch.getAttribute('data-name').replace('.html', '').toUpperCase();
+            
+            db.ref('modulos_disponibles').push({
+                nombre: name,
+                url: path,
                 fecha: new Date().toISOString()
-            };
-            // Guardamos en Firebase
-            promesas.push(db.ref('modulos_disponibles').push(data));
+            });
         });
 
-        await Promise.all(promesas);
-        alert("¡Módulos activados con éxito!");
+        alert("¡Módulos sincronizados con Firebase!");
         window.location.href = "dashboard.html";
+    }
+
+    function filtrar() {
+        const val = document.getElementById('search-input').value.toLowerCase();
+        document.querySelectorAll('.module-item').forEach(item => {
+            item.style.display = item.innerText.toLowerCase().includes(val) ? "flex" : "none";
+        });
     }
 </script>
 </body>
