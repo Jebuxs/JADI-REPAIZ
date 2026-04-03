@@ -21,31 +21,15 @@
         .pillar-card h3 { margin: 5px 0; font-size: 0.65rem; color: #888; text-transform: uppercase; }
         .pillar-card span { font-size: 1.2rem; font-weight: bold; }
 
-        /* BOTÓN DE PUBLICIDAD ESTILO MASTER */
-        .ads-control-btn {
-            background: linear-gradient(45deg, #111, #222);
-            border: 1px solid var(--gold);
-            color: var(--gold);
-            width: 100%;
-            padding: 15px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 15px;
-            cursor: pointer;
-            font-weight: bold;
-            margin-bottom: 25px;
-            transition: 0.3s;
-            text-decoration: none;
-        }
-        .ads-control-btn:hover { background: var(--gold); color: black; box-shadow: 0 0 20px rgba(251, 192, 45, 0.3); }
+        /* BOTÓN PUBLICIDAD */
+        .ads-btn { background: #111; border: 1px dashed var(--gold); color: var(--gold); width: 100%; padding: 12px; border-radius: 10px; cursor: pointer; margin-bottom: 20px; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 10px; text-decoration: none; transition: 0.3s; }
+        .ads-btn:hover { background: var(--gold); color: black; border-style: solid; }
 
         /* Secciones de Control */
         .admin-section { background: var(--card); border-radius: 15px; padding: 20px; border: 1px solid #222; margin-bottom: 25px; }
         .admin-section h2 { color: var(--gold); font-size: 1rem; margin-top: 0; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #222; padding-bottom: 10px; }
 
-        /* Explorador de Archivos */
+        /* Explorador de Archivos Estilo GitHub */
         #github-explorer { display: none; margin-top: 15px; }
         .file-row { display: flex; align-items: center; padding: 10px; border-bottom: 1px solid #222; font-size: 0.85rem; text-decoration: none; color: #aaa; }
         .file-row:hover { background: #161b22; color: var(--gold); }
@@ -55,11 +39,14 @@
         table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.8rem; }
         th { text-align: left; color: #555; padding: 10px; border-bottom: 1px solid #333; }
         td { padding: 10px; border-bottom: 1px solid #222; }
+        .badge { padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; }
+        .badge-adm { background: #fbc02d33; color: var(--gold); }
+        .badge-user { background: #333; color: #aaa; }
 
-        /* Barra Inferior Maestro */
-        .quick-nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.9); padding: 12px 30px; border-radius: 50px; border: 1px solid var(--gold); display: flex; gap: 25px; backdrop-filter: blur(10px); z-index: 2000; }
-        .nav-item { color: #fff; font-size: 1.2rem; text-decoration: none; opacity: 0.6; transition: 0.3s; }
-        .nav-item:hover, .nav-item.active { opacity: 1; color: var(--gold); transform: scale(1.1); }
+        /* Barra Inferior */
+        .quick-nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.9); padding: 12px 30px; border-radius: 50px; border: 1px solid var(--gold); display: flex; gap: 25px; backdrop-filter: blur(10px); z-index: 1000; }
+        .nav-item { color: #fff; font-size: 1.2rem; text-decoration: none; opacity: 0.6; }
+        .nav-item:hover, .nav-item.active { opacity: 1; color: var(--gold); }
     </style>
 </head>
 <body>
@@ -77,3 +64,142 @@
     <div class="pillar-card"><i class="fas fa-users"></i><h3>CLIENTES</h3><span id="count-cln">0</span></div>
     <div class="pillar-card"><i class="fas fa-store"></i><h3>TIENDAS</h3><span id="count-shp">0</span></div>
     <div class="pillar-card"><i class="fas fa-truck"></i><h3>DELIVERY</h3><span id="count-dlv">0</span></div>
+    <div class="pillar-card"><i class="fas fa-box-open"></i><h3>PROV</h3><span id="count-prv">0</span></div>
+</div>
+
+<a href="publicidad.html" class="ads-btn">
+    <i class="fas fa-bullhorn"></i> GESTIONAR PUBLICIDAD DEL INDEX
+</a>
+
+<div class="admin-section">
+    <h2><i class="fas fa-user-shield"></i> CONTROL DE ACCESOS</h2>
+    <div style="overflow-x: auto;">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID / NOMBRE</th>
+                    <th>ROL</th>
+                    <th>TELÉFONO</th>
+                    <th>ACCIÓN</th>
+                </tr>
+            </thead>
+            <tbody id="tabla-usuarios-body">
+                </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="admin-section" id="github-explorer">
+    <h2><i class="fab fa-github"></i> ESTRUCTURA DE ARCHIVOS JADI</h2>
+    <div id="lista-archivos">
+        <div class="file-row"><i class="fas fa-folder-open"></i> public / root</div>
+        <div id="archivos-dinamicos"></div>
+    </div>
+</div>
+
+<div class="quick-nav">
+    <a href="dashboard.html" class="nav-item active"><i class="fas fa-chart-line"></i></a>
+    <a href="publicidad.html" class="nav-item"><i class="fas fa-ad"></i></a>
+    <a href="../index.html" class="nav-item"><i class="fas fa-eye"></i></a>
+    <a href="config.html" class="nav-item"><i class="fas fa-tools"></i></a>
+</div>
+
+<script>
+    const SUPER_ADMIN_UID = "ADM000000001"; // Pon aquí tu ID de Admin real
+    
+    const firebaseConfig = {
+        apiKey: "AIzaSyAKPxG1osuR9hsj-PsmwJrzK-3W_XM1UyU",
+        authDomain: "jadi-repaiz.firebaseapp.com",
+        databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com",
+    };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const auth = firebase.auth();
+
+    async function validarAdmin() {
+        const session = JSON.parse(localStorage.getItem('session_jadi'));
+        if(!session || session.rolCodigo !== 'ADM') {
+            window.location.href = "../login.html";
+            return;
+        }
+
+        db.ref('usuarios/' + session.uid).on('value', snap => {
+            if(!snap.exists()){ cerrarSesion(); return; }
+            const u = snap.val();
+            document.getElementById('admin-name').innerText = "SÚPER ADMIN: " + u.nombre.toUpperCase();
+            
+            // Si el ID coincide, mostramos el explorador de archivos
+            if(u.uid === SUPER_ADMIN_UID) {
+                document.getElementById('github-explorer').style.display = 'block';
+                cargarExplorador();
+            }
+        });
+
+        cargarMetricasGlobales();
+        cargarListaUsuarios();
+    }
+
+    function cargarMetricasGlobales() {
+        db.ref('usuarios').on('value', snap => {
+            let counts = { ZPT:0, CLN:0, SHP:0, DLV:0, PRV:0 };
+            snap.forEach(child => {
+                const user = child.val();
+                if(counts[user.rolCodigo] !== undefined) counts[user.rolCodigo]++;
+            });
+            document.getElementById('count-zpt').innerText = counts.ZPT;
+            document.getElementById('count-cln').innerText = counts.CLN;
+            document.getElementById('count-shp').innerText = counts.SHP;
+            document.getElementById('count-dlv').innerText = counts.DLV;
+            document.getElementById('count-prv').innerText = counts.PRV;
+        });
+    }
+
+    function cargarListaUsuarios() {
+        db.ref('usuarios').limitToLast(10).on('value', snap => {
+            const tbody = document.getElementById('tabla-usuarios-body');
+            tbody.innerHTML = "";
+            snap.forEach(child => {
+                const u = child.val();
+                tbody.innerHTML += `
+                    <tr>
+                        <td>
+                            <div style="font-weight:bold; color:white;">${u.nombre}</div>
+                            <div style="font-size:0.7rem; color:#555;">${u.uid}</div>
+                        </td>
+                        <td><span class="badge ${u.rolCodigo==='ADM'?'badge-adm':'badge-user'}">${u.rolCodigo}</span></td>
+                        <td style="color:#888;">${u.telefono || '---'}</td>
+                        <td><button style="background:none; border:none; color:var(--gold); cursor:pointer;"><i class="fas fa-edit"></i></button></td>
+                    </tr>
+                `;
+            });
+        });
+    }
+
+    function cargarExplorador() {
+        // Esto lee una rama donde puedes listar tus archivos si quieres
+        db.ref('modulos_disponibles').on('value', snap => {
+            const container = document.getElementById('archivos-dinamicos');
+            container.innerHTML = "";
+            snap.forEach(child => {
+                const m = child.val();
+                container.innerHTML += `
+                    <a href="../${m.url}" class="file-row">
+                        <i class="far fa-file-code"></i>
+                        <span>${m.url}</span>
+                        <span style="margin-left:auto; font-size:0.6rem; opacity:0.5;">${m.nombre}</span>
+                    </a>
+                `;
+            });
+        });
+    }
+
+    function cerrarSesion() {
+        auth.signOut();
+        localStorage.removeItem('session_jadi');
+        window.location.href = "../login.html";
+    }
+
+    validarAdmin();
+</script>
+</body>
+</html>
