@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JADI - Gestión de Publicidad</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --gold: #fbc02d; --dark: #000; --card: #111; }
+        body { font-family: sans-serif; background: var(--dark); color: white; margin: 0; padding: 20px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 1px solid #222; padding-bottom: 10px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .card { background: var(--card); padding: 20px; border-radius: 15px; border: 1px solid #222; }
+        .card h3 { color: var(--gold); margin-top: 0; }
+        .preview { width: 100%; height: 120px; background: #222; border-radius: 10px; margin: 10px 0; object-fit: cover; }
+        input { width: 100%; padding: 12px; margin: 8px 0; background: #000; border: 1px solid #333; color: white; border-radius: 8px; box-sizing: border-box; }
+        .btn-save { width: 100%; padding: 12px; background: var(--gold); border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn-save:hover { background: #f9a825; }
+        .back-link { color: var(--gold); text-decoration: none; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div>
+        <a href="dashboard.html" class="back-link"><i class="fas fa-arrow-left"></i> Volver al Panel</a>
+        <h1>Gestión de Banners e Imágenes</h1>
+    </div>
+    <i class="fas fa-ad fa-2x" style="color:var(--gold)"></i>
+</div>
+
+<div class="grid">
+    <div class="card">
+        <h3>Banner Principal (Hero)</h3>
+        <img id="prev-hero" class="preview" src="" alt="Vista previa">
+        <label>URL de la Imagen:</label>
+        <input type="text" id="url-hero" placeholder="https://imagen-zapato-fondo.jpg">
+        <label>Título Principal:</label>
+        <input type="text" id="tit-hero" placeholder="Ej: Dales una segunda vida">
+        <button class="btn-save" onclick="guardarPublicidad('hero')">Actualizar Hero</button>
+    </div>
+
+    <div class="card">
+        <h3>Publicidad 1 (Izquierda)</h3>
+        <img id="prev-ad1" class="preview" src="" alt="Vista previa">
+        <label>URL de la Imagen:</label>
+        <input type="text" id="url-ad1" placeholder="URL de la imagen">
+        <label>Texto del Botón:</label>
+        <input type="text" id="tit-ad1" placeholder="Ej: LIMPIEZA PREMIUM">
+        <button class="btn-save" onclick="guardarPublicidad('ad1')">Actualizar Banner 1</button>
+    </div>
+
+    <div class="card">
+        <h3>Publicidad 2 (Derecha)</h3>
+        <img id="prev-ad2" class="preview" src="" alt="Vista previa">
+        <label>URL de la Imagen:</label>
+        <input type="text" id="url-ad2" placeholder="URL de la imagen">
+        <label>Texto del Botón:</label>
+        <input type="text" id="tit-ad2" placeholder="Ej: CAMBIO DE SUELAS">
+        <button class="btn-save" onclick="guardarPublicidad('ad2')">Actualizar Banner 2</button>
+    </div>
+</div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyAKPxG1osuR9hsj-PsmwJrzK-3W_XM1UyU",
+        authDomain: "jadi-repaiz.firebaseapp.com",
+        databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com",
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // Cargar datos actuales al abrir
+    async function cargarDatos() {
+        const snap = await db.ref('configuracion/publicidad').once('value');
+        if(snap.exists()){
+            const d = snap.val();
+            // Hero
+            if(d.hero) {
+                document.getElementById('url-hero').value = d.hero.url;
+                document.getElementById('tit-hero').value = d.hero.titulo;
+                document.getElementById('prev-hero').src = d.hero.url;
+            }
+            // Ad 1
+            if(d.ad1) {
+                document.getElementById('url-ad1').value = d.ad1.url;
+                document.getElementById('tit-ad1').value = d.ad1.titulo;
+                document.getElementById('prev-ad1').src = d.ad1.url;
+            }
+            // Ad 2
+            if(d.ad2) {
+                document.getElementById('url-ad2').value = d.ad2.url;
+                document.getElementById('tit-ad2').value = d.ad2.titulo;
+                document.getElementById('prev-ad2').src = d.ad2.url;
+            }
+        }
+    }
+
+    async function guardarPublicidad(seccion) {
+        const url = document.getElementById('url-' + seccion).value;
+        const titulo = document.getElementById('tit-' + seccion).value;
+
+        if(!url) return alert("La URL es necesaria");
+
+        try {
+            await db.ref('configuracion/publicidad/' + seccion).set({
+                url: url,
+                titulo: titulo,
+                fechaActualizacion: new Date().toISOString()
+            });
+            document.getElementById('prev-' + seccion).src = url;
+            alert("¡Publicidad de " + seccion + " actualizada!");
+        } catch(e) { alert("Error al guardar"); }
+    }
+
+    window.onload = cargarDatos;
+</script>
+</body>
+</html>
