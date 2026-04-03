@@ -3,51 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sincronizador JADI</title>
+    <title>Sincronizador JADI - GitHub a Firebase</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --gold: #fbc02d; --dark: #000; }
+        :root { --gold: #fbc02d; --dark: #000; --card: #0d1117; }
         body { background: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; padding-bottom: 90px; }
         .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; border-bottom: 1px solid #222; padding-bottom: 15px; }
         .back-btn { color: var(--gold); text-decoration: none; border: 1px solid #333; padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; }
-        .search-box { display: flex; gap: 10px; margin-bottom: 20px; }
+        .controls { display: flex; gap: 10px; margin-bottom: 20px; }
         #search-input { flex-grow: 1; padding: 12px; background: #111; border: 1px solid #333; color: white; border-radius: 8px; }
         .btn-scan { background: #238636; color: white; border: none; padding: 0 20px; border-radius: 8px; cursor: pointer; font-weight: bold; }
-        .modules-container { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; overflow: hidden; min-height: 200px; }
-        .module-row { display: flex; align-items: center; padding: 12px 15px; border-bottom: 1px solid #21262d; cursor: pointer; }
-        .module-row:hover { background: #161b22; }
-        .module-row input[type="checkbox"] { margin-right: 15px; width: 18px; height: 18px; accent-color: var(--gold); }
-        .module-row span { font-size: 0.9rem; color: #c9d1d9; flex-grow: 1; }
-        .footer-action { position: fixed; bottom: 0; left: 0; right: 0; background: #161b22; padding: 15px; border-top: 1px solid var(--gold); text-align: center; }
-        .btn-save { background: var(--gold); border: none; padding: 12px 50px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .list-container { background: var(--card); border: 1px solid #30363d; border-radius: 8px; overflow: hidden; }
+        .row { display: flex; align-items: center; padding: 12px 15px; border-bottom: 1px solid #21262d; cursor: pointer; transition: 0.2s; }
+        .row:hover { background: #161b22; }
+        .row input[type="checkbox"] { margin-right: 15px; width: 18px; height: 18px; accent-color: var(--gold); }
+        .row span { font-size: 0.9rem; color: #c9d1d9; flex-grow: 1; }
+        .footer { position: fixed; bottom: 0; left: 0; right: 0; background: #161b22; padding: 15px; border-top: 1px solid var(--gold); text-align: center; }
+        .btn-save { background: var(--gold); border: none; padding: 12px 50px; border-radius: 8px; font-weight: bold; cursor: pointer; color: black; }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <a href="dashboard.html" class="back-btn"><i class="fas fa-chevron-left"></i> DASHBOARD</a>
-    <h2 style="margin:0; font-size: 1rem; color: var(--gold);">DIRECTORIO GITHUB</h2>
+    <a href="dashboard.html" class="back-btn"><i class="fas fa-chevron-left"></i> VOLVER AL DASHBOARD</a>
+    <h2 style="margin:0; font-size: 1rem; color: var(--gold);">CONFIGURACIÓN DE MÓDULOS</h2>
 </div>
 
-<div class="search-box">
-    <input type="text" id="search-input" placeholder="Filtrar archivos..." onkeyup="filtrar()">
+<div class="controls">
+    <input type="text" id="search-input" placeholder="Filtrar archivos encontrados..." onkeyup="filtrar()">
     <button class="btn-scan" onclick="escanear()"><i class="fas fa-sync-alt"></i> ESCANEAR REPO</button>
 </div>
 
-<div id="lista-archivos" class="modules-container">
-    <div style="padding: 40px; text-align: center; color: #555;">
-        Presiona ESCANEAR para conectar con tu cuenta de Jebuxs
+<div class="list-container" id="lista-archivos">
+    <div style="padding: 40px; text-align: center; color: #444;">
+        <i class="fab fa-github fa-3x"></i><br><br>
+        Presiona ESCANEAR para buscar archivos en Jebuxs/JADI-REPAIZ
     </div>
 </div>
 
-<div class="footer-action">
-    <button class="btn-save" onclick="activarSeleccionados()">ACTIVAR SELECCIONADOS</button>
+<div class="footer">
+    <button class="btn-save" onclick="activarSeleccionados()">REGISTRAR EN BASE DE DATOS</button>
 </div>
 
 <script>
-    // CORREGIDO SEGÚN TUS IMÁGENES
+    // CONFIGURACIÓN GITHUB Y FIREBASE
     const GITHUB_USER = "Jebuxs"; 
     const GITHUB_REPO = "JADI-REPAIZ"; 
 
@@ -59,72 +60,81 @@
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
+    // 1. ESCANEAR ARCHIVOS
     async function escanear() {
         const list = document.getElementById('lista-archivos');
-        list.innerHTML = "<div style='padding:20px; text-align:center;'>Buscando en JADI-REPAIZ...</div>";
+        list.innerHTML = "<div style='padding:20px; text-align:center;'>Escaneando repositorio...</div>";
 
         try {
-            // Buscamos dentro de la carpeta 'public' que es donde tienes todo
             const url = `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/git/trees/main?recursive=1`;
             const res = await fetch(url);
             const data = await res.json();
 
-            if(!data.tree) throw new Error("Error de conexión");
-
-            // Solo mostramos los archivos .html que están dentro de /public
-            const htmlFiles = data.tree.filter(file => 
-                file.path.startsWith('public/') && file.path.endsWith('.html')
-            );
+            // Filtramos solo HTML que estén dentro de la carpeta public/
+            const archivos = data.tree.filter(f => f.path.startsWith('public/') && f.path.endsWith('.html'));
 
             list.innerHTML = "";
-            if(htmlFiles.length === 0) {
-                list.innerHTML = "<div style='padding:20px; text-align:center;'>No se encontraron archivos HTML en /public</div>";
-                return;
-            }
-
-            htmlFiles.forEach(file => {
-                // Limpiamos la ruta para que solo se vea desde public en adelante
-                const cleanPath = file.path.replace('public/', '');
+            archivos.forEach(f => {
+                const rutaLimpia = f.path.replace('public/', '');
                 list.innerHTML += `
-                    <label class="module-row">
-                        <input type="checkbox" class="mod-check" data-path="${cleanPath}">
+                    <label class="row">
+                        <input type="checkbox" class="mod-check" data-path="${rutaLimpia}">
                         <i class="far fa-file-code" style="margin-right:10px; color:#8b949e;"></i>
-                        <span>${cleanPath}</span>
+                        <span>${rutaLimpia}</span>
                     </label>
                 `;
             });
-
         } catch (e) {
-            list.innerHTML = `<div style="padding:20px; color:#ff4444; text-align:center;">
-                Error: No se pudo conectar.<br>
-                <small>Asegúrate de que el repo sea PÚBLICO.</small>
-            </div>`;
+            list.innerHTML = "<div style='padding:20px; color:red; text-align:center;'>Error al conectar con GitHub.</div>";
         }
     }
 
+    // 2. GENERAR ID PERSONALIZADO (ConsonantesCarpeta_mdl_Nombre)
+    function generarIdPersonalizado(path) {
+        const partes = path.split('/');
+        const archivo = partes.pop().replace('.html', '');
+        let carpeta = partes.length > 0 ? partes[0] : 'root';
+
+        // Extraer consonantes (Quita a,e,i,o,u y símbolos)
+        const consonantes = carpeta.match(/[^aeiou\W]/gi)?.join('').toLowerCase() || 'rt';
+        
+        return `${consonantes}_mdl_${archivo}`;
+    }
+
+    // 3. GUARDAR EN FIREBASE SIN IDs ALEATORIOS
     function activarSeleccionados() {
         const seleccionados = document.querySelectorAll('.mod-check:checked');
         if(seleccionados.length === 0) return alert("Selecciona al menos un archivo");
 
-        seleccionados.forEach(item => {
-            const path = item.getAttribute('data-path');
-            const name = path.split('/').pop().replace('.html', '').toUpperCase();
+        const batch = {};
 
-            db.ref('modulos_disponibles').push({
-                nombre: name,
+        seleccionados.forEach(item => {
+            const path = item.getAttribute('data-path'); // ej: admin/dashboard.html
+            const customId = generarIdPersonalizado(path);
+            const label = path.split('/').pop().replace('.html', '').toUpperCase();
+
+            // Guardamos con el ID manual que tú pediste
+            batch[customId] = {
+                nombre: label,
                 url: path,
-                fecha: new Date().toISOString()
-            });
+                id_custom: customId,
+                fecha_registro: new Date().toLocaleString()
+            };
         });
 
-        alert("¡Módulos agregados!");
-        window.location.href = "dashboard.html";
+        // .update guarda todo usando los IDs como nombres de carpeta
+        db.ref('modulos_disponibles').update(batch)
+            .then(() => {
+                alert("¡Módulos registrados correctamente en Firebase!");
+                window.location.href = "dashboard.html";
+            })
+            .catch(err => alert("Error al guardar: " + err.message));
     }
 
     function filtrar() {
-        const query = document.getElementById('search-input').value.toLowerCase();
-        document.querySelectorAll('.module-row').forEach(row => {
-            row.style.display = row.innerText.toLowerCase().includes(query) ? "flex" : "none";
+        const q = document.getElementById('search-input').value.toLowerCase();
+        document.querySelectorAll('.row').forEach(r => {
+            r.style.display = r.innerText.toLowerCase().includes(q) ? "flex" : "none";
         });
     }
 </script>
