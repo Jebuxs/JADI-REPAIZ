@@ -6,38 +6,34 @@
     <title>JADI REPAIZ - Cuidamos tus Pasos</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --gold: #fbc02d; --dark: #000; --glass: rgba(255, 255, 255, 0.1); }
+        :root { --gold: #fbc02d; --dark: #000; }
         body { margin: 0; padding: 0; background: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; overflow-x: hidden; }
 
-        /* NAVBAR TRANSPARENTE */
-        nav { position: fixed; top: 0; width: 100%; padding: 20px; display: flex; justify-content: space-between; align-items: center; z-index: 1000; box-sizing: border-box; background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent); }
+        /* NAVBAR */
+        nav { position: fixed; top: 0; width: 100%; padding: 20px; display: flex; justify-content: space-between; align-items: center; z-index: 1000; box-sizing: border-box; background: linear-gradient(to bottom, rgba(0,0,0,0.9), transparent); }
         .logo { font-weight: bold; color: var(--gold); font-size: 1.5rem; letter-spacing: 2px; }
-        
-        /* BOTÓN REDIRECCIONADO */
         .btn-entrar { background: var(--gold); color: black; padding: 10px 25px; border-radius: 50px; text-decoration: none; font-weight: bold; font-size: 0.9rem; transition: 0.3s; }
-        .btn-entrar:hover { transform: scale(1.05); box-shadow: 0 0 15px rgba(251, 192, 45, 0.4); }
 
-        /* HERO SECTION */
+        /* HERO */
         .hero { height: 85vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?auto=format&fit=crop&q=80&w=1500') center/cover; }
-        .hero h1 { font-size: 3.5rem; margin: 0; color: white; text-transform: uppercase; font-weight: 900; letter-spacing: -2px; }
-        .hero p { color: var(--gold); font-size: 1.1rem; letter-spacing: 5px; text-transform: uppercase; margin-bottom: 10px; }
+        .hero h1 { font-size: 3.5rem; margin: 0; text-transform: uppercase; font-weight: 900; }
+        .hero p { color: var(--gold); font-size: 1.1rem; letter-spacing: 5px; text-transform: uppercase; }
 
-        /* CARRUSEL DE MARCAS */
-        .brands-section { background: #050505; padding: 30px 0; border-top: 1px solid #222; border-bottom: 1px solid #222; overflow: hidden; }
+        /* MARCAS */
+        .brands-section { background: #050505; padding: 30px 0; border-top: 1px solid #222; overflow: hidden; }
         .brands-track { display: flex; width: calc(250px * 10); animation: scroll 25s linear infinite; }
-        .brand-item { width: 250px; display: flex; align-items: center; justify-content: center; color: #333; font-size: 1.5rem; font-weight: bold; transition: 0.3s; }
-        .brand-item:hover { color: var(--gold); }
+        .brand-item { width: 250px; display: flex; align-items: center; justify-content: center; color: #333; font-size: 1.5rem; font-weight: bold; }
         @keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(calc(-250px * 5)); } }
 
-        /* BANNERS PUBLICITARIOS */
-        .ads-container { padding: 60px 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 25px; max-width: 1200px; margin: auto; }
-        .ad-banner { background: #111; height: 250px; border-radius: 20px; border: 1px solid #222; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; cursor: pointer; }
-        .ad-banner img { width: 100%; height: 100%; object-fit: cover; opacity: 0.4; transition: 0.6s ease; }
+        /* BANNERS */
+        .ads-container { padding: 60px 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; max-width: 1200px; margin: auto; }
+        .ad-banner { background: #111; height: 250px; border-radius: 20px; border: 1px solid #222; position: relative; overflow: hidden; cursor: pointer; }
+        .ad-banner img { width: 100%; height: 100%; object-fit: cover; opacity: 0.4; transition: 0.5s; }
         .ad-banner:hover img { opacity: 0.7; transform: scale(1.1); }
-        .ad-label { position: absolute; top: 20px; right: 20px; background: var(--gold); color: black; font-size: 0.65rem; padding: 4px 12px; font-weight: bold; border-radius: 50px; text-transform: uppercase; }
-        .ad-title { position: absolute; bottom: 25px; left: 25px; color: white; font-size: 1.2rem; font-weight: bold; text-shadow: 2px 2px 10px rgba(0,0,0,0.8); }
+        .ad-label { position: absolute; top: 20px; right: 20px; background: var(--gold); color: black; font-size: 0.65rem; padding: 4px 12px; font-weight: bold; border-radius: 50px; }
+        .ad-title { position: absolute; bottom: 25px; left: 25px; color: white; font-size: 1.2rem; font-weight: bold; }
 
-        footer { padding: 60px; text-align: center; color: #333; font-size: 0.75rem; border-top: 1px solid #0a0a0a; letter-spacing: 1px; }
+        footer { padding: 40px; text-align: center; color: #333; font-size: 0.75rem; border-top: 1px solid #111; }
     </style>
 </head>
 <body>
@@ -50,41 +46,33 @@
     <section class="hero">
         <p>Expertos en Calzado</p>
         <h1>Dales una segunda vida</h1>
-        <a href="login.html" style="margin-top:25px; padding: 15px 35px; background:none; border:2px solid var(--gold); color:var(--gold); border-radius:50px; font-weight:bold; cursor:pointer; text-decoration:none; transition:0.3s;">
-            PEDIR REPARACIÓN
+        <a href="login.html" style="margin-top:25px; padding: 15px 35px; border:2px solid var(--gold); color:var(--gold); border-radius:50px; font-weight:bold; text-decoration:none;">
+            EMPEZAR AHORA
         </a>
     </section>
 
     <div class="brands-section">
         <div class="brands-track">
-            <div class="brand-item">NIKE</div>
-            <div class="brand-item">ADIDAS</div>
-            <div class="brand-item">PUMA</div>
-            <div class="brand-item">JORDAN</div>
-            <div class="brand-item">TIMBERLAND</div>
-            <div class="brand-item">NIKE</div>
-            <div class="brand-item">ADIDAS</div>
-            <div class="brand-item">PUMA</div>
-            <div class="brand-item">JORDAN</div>
-            <div class="brand-item">TIMBERLAND</div>
+            <div class="brand-item">NIKE</div><div class="brand-item">ADIDAS</div><div class="brand-item">PUMA</div><div class="brand-item">JORDAN</div><div class="brand-item">TIMBERLAND</div>
+            <div class="brand-item">NIKE</div><div class="brand-item">ADIDAS</div><div class="brand-item">PUMA</div><div class="brand-item">JORDAN</div><div class="brand-item">TIMBERLAND</div>
         </div>
     </div>
 
     <div class="ads-container">
-        <div class="ad-banner" onclick="window.location.href='login.html'">
-            <img src="https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&q=60&w=500" alt="Promo">
-            <span class="ad-label">Servicio VIP</span>
+        <div class="ad-banner" onclick="location.href='login.html'">
+            <img src="https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&q=60&w=500">
+            <span class="ad-label">VIP</span>
             <div class="ad-title">LIMPIEZA PREMIUM</div>
         </div>
-        <div class="ad-banner" onclick="window.location.href='login.html'">
-            <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&q=60&w=500" alt="Promo">
-            <span class="ad-label">Oferta</span>
-            <div class="ad-title">CAMBIO DE SUELAS</div>
+        <div class="ad-banner" onclick="location.href='login.html'">
+            <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&q=60&w=500">
+            <span class="ad-label">PROMO</span>
+            <div class="ad-title">RESTAURACIÓN DE SUELAS</div>
         </div>
     </div>
 
     <footer>
-        &copy; 2026 JADI REPAIZ - SOLUTIONS FOR FOOTWEAR. All rights reserved.
+        &copy; 2026 JADI REPAIZ. All rights reserved.
     </footer>
 
 </body>
