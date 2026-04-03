@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orden de Trabajo - JADI REPAIZ</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --gold: #FFD700; --dark: #000; --card: #111; --danger: #ff4444; --success: #00ff00; }
+        body { background: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding-bottom: 80px; }
+        
+        .header { padding: 15px; border-bottom: 1px solid #222; display: flex; align-items: center; background: #050505; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+        .btn-back { color: var(--gold); text-decoration: none; font-size: 1.2rem; }
+
+        .container { padding: 15px; }
+        
+        /* Formulario Estilizado */
+        .seccion-form { background: var(--card); border-radius: 15px; padding: 15px; border: 1px solid #222; margin-bottom: 15px; }
+        label { font-size: 11px; color: var(--gold); margin-bottom: 5px; display: block; text-transform: uppercase; }
+        input, textarea { width: 100%; padding: 12px; margin-bottom: 12px; background: #050505; border: 1px solid #333; color: white; border-radius: 8px; box-sizing: border-box; outline: none; font-size: 16px; }
+        
+        .row-flex { display: flex; gap: 8px; margin-bottom: 10px; align-items: center; }
+        .btn-add { background: #222; color: var(--gold); border: 1px solid var(--gold); border-radius: 8px; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+
+        /* Visor de Items */
+        .item-listado { background: #080808; border-bottom: 1px solid #222; padding: 10px; font-size: 14px; display: flex; justify-content: space-between; }
+        .item-info b { color: var(--gold); }
+        .detalles-mini { font-size: 11px; color: #888; margin-top: 3px; }
+
+        /* Totales */
+        .caja-totales { background: #0a0a0a; padding: 15px; border-radius: 12px; border: 1px solid #333; }
+        #txt-descuento { color: var(--danger); font-size: 12px; font-weight: bold; margin-bottom: 8px; display: none; }
+        .saldo-row { border-top: 1px solid #222; margin-top: 10px; padding-top: 10px; display: flex; justify-content: space-between; color: var(--success); font-weight: bold; }
+
+        .btn-guardar { width: 100%; background: var(--gold); color: black; border: none; padding: 18px; border-radius: 12px; font-weight: bold; font-size: 1rem; cursor: pointer; margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <a href="dashboard.html" class="btn-back"><i class="fas fa-chevron-left"></i></a>
+        <h2 style="margin:0; font-size: 1.1rem; letter-spacing: 1px;">NUEVA ORDEN</h2>
+        <div style="width: 20px;"></div>
+    </div>
+
+    <div class="container">
+        <div class="seccion-form">
+            <label>Celular del Cliente</label>
+            <input type="tel" id="cli-tel" placeholder="099..." onkeyup="buscarCliente(this.value)">
+            <label>Nombre</label>
+            <input type="text" id="cli-nom" placeholder="Nombre completo">
+            <input type="hidden" id="cli-id-db"> </div>
+
+        <div class="seccion-form" id="form-item">
+            <label>¿Qué vamos a reparar?</label>
+            <div class="row-flex">
+                <input type="number" id="item-cant" value="1" style="flex:0.3;">
+                <input type="text" id="item-tipo" placeholder="Ej: Zapato Deportivo" style="flex:2;">
+            </div>
+            
+            <label>Detalles del daño</label>
+            <div class="row-flex">
+                <input type="text" id="item-desc-input" placeholder="Ej: Cambio de suela" style="flex:1; margin-bottom:0;">
+                <div class="btn-add" onclick="acumularDetalle()"><i class="fas fa-plus"></i></div>
+            </div>
+            <textarea id="item-detalles-final" style="min-height:50px; margin-top:10px;" placeholder="Los detalles aparecerán aquí..."></textarea>
+            
+            <label>Precio Unitario $</label>
+            <div class="row-flex">
+                <input type="number" id="item-precio" placeholder="0.00" style="margin-bottom:0;">
+                <button onclick="bajarArticulo()" style="background:var(--gold); border:none; border-radius:8px; height:45px; width:60px; color:black;">
+                    <i class="fas fa-arrow-down"></i>
+                </button>
+            </div>
+        </div>
+
+        <div id="visor-items" style="border-radius:10px; overflow:hidden; margin-bottom:15px;"></div>
+
+        <div class="caja-totales">
+            <div id="txt-descuento">REBAJA: -$0 (0%)</div>
+            <label>Total a Cobrar $</label>
+            <input type="number" id="total-final" value="0" oninput="recalcular()">
+            <label>Abono inicial $</label>
+            <input type="number" id="abono" value="0" oninput="recalcular()">
+            
+            <div class="saldo-row">
+                <span>SALDO PENDIENTE:</span>
+                <span id="txt-saldo">$0.00</span>
+            </div>
+        </div>
+
+        <button class="btn-guardar" onclick="finalizarOrden()">GUARDAR EN JADI REPAIZ</button>
+    </div>
+
+    <script>
+        // CONFIGURACIÓN (Asegúrate de que sea la misma de tu Index)
+        const firebaseConfig = { databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com" };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // Simulamos sesión del zapatero (Esto lo deberías traer de tu login)
+        const session = JSON.parse(localStorage.getItem('session_jadi')) || { uid: "ZPT1", nombre: "Admin" };
+
+        let itemsOrden = [];
+        let sumaOriginal = 0;
+
+        // 1. BUSCAR CLIENTE Y OBTENER SU ID LIMPIO
+        function buscarCliente(tel) {
+            if(tel.length < 9) return;
+            db.ref('usuarios').orderByChild('telefono').equalTo(tel).once('value', snap => {
+                if(snap.exists()){
+                    const key = Object.keys(snap.val())[0];
+                    const u = snap.val()[key];
+                    document.getElementById('cli-nom').value = u.nombre;
+                    // Guardamos el ID limpio (ej: CLN5)
+                    document.getElementById('cli-id-db').value = u.clienteID || key;
+                }
+            });
+        }
+
+        // 2. LÓGICA DE ITEMS
+        function acumularDetalle() {
+            const input = document.getElementById('item-desc-input');
+            const area = document.getElementById('item-detalles-final');
+            if(!input.value) return;
+            area.value += (area.value ? "\n" : "") + "- " + input.value;
+            input.value = ""; input.focus();
+        }
+
+        function bajarArticulo() {
+            const tipo = document.getElementById('item-tipo').value;
+            const precio = parseFloat(document.getElementById('item-precio').value) || 0;
+            if(!tipo) return alert("¿Qué artículo es?");
+
+            itemsOrden.push({
+                cant: document.getElementById('item-cant').value,
+                tipo: tipo,
+                detalles: document.getElementById('item-detalles-final').value,
+                precio: precio
+            });
+            renderizar();
+            limpiarFormItem();
+        }
+
+        function renderizar() {
+            const visor = document.getElementById('visor-items');
+            visor.innerHTML = "";
+            sumaOriginal = 0;
+            itemsOrden.forEach((it, idx) => {
+                sumaOriginal += it.precio;
+                visor.innerHTML += `
+                    <div class="item-listado">
+                        <div class="item-info">
+                            <b>${it.cant} ${it.tipo}</b> - $${it.precio}
+                            <div class="detalles-mini">${it.detalles}</div>
+                        </div>
+                        <i class="fas fa-times" style="color:red" onclick="borrarItem(${idx})"></i>
+                    </div>`;
+            });
+            document.getElementById('total-final').value = sumaOriginal;
+            recalcular();
+        }
+
+        function recalcular() {
+            const cobrado = parseFloat(document.getElementById('total-final').value) || 0;
+            const abono = parseFloat(document.getElementById('abono').value) || 0;
+            
+            // Lógica Descuento
+            const descDiv = document.getElementById('txt-descuento');
+            if(cobrado < sumaOriginal) {
+                const diff = sumaOriginal - cobrado;
+                const porc = ((diff/sumaOriginal)*100).toFixed(1);
+                descDiv.innerHTML = `REBAJA: -$${diff.toFixed(2)} (${porc}%)`;
+                descDiv.style.display = "block";
+            } else { descDiv.style.display = "none"; }
+
+            // Saldo
+            document.getElementById('txt-saldo').innerText = "$" + (cobrado - abono).toFixed(2);
+        }
+
+        // 3. GUARDAR CON NOMENCLATURA ZPT-CLN-NUM (SIN CEROS)
+        async function finalizarOrden() {
+            const cliID = document.getElementById('cli-id-db').value || "PROVISIONAL";
+            const zapID = session.uid; // Ej: ZPT1
+
+            if(itemsOrden.length === 0) return alert("Agrega trabajos a la lista");
+
+            // Obtener el número de trabajo para este zapatero específico
+            // Usamos una transacción para que el contador sea exacto
+            const contadorRef = db.ref(`contadores_trabajos/${zapID}`);
+            const result = await contadorRef.transaction(current => (current || 0) + 1);
+            const numTrabajo = result.snapshot.val();
+
+            // ARMAR EL NOMBRE DE LA CARPETA (Ruta Relacional)
+            // Ejemplo: ZPT1-CLN5-1
+            const nombreCarpeta = `${zapID}-${cliID}-${numTrabajo}`;
+
+            const data = {
+                ordenID: nombreCarpeta,
+                zapateroId: zapID,
+                clienteId: cliID,
+                clienteNombre: document.getElementById('cli-nom').value,
+                items: itemsOrden,
+                subtotal: sumaOriginal,
+                precioFinal: parseFloat(document.getElementById('total-final').value),
+                abono: parseFloat(document.getElementById('abono').value),
+                saldo: parseFloat(document.getElementById('total-final').value) - parseFloat(document.getElementById('abono').value),
+                fecha: new Date().toLocaleString(),
+                timestamp: Date.now()
+            };
+
+            await db.ref('trabajos/' + nombreCarpeta).set(data);
+            
+            alert("¡Orden Guardada! ID: " + nombreCarpeta);
+            location.reload(); // Limpiar todo para la siguiente
+        }
+
+        function limpiarFormItem() {
+            document.getElementById('item-tipo').value = "";
+            document.getElementById('item-detalles-final').value = "";
+            document.getElementById('item-precio').value = "";
+            document.getElementById('item-cant').value = "1";
+        }
+
+        function borrarItem(idx) {
+            itemsOrden.splice(idx, 1);
+            renderizar();
+        }
+    </script>
+</body>
+</html>
