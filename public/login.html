@@ -1,0 +1,111 @@
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyAKPxG1osuR9hsj-PsmwJrzK-3W_XM1UyU",
+        authDomain: "jadi-repaiz.firebaseapp.com",
+        databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com",
+    };
+
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const auth = firebase.auth();
+
+    // --- MAPA DE RUTAS ACTUALIZADO A CARPETAS ---
+    const paginasMaster = { 
+        'ZPT': 'zapatero/dashboard.html', 
+        'PRV': 'proveedores/dashboard.html', 
+        'CLN': 'cliente/dashboard.html', 
+        'DLV': 'movilidad/dashboard.html', // Cambiado a movilidad según tu última instrucción
+        'SHP': 'tiendas/dashboard.html', 
+        'ADM': 'admin/dashboard.html' 
+    };
+
+    // --- ACCESO MAESTRO (Tu llave oculta) ---
+    document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey && e.altKey && e.key.toLowerCase() === 'j') {
+            alert("¡MODO CONSTRUCTOR JADI ACTIVADO!");
+            mostrarVista('view-register');
+            document.getElementById('opt-admin').style.display = 'block';
+            document.getElementById('reg-rol').value = 'ADM';
+        }
+    });
+
+    // --- LÓGICA DE REDIRECCIÓN CENTRALIZADA ---
+    function dirigirAUsuario(userObj) {
+        const destino = paginasMaster[userObj.rolCodigo] || 'index.html';
+        localStorage.setItem('session_jadi', JSON.stringify(userObj));
+        window.location.href = destino;
+    }
+
+    async function login() {
+        const input = document.getElementById('login-input').value.trim();
+        const pass = document.getElementById('login-pass').value;
+        if(!input || !pass) return alert("Ingresa tus credenciales");
+
+        toggleLoader(true);
+        try {
+            // Buscamos al usuario por ID, Email o Celular
+            const snap = await db.ref('usuarios').once('value');
+            let uFound = null;
+            snap.forEach(c => {
+                const u = c.val();
+                if(u.uid === input || u.email === input || u.telefono === input) uFound = u;
+            });
+
+            if(uFound && (uFound.pass === pass || uFound.pass === "G_AUTH")) {
+                dirigirAUsuario(uFound);
+            } else {
+                alert("Usuario o contraseña no coinciden");
+            }
+        } catch(e) { alert("Error de conexión"); } finally { toggleLoader(false); }
+    }
+
+    // --- REGISTRO CON GENERACIÓN DE ID ÚNICO (ZPT000000001, etc) ---
+    async function validarYCrearEcosistema() {
+        const n = document.getElementById('reg-name').value;
+        const em = document.getElementById('reg-email').value;
+        const t = document.getElementById('reg-tel').value;
+        const r = document.getElementById('reg-rol').value;
+        const p = document.getElementById('reg-pass').value;
+
+        if(!n || !em || !t || !r || !p) return alert("Faltan datos");
+
+        toggleLoader(true);
+        try {
+            // 1. Verificar si el teléfono ya existe
+            const snapExistente = await db.ref('usuarios').orderByChild('telefono').equalTo(t).once('value');
+            let finalUID;
+
+            if(snapExistente.exists()){
+                // Si existe, actualizamos su rol y datos
+                snapExistente.forEach(child => { finalUID = child.key; });
+                const updateObj = { 
+                    nombre: n, email: em, pass: p, 
+                    verificado: true, rolCodigo: r, 
+                    empresaNombre: document.getElementById('reg-empresa-nombre').value || "JADI REPAIZ" 
+                };
+                await db.ref('usuarios/' + finalUID).update(updateObj);
+            } else {
+                // 2. Si es nuevo, generamos el ID autoincremental por ROL
+                const snapC = await db.ref('contadores/' + r).once('value');
+                let num = (snapC.val() || 0) + 1;
+                finalUID = r + num.toString().padStart(9,'0'); // Ej: ZPT000000001
+                
+                const nuevoObj = { 
+                    nombre: n, email: em, telefono: t, 
+                    rolCodigo: r, uid: finalUID, pass: p, 
+                    verificado: true, 
+                    empresaNombre: document.getElementById('reg-empresa-nombre').value || "JADI REPAIZ" 
+                };
+                await db.ref('usuarios/' + finalUID).set(nuevoObj);
+                await db.ref('contadores/' + r).set(num); // Guardamos el nuevo número del contador
+            }
+            
+            // 3. Mandar al Dashboard correspondiente
+            const fullUser = (await db.ref('usuarios/' + finalUID).once('value')).val();
+            dirigirAUsuario(fullUser);
+
+        } catch(e) { alert("Error en registro: " + e.message); } finally { toggleLoader(false); }
+    }
+
+    // ... (Mantén tus funciones de Google igual, pero usando dirigirAUsuario al final) ...
+</script>
