@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JADI REPAIZ - Cuidamos tus Pasos</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --gold: #fbc02d; --dark: #000; --glass: rgba(255, 255, 255, 0.1); }
+        body { margin: 0; padding: 0; background: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; overflow-x: hidden; }
+
+        /* NAVBAR TRANSPARENTE */
+        nav { position: fixed; top: 0; width: 100%; padding: 20px; display: flex; justify-content: space-between; align-items: center; z-index: 1000; box-sizing: border-box; background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent); }
+        .logo { font-weight: bold; color: var(--gold); font-size: 1.5rem; letter-spacing: 2px; }
+        .btn-entrar { background: var(--gold); color: black; padding: 8px 20px; border-radius: 50px; text-decoration: none; font-weight: bold; font-size: 0.9rem; }
+
+        /* HERO SECTION - IMPACTO */
+        .hero { height: 80vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?auto=format&fit=crop&q=80&w=1500') center/cover; }
+        .hero h1 { font-size: 3rem; margin: 0; color: white; text-transform: uppercase; }
+        .hero p { color: var(--gold); font-size: 1.2rem; letter-spacing: 4px; }
+
+        /* CARRUSEL DE MARCAS (MARQUEE) */
+        .brands-section { background: #050505; padding: 30px 0; border-top: 1px solid #222; border-bottom: 1px solid #222; overflow: hidden; }
+        .brands-track { display: flex; width: calc(250px * 10); animation: scroll 20s linear infinite; }
+        .brand-item { width: 250px; display: flex; align-items: center; justify-content: center; color: #444; font-size: 1.5rem; font-weight: bold; filter: grayscale(1); transition: 0.3s; }
+        .brand-item:hover { filter: grayscale(0); color: var(--gold); }
+        @keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(calc(-250px * 5)); } }
+
+        /* SECCIÓN DE PUBLICIDAD EXTERNA / BANNERS */
+        .ads-container { padding: 40px 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; max-width: 1200px; margin: auto; }
+        .ad-banner { background: #111; height: 200px; border-radius: 15px; border: 1px solid #222; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; cursor: pointer; }
+        .ad-banner img { width: 100%; height: 100%; object-fit: cover; opacity: 0.5; transition: 0.5s; }
+        .ad-banner:hover img { opacity: 0.8; transform: scale(1.05); }
+        .ad-label { position: absolute; bottom: 10px; left: 10px; background: var(--gold); color: black; font-size: 0.7rem; padding: 2px 8px; font-weight: bold; border-radius: 4px; }
+
+        /* POPUP DE REGISTRO / LOGIN */
+        .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); }
+        .modal-content { background: #0a0a0a; margin: 10vh auto; padding: 30px; border: 1px solid var(--gold); width: 90%; max-width: 400px; border-radius: 20px; text-align: center; }
+        .modal-content input { width: 100%; padding: 12px; margin: 10px 0; background: #111; border: 1px solid #333; color: white; border-radius: 8px; box-sizing: border-box; }
+        .btn-action { width: 100%; padding: 15px; background: var(--gold); border: none; border-radius: 10px; font-weight: bold; margin-top: 10px; cursor: pointer; }
+
+        footer { padding: 40px; text-align: center; color: #444; font-size: 0.8rem; border-top: 1px solid #111; }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="logo">JADI REPAIZ</div>
+        <a href="#" class="btn-entrar" onclick="abrirModal()">ACCESO MASTER</a>
+    </nav>
+
+    <section class="hero">
+        <p>REPARACIÓN DE CALZADO DE ALTA GAMA</p>
+        <h1>Dales una segunda vida</h1>
+        <button onclick="abrirModal()" style="margin-top:20px; padding: 15px 30px; background:none; border:2px solid var(--gold); color:var(--gold); border-radius:50px; font-weight:bold; cursor:pointer;">EMPEZAR AHORA</button>
+    </section>
+
+    <div class="brands-section">
+        <div class="brands-track">
+            <div class="brand-item">NIKE</div>
+            <div class="brand-item">ADIDAS</div>
+            <div class="brand-item">PUMA</div>
+            <div class="brand-item">JORDAN</div>
+            <div class="brand-item">TIMBERLAND</div>
+            <div class="brand-item">NIKE</div>
+            <div class="brand-item">ADIDAS</div>
+            <div class="brand-item">PUMA</div>
+            <div class="brand-item">JORDAN</div>
+            <div class="brand-item">TIMBERLAND</div>
+        </div>
+    </div>
+
+    <div class="ads-container">
+        <div class="ad-banner">
+            <img src="https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&q=60&w=500" alt="Promo">
+            <span class="ad-label">NUEVO SERVICIO</span>
+            <div style="position:absolute; color:white; font-weight:bold;">LIMPIEZA PREMIUM</div>
+        </div>
+        <div class="ad-banner">
+            <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&q=60&w=500" alt="Promo">
+            <span class="ad-label">PROMO</span>
+            <div style="position:absolute; color:white; font-weight:bold;">RESTAURACIÓN DE SUELAS</div>
+        </div>
+    </div>
+
+    <div id="login-modal" class="modal">
+        <div class="modal-content">
+            <i class="fas fa-times" onclick="cerrarModal()" style="float:right; cursor:pointer; color:#555;"></i>
+            <h2 style="color:var(--gold); margin-bottom:5px;">BIENVENIDO</h2>
+            <p style="color:#888; font-size:0.8rem; margin-bottom:20px;">Ingresa tus credenciales de JADI</p>
+            
+            <input type="email" id="user-email" placeholder="Correo electrónico">
+            <input type="password" id="user-pass" placeholder="Contraseña">
+            
+            <button class="btn-action" onclick="login()">INICIAR SESIÓN</button>
+            <p style="margin-top:20px; font-size:0.8rem; color:#555;">¿Eres nuevo? <a href="#" style="color:var(--gold)">Crea una cuenta cliente</a></p>
+        </div>
+    </div>
+
+    <footer>
+        &copy; 2026 JADI REPAIZ - SOLUTIONS FOR FOOTWEAR. All rights reserved.
+    </footer>
+
+    <script>
+        // CONFIGURACIÓN DE FIREBASE
+        const firebaseConfig = {
+            apiKey: "AIzaSyAKPxG1osuR9hsj-PsmwJrzK-3W_XM1UyU",
+            authDomain: "jadi-repaiz.firebaseapp.com",
+            databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com",
+        };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.database();
+
+        function abrirModal() { document.getElementById('login-modal').style.display = 'block'; }
+        function cerrarModal() { document.getElementById('login-modal').style.display = 'none'; }
+
+        // Función de Login que ya teníamos
+        async function login() {
+            const email = document.getElementById('user-email').value;
+            const pass = document.getElementById('user-pass').value;
+            
+            try {
+                const userCredential = await auth.signInWithEmailAndPassword(email, pass);
+                const uid = userCredential.user.uid;
+                
+                // Buscamos los datos extra en la DB (rol, nombre)
+                db.ref('usuarios/' + uid).once('value', snap => {
+                    const u = snap.val();
+                    localStorage.setItem('session_jadi', JSON.stringify({
+                        uid: uid,
+                        nombre: u.nombre,
+                        rolCodigo: u.rolCodigo
+                    }));
+                    
+                    // Redirección según rol
+                    if(u.rolCodigo === 'ADM') window.location.href = "admin.html";
+                    else if(u.rolCodigo === 'ZPT') window.location.href = "zapatero/dashboard.html";
+                    else window.location.href = "cliente/perfil.html";
+                });
+            } catch (error) {
+                alert("Error: " + error.message);
+            }
+        }
+
+        // MOSTRAR POPUP AUTOMÁTICAMENTE A LOS 5 SEGUNDOS (OPCIONAL)
+        setTimeout(() => {
+            if(!localStorage.getItem('session_jadi')) abrirModal();
+        }, 5000);
+    </script>
+</body>
+</html>
