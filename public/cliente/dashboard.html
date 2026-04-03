@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Panel - JADI REPAIZ</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --gold: #fbc02d; --dark: #000; --card: #111; --text: #eee; }
+        body { background: var(--dark); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; padding-bottom: 100px; }
+        
+        header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--gold); padding-bottom: 15px; margin-bottom: 25px; }
+
+        /* Pilares del Cliente */
+        .main-pillars { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 30px; }
+        .pillar-card { background: var(--card); padding: 18px; border-radius: 15px; border: 1px solid #222; text-align: center; transition: 0.3s; }
+        .pillar-card i { font-size: 1.6rem; margin-bottom: 8px; display: block; color: var(--gold); }
+        .pillar-card h3 { margin: 5px 0; font-size: 0.75rem; color: #888; text-transform: uppercase; }
+        .pillar-card span { font-size: 1.4rem; font-weight: bold; color: #fff; }
+
+        /* Secciones de Contenido */
+        .client-section { background: var(--card); border-radius: 15px; padding: 20px; border: 1px solid #222; margin-bottom: 20px; }
+        .client-section h2 { color: var(--gold); font-size: 1rem; margin-top: 0; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #222; padding-bottom: 10px; }
+        
+        /* Card de Zapato en Proceso */
+        .shoe-card { background: #1a1a1a; border-radius: 10px; padding: 15px; display: flex; align-items: center; gap: 15px; margin-top: 10px; border-left: 4px solid var(--gold); }
+        .shoe-thumb { width: 60px; height: 60px; background: #333; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
+        .shoe-info h4 { margin: 0; font-size: 0.9rem; }
+        .shoe-info p { margin: 2px 0; font-size: 0.75rem; color: #777; }
+
+        /* Botones de Acción */
+        .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 25px; }
+        .action-btn { background: #111; border: 1px solid #333; color: #ccc; padding: 15px; border-radius: 12px; text-decoration: none; text-align: center; font-size: 0.85rem; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+        .action-btn:hover { border-color: var(--gold); color: var(--gold); }
+        .action-btn i { font-size: 1.2rem; }
+
+        /* Barra Inferior */
+        .quick-nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(10,10,10,0.95); padding: 10px 30px; border-radius: 50px; border: 1px solid var(--gold); display: flex; gap: 30px; backdrop-filter: blur(10px); z-index: 1000; }
+        .nav-item { color: #888; font-size: 1.2rem; text-decoration: none; transition: 0.3s; }
+        .nav-item.active { color: var(--gold); }
+    </style>
+</head>
+<body>
+
+<header>
+    <div>
+        <h2 style="color:var(--gold); margin:0; font-size: 1.1rem;">HOLA, <span id="user-display">CLIENTE</span></h2>
+        <small style="color: #555;">Tus zapatos en las mejores manos.</small>
+    </div>
+    <div id="user-points" style="text-align: right;">
+        <span style="color:var(--gold); font-weight:bold;"><i class="fas fa-coins"></i> 50</span>
+        <div style="font-size: 0.6rem; color:#444;">JADI POINTS</div>
+    </div>
+</header>
+
+<div class="main-pillars">
+    <div class="pillar-card">
+        <i class="fas fa-shoe-prints"></i>
+        <h3>MIS ÓRDENES</h3><span id="c-total">0</span>
+    </div>
+    <div class="pillar-card">
+        <i class="fas fa-tools"></i>
+        <h3>EN TALLER</h3><span id="c-process">0</span>
+    </div>
+    <div class="pillar-card">
+        <i class="fas fa-box-open"></i>
+        <h3>LISTOS</h3><span id="c-ready">0</span>
+    </div>
+</div>
+
+<div class="action-grid">
+    <a href="rastreo.html" class="action-btn">
+        <i class="fas fa-search-location"></i> Rastrear Calzado
+    </a>
+    <a href="../tiendas/catalogo.html" class="action-btn">
+        <i class="fas fa-shopping-bag"></i> Ver Tienda
+    </a>
+</div>
+
+<div class="client-section">
+    <h2><i class="fas fa-history"></i> ESTADO DE MIS TRABAJOS</h2>
+    <div id="lista-zapatos">
+        <p style="text-align:center; color:#444; padding:20px; font-size: 0.8rem;">Aún no tienes zapatos registrados en JADI.</p>
+    </div>
+</div>
+
+<div class="quick-nav">
+    <a href="dashboard.html" class="nav-item active"><i class="fas fa-home"></i></a>
+    <a href="mis-fotos.html" class="nav-item"><i class="fas fa-camera"></i></a>
+    <a href="notificaciones.html" class="nav-item"><i class="fas fa-bell"></i></a>
+    <a href="perfil.html" class="nav-item"><i class="fas fa-user"></i></a>
+</div>
+
+<script>
+    // CONFIGURACIÓN FIREBASE
+    const firebaseConfig = {
+        apiKey: "AIzaSyAKPxG1osuR9hsj-PsmwJrzK-3W_XM1UyU",
+        authDomain: "jadi-repaiz.firebaseapp.com",
+        databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com",
+    };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const auth = firebase.auth();
+
+    // SEGURIDAD DE ENTRADA
+    async function validarAcceso() {
+        const session = JSON.parse(localStorage.getItem('session_jadi'));
+        
+        if(!session) {
+            window.location.href = "../login.html";
+            return;
+        }
+
+        const snap = await db.ref('usuarios/' + session.uid).once('value');
+        if(!snap.exists()) {
+            auth.signOut();
+            localStorage.removeItem('session_jadi');
+            window.location.href = "../login.html";
+            return;
+        }
+
+        const u = snap.val();
+        // Permitimos CLN y ADM (tú)
+        if(u.rolCodigo !== 'CLN' && u.rolCodigo !== 'ADM') {
+            window.location.href = "../login.html";
+            return;
+        }
+
+        document.getElementById('user-display').innerText = u.nombre.split(' ')[0].toUpperCase();
+        cargarDatosCliente(session.uid);
+    }
+
+    function cargarDatosCliente(uid) {
+        // En el futuro aquí filtraremos 'ordenes' donde clienteID == uid
+        console.log("Cargando historial para el cliente: " + uid);
+    }
+
+    validarAcceso();
+</script>
+</body>
+</html>
