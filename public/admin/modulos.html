@@ -2,142 +2,114 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Directorio de Módulos - JADI Master</title>
+    <title>Selector Maestro de Módulos - JADI</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --gold: #fbc02d; --dark: #000; --card: #111; }
-        body { background: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; }
+        :root { --gold: #fbc02d; --dark: #0d1117; }
+        body { background: #000; color: #eee; font-family: sans-serif; padding: 20px; }
         
-        .header { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #222; padding-bottom: 15px; margin-bottom: 25px; }
-        .back-btn { color: var(--gold); text-decoration: none; font-size: 0.9rem; border: 1px solid #333; padding: 5px 15px; border-radius: 20px; }
+        .panel { background: var(--dark); border: 1px solid #30363d; border-radius: 8px; padding: 20px; }
+        h2 { color: var(--gold); border-bottom: 1px solid #333; padding-bottom: 10px; }
 
-        /* BUSCADOR ESTILO GITHUB */
-        .search-container { margin-bottom: 20px; }
-        #search-input { width: 100%; padding: 12px; background: #161b22; border: 1px solid #30363d; border-radius: 6px; color: white; box-sizing: border-box; }
-
-        /* LISTA DE MÓDULOS */
-        .modules-list { background: #0d1117; border: 1px solid #30363d; border-radius: 6px; overflow: hidden; }
-        .module-item { 
-            display: flex; 
-            align-items: center; 
-            padding: 15px; 
-            border-bottom: 1px solid #21262d; 
-            text-decoration: none; 
-            color: #c9d1d9; 
-            transition: 0.2s;
+        /* LISTADO DE GITHUB */
+        .github-list { margin: 20px 0; max-height: 400px; overflow-y: auto; border: 1px solid #222; border-radius: 5px; }
+        .file-item { 
+            display: flex; align-items: center; padding: 10px; border-bottom: 1px solid #21262d; 
+            transition: 0.2s; cursor: pointer;
         }
-        .module-item:hover { background: #161b22; color: var(--gold); }
-        .module-item i { width: 30px; font-size: 1.1rem; color: #8b949e; }
-        .module-item .info { flex-grow: 1; }
-        .module-item .info span { display: block; font-size: 0.9rem; font-weight: bold; }
-        .module-item .info small { color: #484f58; font-size: 0.7rem; }
-        .module-item .status { font-size: 0.6rem; padding: 2px 8px; border-radius: 10px; background: #238636; color: white; text-transform: uppercase; }
+        .file-item:hover { background: #161b22; }
+        .file-item input[type="checkbox"] { margin-right: 15px; transform: scale(1.3); }
+        .file-item i { margin-right: 10px; color: #8b949e; }
 
-        /* FORMULARIO PARA AGREGAR NUEVO (SOLO PARA TI) */
-        .add-module-form { background: var(--card); padding: 15px; border-radius: 8px; border: 1px solid #222; margin-top: 30px; }
-        .add-module-form h3 { color: var(--gold); margin-top: 0; font-size: 1rem; }
-        .add-module-form input { padding: 8px; margin-right: 10px; background: #000; border: 1px solid #333; color: white; border-radius: 4px; }
-        .btn-add { background: var(--gold); border: none; padding: 8px 15px; border-radius: 4px; font-weight: bold; cursor: pointer; }
+        .btn-sync { background: #238636; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .btn-save { background: var(--gold); color: black; border: none; padding: 12px 25px; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 20px; }
     </style>
 </head>
 <body>
 
-<div class="header">
-    <div>
-        <a href="dashboard.html" class="back-btn"><i class="fas fa-chevron-left"></i> PANEL</a>
-        <h1 style="margin: 10px 0 0 0; font-size: 1.4rem;">Directorio de Módulos</h1>
+<div class="panel">
+    <h2><i class="fab fa-github"></i> Sincronizador JADI/GitHub</h2>
+    <p style="font-size: 0.8rem; color: #8b949e;">Selecciona los archivos que quieres activar en tu Dashboard:</p>
+    
+    <button class="btn-sync" onclick="escanearGitHub()"><i class="fas fa-sync"></i> Escanear mi GitHub</button>
+
+    <div class="github-list" id="contenedor-archivos">
+        <div style="padding: 20px; color: #555;">Dale al botón de escanear para ver tus archivos...</div>
     </div>
-    <i class="fab fa-github fa-2x" style="opacity: 0.3;"></i>
-</div>
 
-<div class="search-container">
-    <input type="text" id="search-input" placeholder="Buscar módulo por nombre o ruta..." onkeyup="filtrarModulos()">
-</div>
-
-<div class="modules-list" id="lista-modulos">
-    <div style="padding: 20px; text-align: center; color: #555;">Cargando archivos del repositorio...</div>
-</div>
-
-<div class="add-module-form">
-    <h3><i class="fas fa-plus-circle"></i> Registrar Nuevo Módulo de GitHub</h3>
-    <div style="display: flex; flex-wrap: wrap; gap: 10px;">
-        <input type="text" id="new-name" placeholder="Nombre (Ej: Finanzas)">
-        <input type="text" id="new-url" placeholder="Ruta (Ej: admin/finanzas.html)">
-        <button class="btn-add" onclick="agregarModulo()">REGISTRAR</button>
-    </div>
+    <button class="btn-save" onclick="guardarSeleccionados()"><i class="fas fa-check"></i> ACTIVAR MÓDULOS SELECCIONADOS</button>
 </div>
 
 <script>
+    // Tu config de Firebase
     const firebaseConfig = {
-        apiKey: "AIzaSyAKPxG1osuR9hsj-PsmwJrzK-3W_XM1UyU",
-        authDomain: "jadi-repaiz.firebaseapp.com",
         databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com",
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // 1. CARGAR MÓDULOS DESDE FIREBASE
-    function cargarModulos() {
-        db.ref('modulos_disponibles').on('value', snap => {
-            const container = document.getElementById('lista-modulos');
-            container.innerHTML = "";
-            
-            if(!snap.exists()) {
-                container.innerHTML = "<div style='padding:20px'>No hay módulos registrados aún.</div>";
-                return;
-            }
+    // AQUÍ PONES TUS DATOS DE GITHUB
+    const USER = "tu-usuario-github"; // Cambia por tu usuario
+    const REPO = "tu-repositorio";    // Cambia por el nombre de tu repo
 
-            snap.forEach(child => {
-                const m = child.val();
-                container.innerHTML += `
-                    <a href="../${m.url}" class="module-item">
-                        <i class="far fa-file-code"></i>
-                        <div class="info">
-                            <span>${m.nombre}</span>
-                            <small>Ruta: /public/${m.url}</small>
-                        </div>
-                        <span class="status">Activo</span>
-                        <i class="fas fa-chevron-right" style="font-size:0.7rem; margin-left:15px; color:#333;"></i>
-                    </a>
-                `;
-            });
-        });
-    }
-
-    // 2. AGREGAR NUEVO MÓDULO A LA LISTA
-    async function agregarModulo() {
-        const nombre = document.getElementById('new-name').value;
-        const url = document.getElementById('new-url').value;
-
-        if(!nombre || !url) return alert("Completa ambos campos");
+    async function escanearGitHub() {
+        const container = document.getElementById('contenedor-archivos');
+        container.innerHTML = "<div style='padding:20px'>Escaneando carpetas...</div>";
 
         try {
-            await db.ref('modulos_disponibles').push({
-                nombre: nombre,
-                url: url,
-                fecha: new Date().toISOString()
+            // Buscamos archivos en la raíz y en /admin
+            const rutas = ['', 'admin']; 
+            let todosLosArchivos = [];
+
+            for (const ruta of rutas) {
+                const response = await fetch(`https://api.github.com/repos/${USER}/${REPO}/contents/${ruta}`);
+                const data = await response.json();
+                if(Array.isArray(data)) {
+                    data.forEach(item => {
+                        if(item.name.endsWith('.html')) {
+                            todosLosArchivos.push({ nombre: item.name, ruta: item.path });
+                        }
+                    });
+                }
+            }
+
+            container.innerHTML = "";
+            todosLosArchivos.forEach(file => {
+                container.innerHTML += `
+                    <div class="file-item">
+                        <input type="checkbox" class="modulo-check" data-name="${file.nombre}" data-url="${file.ruta}">
+                        <i class="far fa-file-code"></i>
+                        <span>${file.ruta}</span>
+                    </div>
+                `;
             });
-            document.getElementById('new-name').value = "";
-            document.getElementById('new-url').value = "";
-            alert("Módulo registrado correctamente");
-        } catch(e) { alert("Error al guardar"); }
-    }
 
-    // 3. BUSCADOR
-    function filtrarModulos() {
-        const input = document.getElementById('search-input').value.toLowerCase();
-        const items = document.getElementsByClassName('module-item');
-
-        for (let item of items) {
-            const texto = item.innerText.toLowerCase();
-            item.style.display = texto.includes(input) ? "flex" : "none";
+        } catch (error) {
+            container.innerHTML = "<div style='color:red; padding:20px'>Error al conectar con GitHub. Verifica el usuario/repo.</div>";
         }
     }
 
-    window.onload = cargarModulos;
+    async function guardarSeleccionados() {
+        const checks = document.querySelectorAll('.modulo-check:checked');
+        if(checks.length === 0) return alert("Selecciona al menos un archivo");
+
+        const promesas = [];
+        checks.forEach(check => {
+            const data = {
+                nombre: check.getAttribute('data-name').replace('.html', '').toUpperCase(),
+                url: check.getAttribute('data-url'),
+                fecha: new Date().toISOString()
+            };
+            // Guardamos en Firebase
+            promesas.push(db.ref('modulos_disponibles').push(data));
+        });
+
+        await Promise.all(promesas);
+        alert("¡Módulos activados con éxito!");
+        window.location.href = "dashboard.html";
+    }
 </script>
 </body>
 </html>
