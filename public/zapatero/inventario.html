@@ -3,135 +3,167 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inventario - J.A.D.I</title>
+    <title>Inventario J.A.D.I - Gestión de Bodega</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root { --gold: #FFD700; --dark: #000; --card: #0d1117; --border: #30363d; }
-        body { background: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding-bottom: 80px; }
-        
-        .header { padding: 15px 20px; border-bottom: 1px solid var(--gold); display: flex; justify-content: space-between; align-items: center; background: #050505; }
-        
-        .container { padding: 20px; max-width: 800px; margin: auto; }
+        body { background: var(--dark); color: #e6edf3; font-family: 'Segoe UI', sans-serif; margin: 0; padding-bottom: 20px; }
 
-        /* BUSCADOR Y AGREGAR */
-        .search-box { display: flex; gap: 10px; margin-bottom: 20px; }
-        .search-box input { flex: 1; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: #161b22; color: white; }
-        .btn-add { background: var(--gold); border: none; padding: 0 20px; border-radius: 8px; font-weight: bold; cursor: pointer; }
-
-        /* TARJETAS DE INVENTARIO */
-        .inventory-grid { display: grid; gap: 12px; }
-        .item-card { 
-            background: var(--card); border: 1px solid var(--border); border-radius: 12px; 
-            padding: 15px; display: flex; justify-content: space-between; align-items: center;
+        /* HEADER */
+        .header { 
+            padding: 15px 20px; display: flex; justify-content: space-between; 
+            align-items: center; border-bottom: 1px solid var(--gold); background: #050505;
         }
-        .item-info h4 { margin: 0; font-size: 1rem; color: var(--gold); }
-        .item-info p { margin: 5px 0 0; font-size: 0.8rem; color: #8b949e; }
+        .back-link { color: var(--gold); text-decoration: none; font-size: 14px; }
 
-        .stock-control { text-align: center; }
-        .stock-num { font-size: 1.5rem; font-weight: 900; display: block; }
+        .container { max-width: 700px; margin: auto; padding: 20px; }
+
+        /* BARRA DE NAVEGACIÓN DE MÓDULOS */
+        .module-nav { 
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 25px; 
+        }
+        .nav-btn { 
+            background: var(--card); border: 1px solid var(--border); color: white; 
+            padding: 15px; border-radius: 12px; text-decoration: none; text-align: center;
+            font-size: 12px; font-weight: bold; transition: 0.3s;
+        }
+        .nav-btn i { display: block; font-size: 20px; color: var(--gold); margin-bottom: 8px; }
+        .nav-btn:hover { border-color: var(--gold); background: #161b22; }
+
+        /* BUSCADOR */
+        .search-container { position: relative; margin-bottom: 20px; }
+        .search-container input { 
+            width: 100%; padding: 12px 40px 12px 15px; border-radius: 25px; 
+            border: 1px solid var(--border); background: #111; color: white; box-sizing: border-box;
+        }
+        .search-container i { position: absolute; right: 15px; top: 13px; color: var(--gold); }
+
+        /* LISTADO DE MATERIAL EXISTENTE */
+        .inventory-list { background: var(--card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+        .list-header { background: #161b22; padding: 12px 20px; font-size: 13px; font-weight: bold; color: var(--gold); border-bottom: 1px solid var(--border); }
         
-        /* SEMÁFORO */
-        .status-low { color: #ff4d4d; }    /* Rojo */
-        .status-mid { color: #ffa500; }    /* Naranja */
-        .status-ok { color: #4dff88; }     /* Verde */
+        .item-row { 
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 15px 20px; border-bottom: 1px solid #161b22; transition: 0.2s;
+        }
+        .item-row:last-child { border-bottom: none; }
+        .item-row:hover { background: #1c2128; }
 
-        .btn-order { 
-            margin-top: 10px; font-size: 0.7rem; padding: 5px 10px; 
-            border-radius: 5px; border: 1px solid #444; background: #222; 
-            color: var(--gold); cursor: pointer; display: block;
+        .item-details h4 { margin: 0; font-size: 14px; color: white; }
+        .item-details span { font-size: 11px; color: #666; text-transform: uppercase; }
+
+        .stock-badge { 
+            background: #000; border: 1px solid var(--gold); color: var(--gold); 
+            padding: 5px 12px; border-radius: 20px; font-weight: 900; font-size: 14px;
         }
 
-        /* MODAL SIMPLE */
-        .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); align-items:center; justify-content:center; }
-        .modal-content { background: var(--card); padding: 25px; border-radius: 15px; border: 1px solid var(--gold); width: 90%; max-width: 400px; }
+        /* BOTÓN FLOTANTE AÑADIR */
+        .btn-float-add { 
+            position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; 
+            background: var(--gold); color: black; border-radius: 50%; 
+            display: flex; align-items: center; justify-content: center; 
+            font-size: 24px; box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3); text-decoration: none;
+        }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <a href="zapatero.html" style="color:var(--gold); text-decoration:none;"><i class="fas fa-arrow-left"></i> VOLVER</a>
-        <span style="font-weight:900; letter-spacing:2px;">INVENTARIO</span>
-        <i class="fas fa-boxes-stacked" style="color:var(--gold);"></i>
+        <a href="zapatero.html" class="back-link"><i class="fas fa-chevron-left"></i> VOLVER</a>
+        <div style="color:var(--gold); font-size: 14px; font-weight: 900; letter-spacing: 1px;">J.A.D.I INVENTARIO</div>
     </div>
 
     <div class="container">
-        <div class="search-box">
-            <input type="text" placeholder="Buscar material (ej: Suela Febo)..." id="input-search">
-            <button class="btn-add" onclick="abrirModal()"><i class="fas fa-plus"></i></button>
+        <div class="module-nav">
+            <a href="material.html" class="nav-btn">
+                <i class="fas fa-boxes-packing"></i>
+                MATERIAL DISPONIBLE
+            </a>
+            <a href="compras.html" class="nav-btn">
+                <i class="fas fa-cart-shopping"></i>
+                ADQUIRIR / SOLICITAR
+            </a>
         </div>
 
-        <div class="inventory-grid" id="lista-inventario">
-            <div class="item-card">
-                <div class="item-info">
-                    <h4>Suela de Caucho Talla 40</h4>
-                    <p>Categoría: Suelas | Proveedor: Don Pepe</p>
-                    <button class="btn-order" onclick="solicitarMaterial('Suela Talla 40', 'Don Pepe', '0999999999')">
-                        <i class="fab fa-whatsapp"></i> SOLICITAR PEDIDO
-                    </button>
-                </div>
-                <div class="stock-control">
-                    <span class="stock-num status-low">2</span>
-                    <p style="font-size: 10px; margin:0;">PARES</p>
-                </div>
-            </div>
+        <div class="search-container">
+            <input type="text" id="busqueda" placeholder="Buscar material en bodega..." onkeyup="filtrarInventario()">
+            <i class="fas fa-search"></i>
+        </div>
 
-            <div class="item-card">
-                <div class="item-info">
-                    <h4>Pegamento Amarillo (Cemento)</h4>
-                    <p>Categoría: Químicos | Proveedor: Quimicamp</p>
+        <div class="inventory-list">
+            <div class="list-header">MATERIAL EN LOCAL</div>
+            <div id="lista-existente">
+                <div class="item-row">
+                    <div class="item-details">
+                        <h4>Suela de Caucho Talla 42</h4>
+                        <span>Categoría: Suelas</span>
+                    </div>
+                    <div class="stock-badge">10 pz</div>
                 </div>
-                <div class="stock-control">
-                    <span class="stock-num status-ok">12</span>
-                    <p style="font-size: 10px; margin:0;">LITROS</p>
+                <div class="item-row">
+                    <div class="item-details">
+                        <h4>Hilo Nylon Encerado Negro</h4>
+                        <span>Categoría: Costura</span>
+                    </div>
+                    <div class="stock-badge">3 rollos</div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="modal" id="modal-add">
-        <div class="modal-content">
-            <h3 style="color:var(--gold); margin-top:0;">Nuevo Material</h3>
-            <input type="text" id="m-nombre" placeholder="Nombre del material" style="width:100%; margin-bottom:10px; padding:10px;">
-            <input type="number" id="m-cantidad" placeholder="Cantidad actual" style="width:100%; margin-bottom:10px; padding:10px;">
-            <select id="m-categoria" style="width:100%; margin-bottom:10px; padding:10px;">
-                <option value="Suelas">Suelas / Tapillas</option>
-                <option value="Quimicos">Químicos / Pegamento</option>
-                <option value="Hilos">Hilos / Costura</option>
-            </select>
-            <button onclick="guardarMaterial()" style="width:100%; padding:12px; background:var(--gold); border:none; font-weight:bold; border-radius:8px;">GUARDAR EN BODEGA</button>
-            <button onclick="cerrarModal()" style="width:100%; background:transparent; color:white; border:none; margin-top:10px; font-size:12px;">Cancelar</button>
-        </div>
-    </div>
+    <a href="añadir.html" class="btn-float-add" title="Añadir Nuevo Material">
+        <i class="fas fa-plus"></i>
+    </a>
 
     <script>
         const firebaseConfig = { databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com" };
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        function abrirModal() { document.getElementById('modal-add').style.display = 'flex'; }
-        function cerrarModal() { document.getElementById('modal-add').style.display = 'none'; }
+        window.onload = function() {
+            const session = JSON.parse(localStorage.getItem('session_jadi'));
+            if (session) {
+                cargarInventarioLocal(session.uid);
+            } else {
+                window.location.href = "../index.html";
+            }
+        };
 
-        function solicitarMaterial(item, proveedor, telf) {
-            const msj = `Hola ${proveedor}, te saluda JADI REPAIZ. Necesito un pedido de: ${item}. ¿Tienes disponibilidad?`;
-            const url = `https://wa.me/${telf}?text=${encodeURIComponent(msj)}`;
-            window.open(url, '_blank');
+        function cargarInventarioLocal(uid) {
+            const listaDiv = document.getElementById('lista-existente');
+            
+            db.ref('inventarios').orderByChild('maestroId').equalTo(uid).on('value', snap => {
+                listaDiv.innerHTML = "";
+                if (!snap.exists()) {
+                    listaDiv.innerHTML = "<p style='padding:20px; text-align:center; font-size:12px; color:#555;'>No hay materiales registrados.</p>";
+                    return;
+                }
+                
+                snap.forEach(child => {
+                    const item = child.val();
+                    listaDiv.innerHTML += `
+                        <div class="item-row">
+                            <div class="item-details">
+                                <h4>${item.nombre}</h4>
+                                <span>Categoría: ${item.categoria}</span>
+                            </div>
+                            <div class="stock-badge">${item.cantidad}</div>
+                        </div>
+                    `;
+                });
+            });
         }
 
-        function guardarMaterial() {
-            const session = JSON.parse(localStorage.getItem('session_jadi'));
-            const data = {
-                nombre: document.getElementById('m-nombre').value,
-                cantidad: document.getElementById('m-cantidad').value,
-                categoria: document.getElementById('m-categoria').value,
-                maestroId: session.uid
-            };
+        function filtrarInventario() {
+            let input = document.getElementById('busqueda').value.toLowerCase();
+            let rows = document.getElementsByClassName('item-row');
             
-            db.ref('inventarios').push(data).then(() => {
-                alert("Material registrado");
-                cerrarModal();
-            });
+            for (let i = 0; i < rows.length; i++) {
+                let name = rows[i].getElementsByTagName('h4')[0].innerText.toLowerCase();
+                rows[i].style.display = name.includes(input) ? "flex" : "none";
+            }
         }
     </script>
 </body>
