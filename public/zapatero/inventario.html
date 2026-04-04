@@ -3,103 +3,132 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inventario - J.A.D.I REPAIZ</title>
+    <title>Inventario Maestro - J.A.D.I REPAIZ</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --gold: #FFD700; --dark: #000; --card: #0d1117; --border: #30363d; }
-        body { background: var(--dark); color: #e6edf3; font-family: 'Segoe UI', sans-serif; margin: 0; padding-bottom: 30px; }
+        :root { --gold: #FFD700; --red: #ff4d4d; --dark: #000; --card: #0d1117; --border: #30363d; }
+        body { background: var(--dark); color: #e6edf3; font-family: 'Segoe UI', sans-serif; margin: 0; padding-bottom: 40px; }
 
         /* HEADER */
         .header { 
             padding: 15px 20px; display: flex; justify-content: space-between; 
             align-items: center; border-bottom: 1px solid var(--gold); background: #050505;
+            position: sticky; top: 0; z-index: 100;
         }
         .back-link { color: var(--gold); text-decoration: none; font-size: 14px; font-weight: bold; }
 
         .container { max-width: 600px; margin: auto; padding: 20px; }
 
-        /* SECCIÓN DE BOTONES DE NAVEGACIÓN (LOS 3 QUE PEDISTE) */
+        /* BOTONES DE NAVEGACIÓN REQUERIDOS */
         .nav-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 25px; }
         
         .btn-nav { 
             background: var(--card); border: 1px solid var(--border); color: white; 
             padding: 20px 10px; border-radius: 15px; text-decoration: none; 
-            text-align: center; transition: 0.3s; font-weight: bold;
+            text-align: center; transition: 0.3s; font-weight: bold; font-size: 11px;
         }
-        .btn-nav i { display: block; font-size: 24px; color: var(--gold); margin-bottom: 10px; }
+        .btn-nav i { display: block; font-size: 24px; color: var(--gold); margin-bottom: 8px; }
         .btn-nav:hover { border-color: var(--gold); background: #161b22; transform: translateY(-3px); }
 
-        /* BOTÓN AÑADIR (DESTACADO) */
-        .btn-full { grid-column: span 2; background: #1a1a1a; border: 1px dashed var(--gold); }
+        /* BOTÓN AÑADIR (GRANDE) */
+        .btn-add-main { grid-column: span 2; border: 1px dashed var(--gold); background: #1a1a1a; }
 
         /* BUSCADOR */
-        .search-wrapper { position: relative; margin-bottom: 20px; }
-        .search-wrapper input { 
+        .search-box { position: relative; margin-bottom: 20px; }
+        .search-box input { 
             width: 100%; padding: 12px 45px 12px 15px; border-radius: 10px; 
             border: 1px solid var(--border); background: #111; color: white; box-sizing: border-box;
         }
-        .search-wrapper i { position: absolute; right: 15px; top: 13px; color: var(--gold); }
+        .search-box i { position: absolute; right: 15px; top: 13px; color: var(--gold); }
 
         /* LISTADO DE MATERIAL EN LOCAL */
-        .inventory-box { background: var(--card); border: 1px solid var(--border); border-radius: 15px; overflow: hidden; }
-        .box-title { background: #161b22; padding: 12px 20px; font-size: 13px; font-weight: bold; color: var(--gold); text-transform: uppercase; }
+        .inventory-card { background: var(--card); border: 1px solid var(--border); border-radius: 15px; overflow: hidden; }
+        .card-header { 
+            background: #161b22; padding: 12px 20px; font-size: 12px; font-weight: bold; 
+            color: var(--gold); display: flex; justify-content: space-between;
+        }
         
-        .material-item { 
+        .material-row { 
             display: flex; justify-content: space-between; align-items: center; 
             padding: 15px 20px; border-bottom: 1px solid #1c2128; 
         }
-        .material-item:last-child { border-bottom: none; }
+        .material-row:last-child { border-bottom: none; }
         
-        .mat-info h4 { margin: 0; font-size: 15px; color: #fff; }
-        .mat-info span { font-size: 11px; color: #888; }
+        .info-mat h4 { margin: 0; font-size: 14px; color: #fff; }
+        .info-mat p { font-size: 10px; color: #666; margin: 4px 0 0; text-transform: uppercase; }
 
-        .qty-badge { 
-            background: #000; border: 1px solid var(--gold); color: var(--gold); 
-            padding: 4px 10px; border-radius: 8px; font-weight: bold; min-width: 40px; text-align: center;
+        /* INDICADORES DE STOCK */
+        .stock-status { text-align: right; }
+        .qty { font-size: 18px; font-weight: 900; display: block; }
+        .unit { font-size: 9px; color: #888; font-weight: bold; }
+
+        /* COLORES DE ALERTA */
+        .alert-low { color: var(--red) !important; animation: blink 1.5s infinite; }
+        .alert-ok { color: #4dff88; }
+
+        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+
+        /* RESUMEN DE INVERSIÓN (Sugerencia) */
+        .stats-bar { 
+            background: #050505; border: 1px solid #222; border-radius: 10px; 
+            padding: 10px; margin-top: 20px; display: flex; justify-content: space-around;
+            font-size: 11px; color: #888;
         }
+        .stats-bar strong { color: var(--gold); display: block; font-size: 14px; }
+
     </style>
 </head>
 <body>
 
     <div class="header">
-        <a href="zapatero.html" class="back-link"><i class="fas fa-chevron-left"></i> VOLVER</a>
-        <div style="color:var(--gold); font-weight: 900; letter-spacing: 1px;">GESTIÓN DE INVENTARIO</div>
+        <a href="zapatero.html" class="back-link"><i class="fas fa-chevron-left"></i> PANEL</a>
+        <div style="color:var(--gold); font-weight: 900; letter-spacing: 2px; font-size: 14px;">J.A.D.I INVENTARIO</div>
     </div>
 
     <div class="container">
         <div class="nav-grid">
-            <a href="añadir.html" class="btn-nav btn-full">
+            <a href="añadir.html" class="btn-nav btn-add-main">
                 <i class="fas fa-plus-circle"></i>
                 AÑADIR MATERIAL
             </a>
-
             <a href="material.html" class="btn-nav">
-                <i class="fas fa-layer-group"></i>
+                <i class="fas fa-boxes-stacked"></i>
                 MATERIAL DISPONIBLE
             </a>
-
             <a href="compras.html" class="btn-nav">
-                <i class="fas fa-truck-fast"></i>
+                <i class="fas fa-shopping-cart"></i>
                 ADQUIRIR / SOLICITAR
             </a>
         </div>
 
-        <div class="search-wrapper">
-            <input type="text" id="filterInput" placeholder="Buscar producto en bodega..." onkeyup="filterMaterials()">
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Buscar en bodega..." onkeyup="filterList()">
             <i class="fas fa-search"></i>
         </div>
 
-        <div class="inventory-box">
-            <div class="box-title"><i class="fas fa-warehouse"></i> Material en Local</div>
-            <div id="inventory-list">
-                <div class="material-item">
-                    <div class="mat-info">
-                        <h4>Cargando materiales...</h4>
-                        <span>Espere un momento</span>
-                    </div>
+        <div class="inventory-card">
+            <div class="card-header">
+                <span><i class="fas fa-warehouse"></i> EXISTENCIAS EN LOCAL</span>
+                <span id="total-items">0 Items</span>
+            </div>
+            <div id="inventory-container">
+                <div style="padding:40px; text-align:center; color:#444;">
+                    <i class="fas fa-circle-notch fa-spin fa-2x"></i>
+                    <p>Sincronizando bodega...</p>
                 </div>
+            </div>
+        </div>
+
+        <div class="stats-bar">
+            <div style="text-align:center;">
+                VALOR ESTIMADO
+                <strong id="total-valor">$0.00</strong>
+            </div>
+            <div style="text-align:center;">
+                ALERTAS CRÍTICAS
+                <strong id="alert-count" style="color:var(--red);">0</strong>
             </div>
         </div>
     </div>
@@ -112,43 +141,64 @@
         window.onload = function() {
             const session = JSON.parse(localStorage.getItem('session_jadi'));
             if (session) {
-                renderInventory(session.uid);
+                initInventory(session.uid);
             } else {
                 window.location.href = "../index.html";
             }
         };
 
-        function renderInventory(uid) {
-            const listContainer = document.getElementById('inventory-list');
+        function initInventory(uid) {
+            const container = document.getElementById('inventory-container');
             
             db.ref('inventarios').orderByChild('maestroId').equalTo(uid).on('value', snap => {
-                listContainer.innerHTML = "";
+                container.innerHTML = "";
+                let totalVal = 0;
+                let alerts = 0;
+                let count = 0;
+
                 if (!snap.exists()) {
-                    listContainer.innerHTML = "<p style='padding:20px; text-align:center; color:#555;'>No hay existencias registradas.</p>";
+                    container.innerHTML = "<div style='padding:30px; text-align:center; font-size:13px; color:#666;'>Bodega vacía. Usa el botón 'Añadir'.</div>";
                     return;
                 }
-                
+
                 snap.forEach(child => {
-                    const data = child.val();
-                    listContainer.innerHTML += `
-                        <div class="material-item">
-                            <div class="mat-info">
-                                <h4>${data.nombre}</h4>
-                                <span>Categoría: ${data.categoria || 'Varios'}</span>
+                    const item = child.val();
+                    count++;
+                    
+                    // Lógica de alerta de stock (Si es menor a 3 es crítico)
+                    const isLow = parseInt(item.cantidad) <= 3;
+                    if(isLow) alerts++;
+
+                    // Cálculo de valor (si existe precioCosto en el objeto)
+                    if(item.precioCosto) totalVal += (parseFloat(item.precioCosto) * parseInt(item.cantidad));
+
+                    container.innerHTML += `
+                        <div class="material-row">
+                            <div class="info-mat">
+                                <h4>${item.nombre}</h4>
+                                <p>${item.categoria || 'Sin Categoría'} | Ref: ${child.key.substring(1,6)}</p>
                             </div>
-                            <div class="qty-badge">${data.cantidad}</div>
+                            <div class="stock-status">
+                                <span class="qty ${isLow ? 'alert-low' : 'alert-ok'}">${item.cantidad}</span>
+                                <span class="unit">${item.unidad || 'UDS'}</span>
+                            </div>
                         </div>
                     `;
                 });
+
+                // Actualizar contadores superiores
+                document.getElementById('total-items').innerText = count + " Tipos de Material";
+                document.getElementById('alert-count').innerText = alerts;
+                document.getElementById('total-valor').innerText = "$" + totalVal.toFixed(2);
             });
         }
 
-        function filterMaterials() {
-            let val = document.getElementById('filterInput').value.toLowerCase();
-            let items = document.getElementsByClassName('material-item');
-            for (let i = 0; i < items.length; i++) {
-                let text = items[i].querySelector('h4').innerText.toLowerCase();
-                items[i].style.display = text.includes(val) ? "flex" : "none";
+        function filterList() {
+            let filter = document.getElementById('searchInput').value.toLowerCase();
+            let rows = document.getElementsByClassName('material-row');
+            for (let i = 0; i < rows.length; i++) {
+                let text = rows[i].querySelector('h4').innerText.toLowerCase();
+                rows[i].style.display = text.includes(filter) ? "flex" : "none";
             }
         }
     </script>
