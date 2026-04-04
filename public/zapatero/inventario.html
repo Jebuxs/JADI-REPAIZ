@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventario - J.A.D.I</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --gold: #FFD700; --dark: #000; --card: #0d1117; --border: #30363d; }
+        body { background: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding-bottom: 80px; }
+        
+        .header { padding: 15px 20px; border-bottom: 1px solid var(--gold); display: flex; justify-content: space-between; align-items: center; background: #050505; }
+        
+        .container { padding: 20px; max-width: 800px; margin: auto; }
+
+        /* BUSCADOR Y AGREGAR */
+        .search-box { display: flex; gap: 10px; margin-bottom: 20px; }
+        .search-box input { flex: 1; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: #161b22; color: white; }
+        .btn-add { background: var(--gold); border: none; padding: 0 20px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+
+        /* TARJETAS DE INVENTARIO */
+        .inventory-grid { display: grid; gap: 12px; }
+        .item-card { 
+            background: var(--card); border: 1px solid var(--border); border-radius: 12px; 
+            padding: 15px; display: flex; justify-content: space-between; align-items: center;
+        }
+        .item-info h4 { margin: 0; font-size: 1rem; color: var(--gold); }
+        .item-info p { margin: 5px 0 0; font-size: 0.8rem; color: #8b949e; }
+
+        .stock-control { text-align: center; }
+        .stock-num { font-size: 1.5rem; font-weight: 900; display: block; }
+        
+        /* SEMÁFORO */
+        .status-low { color: #ff4d4d; }    /* Rojo */
+        .status-mid { color: #ffa500; }    /* Naranja */
+        .status-ok { color: #4dff88; }     /* Verde */
+
+        .btn-order { 
+            margin-top: 10px; font-size: 0.7rem; padding: 5px 10px; 
+            border-radius: 5px; border: 1px solid #444; background: #222; 
+            color: var(--gold); cursor: pointer; display: block;
+        }
+
+        /* MODAL SIMPLE */
+        .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); align-items:center; justify-content:center; }
+        .modal-content { background: var(--card); padding: 25px; border-radius: 15px; border: 1px solid var(--gold); width: 90%; max-width: 400px; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <a href="zapatero.html" style="color:var(--gold); text-decoration:none;"><i class="fas fa-arrow-left"></i> VOLVER</a>
+        <span style="font-weight:900; letter-spacing:2px;">INVENTARIO</span>
+        <i class="fas fa-boxes-stacked" style="color:var(--gold);"></i>
+    </div>
+
+    <div class="container">
+        <div class="search-box">
+            <input type="text" placeholder="Buscar material (ej: Suela Febo)..." id="input-search">
+            <button class="btn-add" onclick="abrirModal()"><i class="fas fa-plus"></i></button>
+        </div>
+
+        <div class="inventory-grid" id="lista-inventario">
+            <div class="item-card">
+                <div class="item-info">
+                    <h4>Suela de Caucho Talla 40</h4>
+                    <p>Categoría: Suelas | Proveedor: Don Pepe</p>
+                    <button class="btn-order" onclick="solicitarMaterial('Suela Talla 40', 'Don Pepe', '0999999999')">
+                        <i class="fab fa-whatsapp"></i> SOLICITAR PEDIDO
+                    </button>
+                </div>
+                <div class="stock-control">
+                    <span class="stock-num status-low">2</span>
+                    <p style="font-size: 10px; margin:0;">PARES</p>
+                </div>
+            </div>
+
+            <div class="item-card">
+                <div class="item-info">
+                    <h4>Pegamento Amarillo (Cemento)</h4>
+                    <p>Categoría: Químicos | Proveedor: Quimicamp</p>
+                </div>
+                <div class="stock-control">
+                    <span class="stock-num status-ok">12</span>
+                    <p style="font-size: 10px; margin:0;">LITROS</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="modal-add">
+        <div class="modal-content">
+            <h3 style="color:var(--gold); margin-top:0;">Nuevo Material</h3>
+            <input type="text" id="m-nombre" placeholder="Nombre del material" style="width:100%; margin-bottom:10px; padding:10px;">
+            <input type="number" id="m-cantidad" placeholder="Cantidad actual" style="width:100%; margin-bottom:10px; padding:10px;">
+            <select id="m-categoria" style="width:100%; margin-bottom:10px; padding:10px;">
+                <option value="Suelas">Suelas / Tapillas</option>
+                <option value="Quimicos">Químicos / Pegamento</option>
+                <option value="Hilos">Hilos / Costura</option>
+            </select>
+            <button onclick="guardarMaterial()" style="width:100%; padding:12px; background:var(--gold); border:none; font-weight:bold; border-radius:8px;">GUARDAR EN BODEGA</button>
+            <button onclick="cerrarModal()" style="width:100%; background:transparent; color:white; border:none; margin-top:10px; font-size:12px;">Cancelar</button>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = { databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com" };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        function abrirModal() { document.getElementById('modal-add').style.display = 'flex'; }
+        function cerrarModal() { document.getElementById('modal-add').style.display = 'none'; }
+
+        function solicitarMaterial(item, proveedor, telf) {
+            const msj = `Hola ${proveedor}, te saluda JADI REPAIZ. Necesito un pedido de: ${item}. ¿Tienes disponibilidad?`;
+            const url = `https://wa.me/${telf}?text=${encodeURIComponent(msj)}`;
+            window.open(url, '_blank');
+        }
+
+        function guardarMaterial() {
+            const session = JSON.parse(localStorage.getItem('session_jadi'));
+            const data = {
+                nombre: document.getElementById('m-nombre').value,
+                cantidad: document.getElementById('m-cantidad').value,
+                categoria: document.getElementById('m-categoria').value,
+                maestroId: session.uid
+            };
+            
+            db.ref('inventarios').push(data).then(() => {
+                alert("Material registrado");
+                cerrarModal();
+            });
+        }
+    </script>
+</body>
+</html>
