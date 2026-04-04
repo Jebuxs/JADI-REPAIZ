@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Clientes - J.A.D.I REPAIZ</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --gold: #FFD700; --dark: #000; --card: #0d1117; --border: #30363d; --green: #25d366; }
+        body { background: var(--dark); color: #e6edf3; font-family: 'Segoe UI', sans-serif; margin: 0; padding-bottom: 30px; }
+
+        .header { 
+            padding: 15px 20px; display: flex; justify-content: space-between; 
+            align-items: center; border-bottom: 1px solid var(--gold); background: #050505;
+        }
+        .back-link { color: var(--gold); text-decoration: none; font-size: 14px; font-weight: bold; }
+
+        .container { max-width: 600px; margin: auto; padding: 20px; }
+
+        /* NAVEGACIÓN RÁPIDA */
+        .client-nav { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+        .btn-client { 
+            background: var(--card); border: 1px solid var(--border); color: white; padding: 15px; 
+            border-radius: 12px; text-decoration: none; text-align: center; font-size: 11px; font-weight: bold;
+        }
+        .btn-client i { display: block; font-size: 20px; color: var(--gold); margin-bottom: 8px; }
+
+        /* FILTROS DE FIDELIZACIÓN */
+        .filter-tabs { display: flex; gap: 10px; margin-bottom: 15px; overflow-x: auto; padding-bottom: 5px; }
+        .tab { 
+            padding: 8px 15px; border-radius: 20px; background: #161b22; border: 1px solid var(--border); 
+            font-size: 11px; white-space: nowrap; cursor: pointer; color: #888;
+        }
+        .tab.active { background: var(--gold); color: black; border-color: var(--gold); }
+
+        /* TARJETAS DE CLIENTE */
+        .client-card { 
+            background: var(--card); border: 1px solid var(--border); border-radius: 15px; 
+            padding: 15px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;
+        }
+        .client-info h4 { margin: 0; font-size: 15px; color: #fff; }
+        .client-info p { margin: 5px 0 0; font-size: 11px; color: #888; }
+        .badge { font-size: 9px; padding: 2px 8px; border-radius: 10px; font-weight: bold; text-transform: uppercase; }
+        .badge-vip { background: #332b00; color: var(--gold); border: 1px solid var(--gold); }
+        .badge-inactive { background: #221111; color: #ff4d4d; border: 1px solid #ff4d4d; }
+
+        .btn-promo { 
+            background: var(--green); color: white; border: none; padding: 10px; 
+            border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+            text-decoration: none; font-size: 18px; cursor: pointer;
+        }
+
+        /* BUSCADOR */
+        .search-bar { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border); background: #111; color: white; margin-bottom: 20px; box-sizing: border-box; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <a href="zapatero.html" class="back-link"><i class="fas fa-chevron-left"></i> VOLVER</a>
+        <div style="color:var(--gold); font-weight: 900; letter-spacing: 1px;">MIS CLIENTES</div>
+    </div>
+
+    <div class="container">
+        <div class="client-nav">
+            <a href="nuevo_cliente.html" class="btn-client">
+                <i class="fas fa-user-plus"></i> NUEVO CLIENTE
+            </a>
+            <a href="promociones.html" class="btn-client">
+                <i class="fas fa-bullhorn"></i> CREAR PROMO
+            </a>
+        </div>
+
+        <input type="text" class="search-bar" id="searchClient" placeholder="Buscar cliente por nombre o teléfono..." onkeyup="filterClients()">
+
+        <div class="filter-tabs">
+            <div class="tab active" onclick="loadClients('todos', this)">Todos</div>
+            <div class="tab" onclick="loadClients('vip', this)">Destacados (VIP)</div>
+            <div class="tab" onclick="loadClients('inactivos', this)">No Frecuentes</div>
+        </div>
+
+        <div id="clients-list">
+            <div style="text-align:center; padding:50px; color:#444;">
+                <i class="fas fa-users fa-3x"></i>
+                <p>Cargando cartera de clientes...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = { databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com" };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        let currentMaestroId = "";
+
+        window.onload = function() {
+            const session = JSON.parse(localStorage.getItem('session_jadi'));
+            if (session) {
+                currentMaestroId = session.uid;
+                loadClients('todos');
+            } else {
+                window.location.href = "../index.html";
+            }
+        };
+
+        function loadClients(filter, element) {
+            if(element) {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                element.classList.add('active');
+            }
+
+            const list = document.getElementById('clients-list');
+            db.ref('clientes').orderByChild('maestroId').equalTo(currentMaestroId).on('value', snap => {
+                list.innerHTML = "";
+                if (!snap.exists()) {
+                    list.innerHTML = "<p style='text-align:center; color:#555;'>Aún no tienes clientes registrados.</p>";
+                    return;
+                }
+
+                snap.forEach(child => {
+                    const c = child.val();
+                    let show = true;
+                    
+                    // Lógica de Fidelización
+                    const esVip = c.trabajosRealizados >= 5;
+                    const esInactivo = c.diasDesdeUltimaVisita >= 30;
+
+                    if(filter === 'vip' && !esVip) show = false;
+                    if(filter === 'inactivos' && !esInactivo) show = false;
+
+                    if(show) {
+                        const promoMsg = esVip 
+                            ? `Hola ${c.nombre}, en JADI REPAIZ valoramos tu fidelidad. ¡Tienes un 20% de descuento en tu próxima restauración!`
+                            : `Hola ${c.nombre}, ¡te extrañamos en JADI REPAIZ! Trae tus zapatos esta semana y el brillo va por nuestra cuenta.`;
+
+                        list.innerHTML += `
+                            <div class="client-card">
+                                <div class="client-info">
+                                    <h4>${c.nombre} ${esVip ? '<span class="badge badge-vip">VIP</span>' : ''} ${esInactivo ? '<span class="badge badge-inactive">INACTIVO</span>' : ''}</h4>
+                                    <p><i class="fas fa-phone"></i> ${c.telefono}</p>
+                                    <p><i class="fas fa-shoe-prints"></i> Trabajos: ${c.trabajosRealizados || 0} | Último: hace ${c.diasDesdeUltimaVisita || 0} días</p>
+                                </div>
+                                <a href="https://wa.me/${c.telefono}?text=${encodeURIComponent(promoMsg)}" target="_blank" class="btn-promo">
+                                    <i class="fab fa-whatsapp"></i>
+                                </a>
+                            </div>
+                        `;
+                    }
+                });
+            });
+        }
+
+        function filterClients() {
+            let val = document.getElementById('searchClient').value.toLowerCase();
+            let cards = document.getElementsByClassName('client-card');
+            for (let i = 0; i < cards.length; i++) {
+                let name = cards[i].querySelector('h4').innerText.toLowerCase();
+                cards[i].style.display = name.includes(val) ? "flex" : "none";
+            }
+        }
+    </script>
+</body>
+</html>
