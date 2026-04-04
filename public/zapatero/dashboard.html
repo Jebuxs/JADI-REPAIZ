@@ -3,145 +3,213 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel Zapatero - JADI REPAIZ</title>
+    <title>Módulo Zapatero - J.A.D.I REPAIZ</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --gold: #fbc02d; --dark: #000; --card: #111; --text: #eee; }
-        body { background: var(--dark); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; padding-bottom: 100px; }
+        :root { --gold: #FFD700; --dark: #000; --card-bg: #0d1117; --border: #30363d; }
+        body { background-color: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding-bottom: 50px; }
         
-        header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--gold); padding-bottom: 15px; margin-bottom: 25px; }
-
-        /* Pilares de Producción */
-        .main-pillars { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 30px; }
-        .pillar-card { background: var(--card); padding: 20px; border-radius: 15px; border: 1px solid #222; text-align: center; cursor: pointer; transition: 0.3s; }
-        .pillar-card:hover { border-color: var(--gold); transform: translateY(-5px); background: #1a1a1a; }
-        .pillar-card i { font-size: 1.8rem; margin-bottom: 10px; display: block; }
-        .pillar-card h3 { margin: 5px 0; font-size: 0.8rem; color: var(--gold); text-transform: uppercase; }
-        .pillar-card span { font-size: 1.5rem; font-weight: bold; }
-
-        /* Acciones Rápidas */
-        .support-grid { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 40px; }
-        .support-btn { background: #111; border: 1px solid #333; color: #aaa; padding: 12px 25px; border-radius: 10px; text-decoration: none; font-size: 0.9rem; transition: 0.2s; display: flex; align-items: center; gap: 10px; }
-        .support-btn:hover { background: var(--gold); color: #000; border-color: var(--gold); font-weight: bold; }
-
-        /* Lista de Trabajos Recientes */
-        .work-section { background: var(--card); border-radius: 15px; padding: 20px; border: 1px solid #222; }
-        .work-section h2 { color: var(--gold); font-size: 1.1rem; margin-top: 0; border-bottom: 1px solid #222; padding-bottom: 10px; }
+        /* HEADER PREMIUM */
+        .header {
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 15px 25px; border-bottom: 1px solid var(--gold); background: #050505;
+            position: sticky; top: 0; z-index: 1000;
+        }
+        .logo-container h1 { color: var(--gold); margin: 0; font-size: 24px; letter-spacing: 3px; font-weight: 900; }
+        .logo-container span { color: #FFF; font-size: 9px; letter-spacing: 4px; text-transform: uppercase; display: block; margin-top: -5px; }
         
-        .work-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #222; }
-        .work-item:last-child { border-bottom: none; }
-        .status-badge { padding: 4px 10px; border-radius: 5px; font-size: 0.7rem; font-weight: bold; text-transform: uppercase; }
-        .bg-pend { background: #ff9800; color: white; }
-        .bg-proc { background: #2196f3; color: white; }
-        .bg-done { background: #4caf50; color: white; }
+        .back-dashboard { 
+            text-decoration: none; color: var(--gold); font-size: 12px; 
+            border: 1px solid #332b00; padding: 5px 12px; border-radius: 20px;
+            transition: 0.3s;
+        }
+        .back-dashboard:hover { background: #332b00; }
 
-        /* Barra de Navegación Inferior */
-        .quick-nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(15,15,15,0.95); padding: 12px 30px; border-radius: 50px; border: 1px solid var(--gold); display: flex; gap: 25px; backdrop-filter: blur(10px); z-index: 1000; }
-        .nav-item { color: #fff; font-size: 1.3rem; transition: 0.3s; text-decoration: none; border: none; background: none; cursor: pointer; }
-        .nav-item:hover { color: var(--gold); transform: scale(1.2); }
+        /* CONTENIDO */
+        .main-content { padding: 20px; max-width: 900px; margin: auto; }
+        
+        .welcome-section { margin-bottom: 25px; }
+        .welcome-title { color: var(--gold); border-left: 5px solid var(--gold); padding-left: 15px; margin: 0; font-size: 1.3rem; }
+        .personal-label { color: #888; font-size: 13px; margin: 5px 0 0 20px; }
+        .login-id { 
+            background: #1a1a1a; color: var(--gold); display: inline-block; 
+            padding: 4px 12px; border-radius: 20px; font-size: 11px; 
+            margin: 10px 0 0 20px; font-weight: bold; border: 1px solid var(--border); 
+        }
+
+        /* TABLERO DE ESTADÍSTICAS (KPIs) */
+        .dashboard-stats {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 25px;
+        }
+        .stat-card { background: #111; border: 1px solid #222; padding: 12px 5px; border-radius: 12px; text-align: center; }
+        .stat-card i { font-size: 1.1rem; margin-bottom: 5px; display: block; }
+        .stat-card span { font-size: 1.4rem; font-weight: bold; display: block; }
+        .stat-card p { font-size: 9px; color: #666; margin: 0; text-transform: uppercase; font-weight: bold; }
+        
+        .color-new { color: #ff4d4d; }   /* Rojo para nuevos */
+        .color-proc { color: #4dadff; }  /* Azul para proceso */
+        .color-ready { color: #4dff88; } /* Verde para listos */
+
+        /* GRILLA DE ACCIONES (Tus 5 botones) */
+        .grid-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
+        .card { 
+            background-color: var(--card-bg); padding: 25px 15px; border-radius: 18px; text-align: center; 
+            cursor: pointer; transition: 0.3s; border: 1px solid var(--border); text-decoration: none; color: white;
+        }
+        .card:hover { border-color: var(--gold); transform: translateY(-5px); background: #161b22; }
+        .card i { font-size: 32px; color: var(--gold); margin-bottom: 12px; }
+        .card h3 { margin: 0; font-size: 14px; letter-spacing: 1px; text-transform: uppercase; }
+        .card p { color: #666; font-size: 10px; margin-top: 5px; }
+
+        /* FOOTER STATUS */
+        .status-bar { 
+            background: #050505; color: var(--gold); border: 1px solid #332b00;
+            padding: 15px; border-radius: 12px; text-align: center; margin-top: 30px; 
+            font-size: 13px;
+        }
+
+        .btn-logout { 
+            display: block; text-align: center; color: #444; 
+            text-decoration: none; margin-top: 30px; font-size: 12px; transition: 0.3s;
+        }
+        .btn-logout:hover { color: #ff4d4d; }
     </style>
 </head>
 <body>
 
-<header>
-    <div>
-        <h2 style="color:var(--gold); margin:0; font-size: 1.2rem;">TALLER JADI</h2>
-        <small id="zpt-name" style="color: #666;">Cargando perfil...</small>
+    <div class="header">
+        <div class="logo-container">
+            <h1>J.A.D.I</h1>
+            <span>REPAIZ</span>
+        </div>
+        <a href="../dashboard.html" class="back-dashboard">
+            <i class="fas fa-th-large"></i> DASHBOARD
+        </a>
     </div>
-    <button onclick="cerrarSesion()" style="background:none; border:1px solid #333; color:#555; padding:5px 10px; border-radius:5px; cursor:pointer; font-size:0.7rem;">SALIR</button>
-</header>
 
-<div class="main-pillars">
-    <div class="pillar-card">
-        <i class="fas fa-hammer" style="color:var(--gold);"></i>
-        <h3>PENDIENTES</h3><span id="c-pend">0</span>
+    <div class="main-content">
+        <div class="welcome-section">
+            <h2 class="welcome-title" id="display-nombre">Bienvenido Maestro</h2>
+            <div id="display-local" class="personal-label">Cargando ubicación...</div>
+            <div class="login-id" id="display-id">ID: ZPT-00000000</div>
+        </div>
+
+        <div class="dashboard-stats">
+            <div class="stat-card">
+                <i class="fas fa-bell color-new"></i>
+                <span id="count-nuevos">0</span>
+                <p>Nuevos</p>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-hammer color-proc"></i>
+                <span id="count-proceso">0</span>
+                <p>En Proceso</p>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-check-circle color-ready"></i>
+                <span id="count-listos">0</span>
+                <p>Terminados</p>
+            </div>
+        </div>
+
+        <div class="grid-container">
+            <a href="perfil.html" class="card">
+                <i class="fas fa-user-circle"></i>
+                <h3>Mi Perfil</h3>
+                <p>Datos y Configuración</p>
+            </a>
+            <a href="local.html" class="card">
+                <i class="fas fa-store"></i>
+                <h3>Mi Local</h3>
+                <p>Vitrina y Ubicación</p>
+            </a>
+            <a href="inventario.html" class="card">
+                <i class="fas fa-boxes-stacked"></i>
+                <h3>Inventarios</h3>
+                <p>Suelas y Materiales</p>
+            </a>
+            <a href="clientes.html" class="card">
+                <i class="fas fa-address-book"></i>
+                <h3>Clientes</h3>
+                <p>Base de Datos y QR</p>
+            </a>
+            <a href="trabajos.html" class="card" style="grid-column: span 2;">
+                <i class="fas fa-tools"></i>
+                <h3>Trabajos y Órdenes</h3>
+                <p>Gestión de Pedidos y Chat de Avances</p>
+            </a>
+        </div>
+
+        <div class="status-bar">
+            <i class="fas fa-shield-halved"></i> 
+            <strong>SISTEMA J.A.D.I PROTEGIDO</strong>
+            <div style="font-size: 10px; color: #666; margin-top: 4px;">
+                Conectado a: <span id="local-footer">...</span>
+            </div>
+        </div>
+
+        <a href="#" class="btn-logout" id="logout-trigger">
+            <i class="fas fa-power-off"></i> CERRAR SESIÓN MAESTRA
+        </a>
     </div>
-    <div class="pillar-card">
-        <i class="fas fa-spinner fa-spin" style="color:#2196f3;"></i>
-        <h3>EN PROCESO</h3><span id="c-proc">0</span>
-    </div>
-    <div class="pillar-card">
-        <i class="fas fa-check-double" style="color:#4caf50;"></i>
-        <h3>LISTOS HOY</h3><span id="c-done">0</span>
-    </div>
-</div>
 
-<p style="color:#555; font-size:0.75rem; font-weight:bold; text-transform:uppercase;">Herramientas de Trabajo</p>
-<div class="support-grid">
-    <a href="orden-trabajo.html" class="support-btn"><i class="fas fa-plus-circle"></i> Nueva Orden</a>
-    <a href="inventario.html" class="support-btn"><i class="fas fa-boxes"></i> Ver Materiales</a>
-    <a href="../chat.html" class="support-btn"><i class="fas fa-comments"></i> Chat Admin</a>
-</div>
+    <script>
+        // CONFIGURACIÓN FIREBASE
+        const firebaseConfig = { 
+            databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com" 
+        };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
-<div class="work-section">
-    <h2><i class="fas fa-tasks"></i> ÚLTIMOS TRABAJOS ASIGNADOS</h2>
-    <div id="lista-trabajos">
-        <p style="text-align:center; color:#444; padding:20px;">No hay trabajos asignados recientemente.</p>
-    </div>
-</div>
+        window.onload = function() {
+            // Obtenemos la sesión del localStorage
+            const session = JSON.parse(localStorage.getItem('session_jadi'));
+            
+            if (session) {
+                // Rellenar datos de interfaz
+                document.getElementById('display-nombre').innerText = "Bienvenido, " + (session.nombre || "Maestro");
+                document.getElementById('display-id').innerText = "ID: " + (session.uid || "ZPT-PRO");
+                document.getElementById('display-local').innerText = session.empresaNombre || "Local J.A.D.I";
+                document.getElementById('local-footer').innerText = session.empresaNombre || "Sucursal Principal";
+                
+                // Activar monitor de Firebase para los contadores
+                actualizarEstadisticas(session.uid);
+            } else {
+                // Si no hay sesión, al login (subiendo un nivel si es necesario)
+                window.location.href = "../index.html";
+            }
+        };
 
-<div class="quick-nav">
-    <a href="dashboard.html" class="nav-item"><i class="fas fa-home"></i></a>
-    <a href="orden-trabajo.html" class="nav-item"><i class="fas fa-plus-square"></i></a>
-    <a href="inventario.html" class="nav-item"><i class="fas fa-box"></i></a>
-    <button onclick="cerrarSesion()" class="nav-item"><i class="fas fa-sign-out-alt"></i></button>
-</div>
+        // Función para sincronizar contadores con Firebase
+        function actualizarEstadisticas(uid) {
+            // Escuchamos la rama 'trabajos' filtrando por el ID del zapatero/maestro
+            db.ref('trabajos').orderByChild('maestroId').equalTo(uid).on('value', snap => {
+                let nuevos = 0, proceso = 0, listos = 0;
+                
+                snap.forEach(child => {
+                    const data = child.val();
+                    if(data.estado === 'Recibido' || data.estado === 'Nuevo') nuevos++;
+                    else if(data.estado === 'En Proceso') proceso++;
+                    else if(data.estado === 'Listo' || data.estado === 'Entregado') listos++;
+                });
 
-<script>
-    // CONFIGURACIÓN FIREBASE
-    const firebaseConfig = {
-        apiKey: "AIzaSyAKPxG1osuR9hsj-PsmwJrzK-3W_XM1UyU",
-        authDomain: "jadi-repaiz.firebaseapp.com",
-        databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com",
-    };
-    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-    const auth = firebase.auth();
-
-    // SEGURIDAD DE ENTRADA
-    async function validarAcceso() {
-        const session = JSON.parse(localStorage.getItem('session_jadi'));
-        
-        // 1. ¿Existe sesión local?
-        if(!session) {
-            window.location.href = "../login.html";
-            return;
+                // Actualizar el DOM con animación simple o directa
+                document.getElementById('count-nuevos').innerText = nuevos;
+                document.getElementById('count-proceso').innerText = proceso;
+                document.getElementById('count-listos').innerText = listos;
+            });
         }
 
-        // 2. ¿Sigue existiendo el usuario y tiene el rol?
-        const snap = await db.ref('usuarios/' + session.uid).once('value');
-        if(!snap.exists()) {
-            cerrarSesion();
-            return;
-        }
-
-        const u = snap.val();
-        // Permitimos ZPT y ADM (para que tú puedas entrar a supervisar)
-        if(u.rolCodigo !== 'ZPT' && u.rolCodigo !== 'ADM') {
-            window.location.href = "../login.html";
-            return;
-        }
-
-        document.getElementById('zpt-name').innerText = "ZAPATERO: " + u.nombre.toUpperCase();
-        cargarDatosDashboard();
-    }
-
-    function cargarDatosDashboard() {
-        // Aquí conectaremos con la carpeta 'trabajos' en el futuro
-        // Por ahora inicializamos contadores en 0
-        console.log("Dashboard cargado para producción.");
-    }
-
-    function cerrarSesion() {
-        auth.signOut();
-        localStorage.removeItem('session_jadi');
-        window.location.href = "../login.html";
-    }
-
-    validarAcceso();
-</script>
+        // Lógica de cierre de sesión
+        document.getElementById('logout-trigger').onclick = function(e) {
+            e.preventDefault();
+            if(confirm("¿Desea cerrar la sesión del Módulo Zapatero?")) {
+                localStorage.removeItem('session_jadi');
+                window.location.href = "../index.html";
+            }
+        };
+    </script>
 </body>
 </html>
