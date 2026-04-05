@@ -9,48 +9,61 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --gold: #FFD700; --dark: #050505; --bubble-me: #005c4b; --bubble-other: #202c33; }
+        :root { --gold: #FFD700; --dark: #0b141a; --bubble-me: #005c4b; --bubble-other: #202c33; }
         
-        body { 
-            background: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; 
-            margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden;
+        /* Ajuste total de pantalla */
+        html, body { 
+            height: 100%; margin: 0; padding: 0; 
+            background: var(--dark); overflow: hidden; 
         }
+
+        body { display: flex; flex-direction: column; font-family: 'Segoe UI', sans-serif; }
         
-        .chat-header { padding: 12px 15px; background: #202c33; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #333; z-index: 10; }
+        /* Header Fijo */
+        .chat-header { 
+            padding: 10px 15px; background: #202c33; 
+            display: flex; align-items: center; gap: 12px; 
+            border-bottom: 1px solid #333; flex-shrink: 0;
+        }
         .back-btn { color: var(--gold); text-decoration: none; font-size: 20px; }
         .user-info h4 { margin: 0; font-size: 16px; color: var(--gold); }
         .user-info span { font-size: 11px; color: #888; }
 
+        /* Contenedor de mensajes con Scroll */
         #chat-container { 
-            flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px;
-            background-color: #0b141a;
+            flex: 1; overflow-y: auto; padding: 15px; 
+            display: flex; flex-direction: column; gap: 10px;
+            background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
+            background-blend-mode: overlay;
         }
         
         .msg { 
-            max-width: 85%; padding: 8px 12px; border-radius: 12px; position: relative; 
-            font-size: 15px; line-height: 1.4; word-wrap: break-word;
+            max-width: 80%; padding: 8px 12px; border-radius: 12px; 
+            position: relative; font-size: 15px; line-height: 1.4; 
+            word-wrap: break-word; color: white;
         }
-        /* MI MENSAJE (Derecha) */
         .msg.me { align-self: flex-end; background: var(--bubble-me); border-bottom-right-radius: 2px; }
-        /* MENSAJE CLIENTE (Izquierda) */
         .msg.other { align-self: flex-start; background: var(--bubble-other); border-bottom-left-radius: 2px; }
         
         .msg-meta { 
             display: flex; justify-content: flex-end; align-items: center; 
             gap: 4px; font-size: 10px; color: rgba(255,255,255,0.5); margin-top: 4px;
         }
-        
-        .visto-sent { color: #aaa; } 
-        .visto-delivered { color: #aaa; } 
-        .visto-read { color: #53bdeb; }
 
-        .input-area { background: #202c33; padding: 10px; display: flex; align-items: center; gap: 8px; }
-        .input-area input { 
-            flex: 1; background: #2a3942; border: none; padding: 12px 15px; 
-            border-radius: 25px; color: white; outline: none; font-size: 16px;
+        /* Área de escritura FIJA abajo */
+        .input-area { 
+            background: #202c33; padding: 10px; 
+            display: flex; align-items: center; gap: 8px; 
+            flex-shrink: 0; padding-bottom: env(safe-area-inset-bottom, 10px);
         }
-        .btn-action { color: #8696a0; font-size: 20px; cursor: pointer; padding: 5px; }
+        .input-area input { 
+            flex: 1; background: #2a3942; border: none; padding: 10px 15px; 
+            border-radius: 20px; color: white; outline: none; font-size: 16px;
+        }
+        .btn-action { color: #8696a0; font-size: 22px; cursor: pointer; }
         .btn-send { color: var(--gold); }
+
+        .visto-read { color: #53bdeb; }
     </style>
 </head>
 <body>
@@ -68,50 +81,43 @@
     <div class="input-area">
         <label for="file-input" class="btn-action"><i class="fas fa-camera"></i></label>
         <input type="file" id="file-input" style="display:none" accept="image/*" onchange="subirImagen(this)">
-        <input type="text" id="msg-input" placeholder="Mensaje..." autocomplete="off">
+        
+        <input type="text" id="msg-input" placeholder="Escribe un mensaje..." autocomplete="off">
+        
         <div class="btn-action btn-send" onclick="enviarTexto()"><i class="fas fa-paper-plane"></i></div>
     </div>
 
     <script>
+        // Configuración Firebase (Usando IDs limpios)
         const firebaseConfig = { databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com", storageBucket: "jadi-repaiz.appspot.com" };
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
-        const storage = firebase.storage();
         
-        // Limpiar ceros a la izquierda para los IDs
-        const rawSession = JSON.parse(localStorage.getItem('session_jadi')) || { uid: "ZPT000000001" };
-        const myID = "ZPT" + parseInt(rawSession.uid.replace("ZPT", ""));
+        const rawSession = JSON.parse(localStorage.getItem('session_jadi')) || { uid: "ZPT1" };
+        const myID = "ZPT" + parseInt(rawSession.uid.replace(/\D/g, ""));
         
         const params = new URLSearchParams(window.location.search);
-        const rawReceptor = params.get('id') || "CLN000000001";
-        const receptorID = "CLN" + parseInt(rawReceptor.replace("CLN", ""));
+        const rawReceptor = params.get('id') || "CLN1";
+        const receptorID = "CLN" + parseInt(rawReceptor.replace(/\D/g, ""));
         
         const chatID = [myID, receptorID].sort().join("_");
-        const hoy = new Date().toISOString().split('T')[0]; // Carpeta por fecha: YYYY-MM-DD
+        const hoy = new Date().toISOString().split('T')[0];
 
-        // Cargar datos cliente
+        // 1. Cargar nombre y estado
         db.ref('usuarios/' + rawReceptor).once('value', snap => {
             if(snap.exists()) document.getElementById('chat-user-name').innerText = snap.val().nombre;
-        });
-
-        // Monitorear presencia real
-        db.ref(`.info/connected`).on('value', snap => {
-            if (snap.val() === true) {
-                const presenceRef = db.ref(`presencia/${myID}`);
-                presenceRef.onDisconnect().set("offline");
-                presenceRef.set("online");
-            }
         });
 
         db.ref(`presencia/${receptorID}`).on('value', snap => {
             document.getElementById('chat-status').innerText = snap.val() === "online" ? "En línea" : "Desconectado";
         });
 
+        // 2. Escuchar mensajes
         function cargarChat() {
-            // Escuchamos la carpeta del día actual
             db.ref(`chats/${chatID}/${hoy}`).on('child_added', snap => {
                 const m = snap.val();
                 renderizarMensaje(m, snap.key);
+                // Marcar como leído si lo recibo yo
                 if(m.sender !== myID && m.status !== 'read') {
                     db.ref(`chats/${chatID}/${hoy}/${snap.key}`).update({ status: 'read' });
                 }
@@ -119,7 +125,7 @@
 
             db.ref(`chats/${chatID}/${hoy}`).on('child_changed', snap => {
                 const meta = document.getElementById('meta-' + snap.key);
-                if(meta) meta.innerHTML = generarVistosHTML(snap.val().status, snap.val().timestamp);
+                if(meta) meta.innerHTML = generarVistosHTML(snap.val().status, snap.val().timestamp, m.sender === myID);
             });
         }
 
@@ -140,7 +146,6 @@
             const ref = db.ref(`chats/${chatID}/${hoy}`).push();
             await ref.set(msgData);
 
-            // Solo pasa a "delivered" si el otro está online
             db.ref(`presencia/${receptorID}`).once('value', snap => {
                 if(snap.val() === "online") ref.update({ status: 'delivered' });
             });
@@ -166,13 +171,16 @@
         function generarVistosHTML(status, time, esMio) {
             const hora = new Date(time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
             if(!esMio) return hora;
-
-            let icono = '<i class="fas fa-check visto-sent"></i>';
-            if(status === 'delivered') icono = '<i class="fas fa-check-double visto-delivered"></i>';
-            if(status === 'read') icono = '<i class="fas fa-check-double visto-read"></i>';
-            
-            return `${hora} ${icono}`;
+            let checks = '<i class="fas fa-check"></i>';
+            if(status === 'delivered') checks = '<i class="fas fa-check-double"></i>';
+            if(status === 'read') checks = '<i class="fas fa-check-double visto-read"></i>';
+            return `${hora} ${checks}`;
         }
+
+        // Manejo del teclado en móviles
+        window.addEventListener('resize', () => {
+            document.getElementById('chat-container').scrollTop = document.getElementById('chat-container').scrollHeight;
+        });
 
         window.onload = cargarChat;
     </script>
