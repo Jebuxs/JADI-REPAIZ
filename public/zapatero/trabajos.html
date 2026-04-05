@@ -10,42 +10,25 @@
     <style>
         :root { --gold: #FFD700; --dark: #000; --card: #111; --danger: #ff4444; }
         body { background: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding-bottom: 80px; }
-        
         .header { padding: 15px; border-bottom: 1px solid #222; display: flex; align-items: center; background: #050505; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
         .btn-back { color: var(--gold); text-decoration: none; }
-
         .search-container { padding: 15px; }
         .search-bar { background: #1a1a1a; border: 1px solid #333; padding: 10px; border-radius: 10px; display: flex; align-items: center; }
         .search-bar input { background: transparent; border: none; color: white; margin-left: 10px; width: 100%; outline: none; }
-
         .orders-container { padding: 0 15px; }
         .order-card { background: var(--card); border-radius: 15px; padding: 15px; margin-bottom: 15px; border: 1px solid #222; display: flex; justify-content: space-between; align-items: center; }
-
-        /* MODAL */
         #modal-orden { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark); z-index: 300; padding: 20px; box-sizing: border-box; overflow-y: auto; }
         input, textarea { width: 100%; padding: 12px; margin-bottom: 12px; background: #111; border: 1px solid #333; color: white; border-radius: 8px; box-sizing: border-box; outline: none; font-size: 16px; }
         label { font-size: 11px; color: var(--gold); margin-bottom: 5px; display: block; }
-        
         .row-flex { display: flex; gap: 8px; margin-bottom: 10px; align-items: center; }
         .btn-mini-plus { background: #222; color: var(--gold); border: 1px solid var(--gold); border-radius: 8px; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-        
         #btn-invitar { display: none; background: #0066ff; color: white; border: none; padding: 10px; border-radius: 8px; width: 100%; font-weight: bold; margin-bottom: 15px; }
-
         .fab { position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; background: var(--gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: black; font-size: 24px; border: none; z-index: 200; }
-        
-        .item-listado { border-bottom: 1px solid #222; padding: 10px; font-size: 14px; display: flex; justify-content: space-between; align-items: flex-start; transition: 0.3s; }
-        .item-info { flex: 1; cursor: pointer; }
-        .item-listado b { color: var(--gold); }
-        .detalles-texto { font-size: 12px; color: #888; padding-left: 5px; white-space: pre-wrap; margin-top: 4px; }
-        .btn-eliminar-item { color: var(--danger); background: transparent; border: none; font-size: 18px; padding: 5px 10px; cursor: pointer; }
-
-        .btn-edit-order { background: #222; border: 1px solid #444; color: var(--gold); width: 45px; height: 45px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
-
-        .editando-ahora { border: 1px solid var(--gold) !important; box-shadow: 0 0 10px rgba(255,215,0,0.2); }
-
-        /* Estilo Descuento y Saldo */
+        .item-listado { border-bottom: 1px solid #222; padding: 10px; font-size: 14px; display: flex; justify-content: space-between; align-items: flex-start; }
+        .item-info { flex: 1; }
+        .detalles-texto { font-size: 12px; color: #888; white-space: pre-wrap; margin-top: 4px; }
+        .btn-eliminar-item { color: var(--danger); background: transparent; border: none; font-size: 18px; }
         .caja-totales { background: #0a0a0a; padding: 15px; border-radius: 12px; margin-top:15px; border: 1px solid #222; }
-        #txt-descuento-info { color: var(--danger); font-size: 12px; font-weight: bold; margin-bottom: 10px; display: none; }
         .badge-saldo { background: #222; color: #00ff00; padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-left: 5px; border: 1px solid #004400; }
     </style>
 </head>
@@ -83,34 +66,26 @@
                 <input type="number" id="item-cant" value="1" style="flex:0.4;">
                 <input type="text" id="item-tipo" placeholder="Zapato, Mochila..." style="flex:2;">
             </div>
-            <label>DETALLES (Usa + para añadir líneas)</label>
             <div class="row-flex">
-                <input type="text" id="item-desc-input" placeholder="Ej: Cambio de suela" style="flex:1; margin-bottom:0;">
+                <input type="text" id="item-desc-input" placeholder="Detalle trabajo" style="flex:1;">
                 <div class="btn-mini-plus" onclick="acumularEnTexto()"><i class="fas fa-plus"></i></div>
             </div>
-            <textarea id="item-detalles-final" style="min-height:60px;" placeholder="Los detalles aparecerán aquí..."></textarea>
+            <textarea id="item-detalles-final" placeholder="Resumen detalles..."></textarea>
             <div class="row-flex">
-                <input type="number" id="item-precio" placeholder="Precio $" style="margin-bottom:0;">
-                <button id="btn-bajar-item" onclick="bajarItem()" style="background:var(--gold); border:none; border-radius:8px; height:45px; width:60px; color:black;">
-                    <i class="fas fa-arrow-down" id="icono-bajar"></i>
-                </button>
+                <input type="number" id="item-precio" placeholder="Precio $">
+                <button onclick="bajarItem()" style="background:var(--gold); border:none; border-radius:8px; height:45px; width:60px;"><i class="fas fa-arrow-down"></i></button>
             </div>
         </div>
 
-        <div id="visor-items" style="margin-top:15px; background: #050505; border-radius: 10px;"></div>
+        <div id="visor-items" style="margin-top:15px;"></div>
 
         <div class="caja-totales">
-            <div id="txt-descuento-info">REBAJA: -$0 (0%)</div>
-            
             <label>TOTAL COBRADO $</label>
             <input type="number" id="precio-total" value="0" oninput="calcularDiferencias()">
-            
             <label>ABONO $</label>
             <input type="number" id="abono-inicial" value="0" oninput="calcularDiferencias()">
-
-            <div style="margin-top: 10px; border-top: 1px solid #333; padding-top: 10px; color: #00ff00; font-weight: bold; display: flex; justify-content: space-between;">
-                <span>SALDO PENDIENTE:</span>
-                <span id="txt-saldo-pendiente">$0</span>
+            <div style="color: #00ff00; font-weight: bold; display: flex; justify-content: space-between;">
+                <span>SALDO:</span> <span id="txt-saldo-pendiente">$0</span>
             </div>
         </div>
 
@@ -124,122 +99,77 @@
         const firebaseConfig = { databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com" };
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
-        // Mantiene la sesión local para identificar al zapatero
-        const session = JSON.parse(localStorage.getItem('session_jadi')) || { uid: "ZAP-TEMP" };
+        const session = JSON.parse(localStorage.getItem('session_jadi')) || { uid: "ZPT000000001" };
 
         let itemsParaGuardar = [];
-        let totalRealSuma = 0; 
-        let indiceEditando = -1;
+        let totalRealSuma = 0;
         let idFirebaseActual = null;
-        let trbIDActual = null;
+        let clienteEncontradoID = null;
 
-        function abrirModal() { 
-            idFirebaseActual = null; trbIDActual = null;
-            document.getElementById('titulo-modal').innerText = "Nueva Orden";
-            document.getElementById('btn-guardar-principal').innerText = "GUARDAR ORDEN";
-            document.getElementById('modal-orden').style.display = 'block'; 
-            itemsParaGuardar = []; totalRealSuma = 0;
-            renderizarLista();
-            document.getElementById('cli-celular').value = "";
-            document.getElementById('cli-nombre').value = "";
-            document.getElementById('precio-total').value = 0;
-            document.getElementById('abono-inicial').value = 0;
-            document.getElementById('txt-descuento-info').style.display = "none";
-            limpiarCamposItem();
-        }
-
-        function cerrarModal() { document.getElementById('modal-orden').style.display = 'none'; }
-
-        async function cargarOrdenParaEditar(key) {
-            const snap = await db.ref('trabajos/' + key).once('value');
-            if(!snap.exists()) return;
-            const o = snap.val();
-            idFirebaseActual = key;
-            trbIDActual = o.ordenID;
-            document.getElementById('titulo-modal').innerText = "Editando " + trbIDActual;
-            document.getElementById('cli-celular').value = o.telefono;
-            document.getElementById('cli-nombre').value = o.cliente;
-            document.getElementById('precio-total').value = o.precioTotal;
-            document.getElementById('abono-inicial').value = o.abono;
-            itemsParaGuardar = o.items || [];
-            renderizarLista();
-            document.getElementById('modal-orden').style.display = 'block';
-        }
-
-        function bajarItem() {
-            const cant = document.getElementById('item-cant').value;
-            const tipo = document.getElementById('item-tipo').value;
-            const detalles = document.getElementById('item-detalles-final').value;
-            const precio = parseFloat(document.getElementById('item-precio').value) || 0;
-            if(!tipo) return;
-            if(indiceEditando > -1) {
-                itemsParaGuardar[indiceEditando] = { cant, tipo, detalles, precio };
-                indiceEditando = -1;
-                document.getElementById('form-item-caja').classList.remove('editando-ahora');
-            } else {
-                itemsParaGuardar.push({ cant, tipo, detalles, precio });
-            }
-            renderizarLista();
-            limpiarCamposItem();
-        }
-
-        function renderizarLista() {
-            const visor = document.getElementById('visor-items');
-            visor.innerHTML = "";
-            totalRealSuma = 0;
-            itemsParaGuardar.forEach((it, index) => {
-                totalRealSuma += it.precio;
-                visor.innerHTML += `
-                    <div class="item-listado">
-                        <div class="item-info" onclick="cargarItemParaEditar(${index})">
-                            <b>${it.cant} ${it.tipo}</b> - $${it.precio}
-                            <div class="detalles-texto">${it.detalles}</div>
-                        </div>
-                        <button class="btn-eliminar-item" onclick="eliminarItem(${index})"><i class="fas fa-times"></i></button>
-                    </div>`;
+        // 1. VERIFICAR CLIENTE AUTOMÁTICO
+        function verificarCliente(tel) {
+            if(tel.length < 9) return;
+            db.ref('usuarios').orderByChild('telefono').equalTo(tel).once('value', snap => {
+                if(snap.exists()){
+                    const uid = Object.keys(snap.val())[0];
+                    const data = snap.val()[uid];
+                    document.getElementById('cli-nombre').value = data.nombre;
+                    clienteEncontradoID = data.uid || uid; // Guardamos su ID CLN
+                    document.getElementById('btn-invitar').style.display = "none";
+                } else {
+                    document.getElementById('btn-invitar').style.display = "block";
+                    clienteEncontradoID = null;
+                }
             });
-            if(!idFirebaseActual) document.getElementById('precio-total').value = totalRealSuma;
-            calcularDiferencias();
-        }
-
-        function calcularDiferencias() {
-            const cobrado = parseFloat(document.getElementById('precio-total').value) || 0;
-            const abono = parseFloat(document.getElementById('abono-inicial').value) || 0;
-            const infoDesc = document.getElementById('txt-descuento-info');
-            
-            if(cobrado < totalRealSuma && totalRealSuma > 0){
-                const diff = totalRealSuma - cobrado;
-                const porc = ((diff / totalRealSuma) * 100).toFixed(1);
-                infoDesc.innerHTML = `REBAJA: -$${diff.toFixed(2)} (${porc}%)`;
-                infoDesc.style.display = "block";
-            } else {
-                infoDesc.style.display = "none";
-            }
-
-            const saldo = cobrado - abono;
-            document.getElementById('txt-saldo-pendiente').innerText = "$" + (saldo < 0 ? 0 : saldo).toFixed(2);
         }
 
         async function guardarOrdenFinal() {
             if(itemsParaGuardar.length === 0) return alert("Agrega artículos");
+            const tel = document.getElementById('cli-celular').value;
+            const nom = document.getElementById('cli-nombre').value;
             const cobrado = parseFloat(document.getElementById('precio-total').value);
             const abono = parseFloat(document.getElementById('abono-inicial').value);
 
-            if(!idFirebaseActual) {
-                const snapT = await db.ref('contadores/TRB').once('value');
-                let numT = (snapT.val() || 0) + 1;
-                trbIDActual = 'TRB-' + numT.toString().padStart(5, '0');
-                await db.ref('contadores/TRB').set(numT);
+            // 2. SI NO EXISTE, CREAR CLIENTE AUTOMÁTICAMENTE
+            if(!clienteEncontradoID) {
+                const snapC = await db.ref('contadores/CLN').once('value');
+                let numC = (snapC.val() || 0) + 1;
+                clienteEncontradoID = 'CLN' + numC.toString().padStart(9, '0');
+                await db.ref('usuarios/' + clienteEncontradoID).set({
+                    uid: clienteEncontradoID,
+                    nombre: nom,
+                    telefono: tel,
+                    tipo: 'CLIENTE',
+                    totalTrabajos: 0,
+                    registroCompleto: false
+                });
+                await db.ref('contadores/CLN').set(numC);
             }
 
+            // 3. GENERAR ID INTELIGENTE (ZPT1_CLN1234-Z-C-H)
+            // Obtener contadores para el ID
+            const zapIDShort = session.uid.replace(/[^0-9]/g, ''); // Quita ceros y letras: ZPT0001 -> 1
+            const cliIDShort = clienteEncontradoID.replace(/[^0-9]/g, '');
+
+            // Incrementar contadores globales y específicos
+            const snapZapGlobal = await db.ref(`contadores_stats/zpts/${session.uid}/total`).once('value');
+            const totalZap = (snapZapGlobal.val() || 0) + 1;
+
+            const snapCliGlobal = await db.ref(`contadores_stats/clns/${clienteEncontradoID}/total`).once('value');
+            const totalCli = (snapCliGlobal.val() || 0) + 1;
+
+            const snapRelacion = await db.ref(`contadores_stats/relaciones/${session.uid}_${clienteEncontradoID}`).once('value');
+            const totalJuntos = (snapRelacion.val() || 0) + 1;
+
+            const idCarpetaInteligente = `ZPT${parseInt(zapIDShort)}_CLN${parseInt(cliIDShort)}-${totalZap}-${totalCli}-${totalJuntos}`;
+
             const data = {
-                ordenID: trbIDActual,
+                ordenID: idCarpetaInteligente,
                 zapateroId: session.uid,
-                cliente: document.getElementById('cli-nombre').value,
-                telefono: document.getElementById('cli-celular').value,
+                clienteId: clienteEncontradoID,
+                cliente: nom,
+                telefono: tel,
                 items: itemsParaGuardar,
-                subtotal: totalRealSuma,
-                descuento: (totalRealSuma - cobrado) > 0 ? (totalRealSuma - cobrado) : 0,
                 precioTotal: cobrado,
                 abono: abono,
                 saldo: (cobrado - abono),
@@ -247,80 +177,50 @@
                 estado: 'Recibido'
             };
 
-            const ref = idFirebaseActual ? db.ref('trabajos/' + idFirebaseActual) : db.ref('trabajos').push();
-            await ref.update(data);
-            alert("Orden guardada");
+            // Guardar Orden
+            await db.ref('trabajos/' + idCarpetaInteligente).set(data);
+            
+            // Actualizar contadores en la BD
+            await db.ref(`contadores_stats/zpts/${session.uid}/total`).set(totalZap);
+            await db.ref(`contadores_stats/clns/${clienteEncontradoID}/total`).set(totalCli);
+            await db.ref(`contadores_stats/relaciones/${session.uid}_${clienteEncontradoID}`).set(totalJuntos);
+
+            alert("Orden Creada: " + idCarpetaInteligente);
             cerrarModal();
         }
 
-        function verificarCliente(tel) {
-            if(tel.length < 9) return;
-            db.ref('usuarios').orderByChild('telefono').equalTo(tel).once('value', snap => {
-                const btn = document.getElementById('btn-invitar');
-                if(snap.exists()){
-                    document.getElementById('cli-nombre').value = Object.values(snap.val())[0].nombre;
-                    btn.style.display = "none";
-                } else { btn.style.display = "block"; }
+        // SOPORTE INTERFAZ
+        function bajarItem() {
+            const it = {
+                cant: document.getElementById('item-cant').value,
+                tipo: document.getElementById('item-tipo').value,
+                detalles: document.getElementById('item-detalles-final').value,
+                precio: parseFloat(document.getElementById('item-precio').value) || 0
+            };
+            if(!it.tipo) return;
+            itemsParaGuardar.push(it);
+            renderizarLista();
+            limpiarCamposItem();
+        }
+
+        function renderizarLista() {
+            const visor = document.getElementById('visor-items');
+            visor.innerHTML = ""; totalRealSuma = 0;
+            itemsParaGuardar.forEach((it, index) => {
+                totalRealSuma += it.precio;
+                visor.innerHTML += `<div class="item-listado">
+                    <div class="item-info"><b>${it.cant} ${it.tipo}</b> - $${it.precio}<div class="detalles-texto">${it.detalles}</div></div>
+                    <button class="btn-eliminar-item" onclick="itemsParaGuardar.splice(${index},1);renderizarLista();"><i class="fas fa-times"></i></button>
+                </div>`;
             });
+            document.getElementById('precio-total').value = totalRealSuma;
+            calcularDiferencias();
         }
 
-        function invitarCliente() {
-            const tel = document.getElementById('cli-celular').value;
-            const nom = document.getElementById('cli-nombre').value;
-            if(!nom) return alert("Escribe el nombre");
-            db.ref('usuarios').push({ nombre: nom, telefono: tel, tipo: 'CLIENTE' });
-            document.getElementById('btn-invitar').style.display = "none";
-        }
-
-        function cargarItemParaEditar(index) {
-            const it = itemsParaGuardar[index];
-            document.getElementById('item-cant').value = it.cant;
-            document.getElementById('item-tipo').value = it.tipo;
-            document.getElementById('item-detalles-final').value = it.detalles;
-            document.getElementById('item-precio').value = it.precio;
-            indiceEditando = index;
-            document.getElementById('form-item-caja').classList.add('editando-ahora');
-            document.getElementById('icono-bajar').className = "fas fa-sync-alt";
-        }
-
-        function eliminarItem(index) {
-            if(confirm("¿Quitar?")) { itemsParaGuardar.splice(index, 1); renderizarLista(); }
-        }
-
-        function limpiarCamposItem() {
-            document.getElementById('item-cant').value = "1";
-            document.getElementById('item-tipo').value = "";
-            document.getElementById('item-detalles-final').value = "";
-            document.getElementById('item-precio').value = "";
-            document.getElementById('icono-bajar').className = "fas fa-arrow-down";
-        }
-
-        function filtrarTrabajos() {
-            const bus = document.getElementById('inputBusqueda').value.toLowerCase();
-            document.querySelectorAll('.order-card').forEach(c => {
-                c.style.display = c.innerText.toLowerCase().includes(bus) ? "flex" : "none";
-            });
-        }
-
-        function cargarTrabajos() {
-            db.ref('trabajos').orderByChild('zapateroId').equalTo(session.uid).on('value', snap => {
-                const container = document.getElementById('lista-trabajos');
-                container.innerHTML = "";
-                snap.forEach(child => {
-                    const o = child.val();
-                    const key = child.key;
-                    const saldoColor = o.saldo > 0 ? '#ffaa00' : '#00ff00';
-                    container.innerHTML += `
-                        <div class="order-card">
-                            <div style="flex:1;">
-                                <h3 style="color:var(--gold); margin:0;">${o.cliente}</h3>
-                                <div style="font-size:11px; color:#aaa;">ID: ${o.ordenID} | ${o.descuento > 0 ? '<span style="color:red">Ahorro: $'+o.descuento.toFixed(2)+'</span>' : 'Precio Final'}</div>
-                                <div style="font-weight:bold; margin-top:5px;">Total: $${o.precioTotal} <span class="badge-saldo" style="color:${saldoColor}; border-color:${saldoColor}">Pendiente: $${o.saldo}</span></div>
-                            </div>
-                            <button class="btn-edit-order" onclick="cargarOrdenParaEditar('${key}')"><i class="fas fa-edit"></i></button>
-                        </div>`;
-                });
-            });
+        function calcularDiferencias() {
+            const c = parseFloat(document.getElementById('precio-total').value) || 0;
+            const a = parseFloat(document.getElementById('abono-inicial').value) || 0;
+            document.getElementById('txt-saldo-pendiente').innerText = "$" + (c - a).toFixed(2);
         }
 
         function acumularEnTexto() {
@@ -331,6 +231,24 @@
             i.value = ""; i.focus();
         }
 
+        function abrirModal() { document.getElementById('modal-orden').style.display = 'block'; itemsParaGuardar = []; renderizarLista(); }
+        function cerrarModal() { document.getElementById('modal-orden').style.display = 'none'; }
+        function limpiarCamposItem() { document.getElementById('item-tipo').value=""; document.getElementById('item-detalles-final').value=""; document.getElementById('item-precio').value=""; }
+
+        function cargarTrabajos() {
+            db.ref('trabajos').orderByChild('zapateroId').equalTo(session.uid).on('value', snap => {
+                const container = document.getElementById('lista-trabajos');
+                container.innerHTML = "";
+                snap.forEach(child => {
+                    const o = child.val();
+                    container.innerHTML += `<div class="order-card">
+                        <div style="flex:1;"><h3 style="color:var(--gold); margin:0;">${o.cliente}</h3>
+                        <div style="font-size:10px; color:#aaa;">ID: ${o.ordenID}</div>
+                        <div style="font-weight:bold;">Total: $${o.precioTotal} <span class="badge-saldo">Saldo: $${o.saldo}</span></div></div>
+                    </div>`;
+                });
+            });
+        }
         window.onload = cargarTrabajos;
     </script>
 </body>
