@@ -27,15 +27,11 @@
         
         .row-flex { display: flex; gap: 8px; margin-bottom: 10px; align-items: center; }
         .btn-mini-plus { background: #222; color: var(--gold); border: 1px solid var(--gold); border-radius: 8px; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-
         .item-listado { border-bottom: 1px solid #222; padding: 10px; display: flex; justify-content: space-between; align-items: flex-start; cursor: pointer; }
-        .item-listado:active { background: #1a1a1a; }
         .detalles-texto { font-size: 12px; color: #888; white-space: pre-wrap; }
-
         .caja-totales { background: #0a0a0a; padding: 15px; border-radius: 12px; margin-top:15px; border: 1px solid #222; }
         .factura-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }
         .factura-total { border-top: 1px solid #333; padding-top: 10px; margin-top: 10px; font-size: 18px; font-weight: bold; color: var(--gold); }
-        
         .badge-saldo { background: #222; color: #00ff00; padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-left: 5px; border: 1px solid #004400; }
         .fab { position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; background: var(--gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: black; font-size: 24px; border: none; z-index: 200; }
     </style>
@@ -55,7 +51,7 @@
         </div>
     </div>
 
-    <div class="orders-container" id="lista-trabajos"></div>
+    <div id="lista-trabajos" class="orders-container"></div>
 
     <button class="fab" onclick="abrirModal()"><i class="fas fa-plus"></i></button>
 
@@ -68,7 +64,7 @@
         <label>NOMBRE CLIENTE</label>
         <input type="text" id="cli-nombre">
         
-        <div id="form-item-caja" style="background: #080808; border-radius: 10px; padding: 12px; border: 1px dashed #444;">
+        <div style="background: #080808; border-radius: 10px; padding: 12px; border: 1px dashed #444;">
             <div class="row-flex">
                 <input type="number" id="item-cant" value="1" style="flex:0.4;">
                 <input type="text" id="item-tipo" placeholder="¿Qué vas a reparar?" style="flex:2;">
@@ -118,7 +114,10 @@
         const firebaseConfig = { databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com" };
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
-        const session = JSON.parse(localStorage.getItem('session_jadi')) || { uid: "ZPT00001" };
+        
+        // Limpiamos el ID del zapatero (quita ceros)
+        const sessionStored = JSON.parse(localStorage.getItem('session_jadi')) || { uid: "ZPT1" };
+        const myZapID = "ZPT" + parseInt(sessionStored.uid.replace(/\D/g, ""));
 
         let itemsParaGuardar = [];
         let subtotalGlobal = 0;
@@ -127,7 +126,11 @@
 
         function abrirModal() {
             idFirebaseActual = null;
+            clienteEncontradoID = null;
             document.getElementById('modal-orden').style.display = 'block';
+            document.getElementById('cli-celular').value = "";
+            document.getElementById('cli-nombre').value = "";
+            document.getElementById('abono-inicial').value = "";
             itemsParaGuardar = [];
             renderizarLista();
         }
@@ -147,42 +150,53 @@
             limpiarFormItem();
         }
 
+        function eliminarItem(index) {
+            itemsParaGuardar.splice(index, 1);
+            renderizarLista();
+        }
+
         function editarItem(index) {
             const it = itemsParaGuardar[index];
             document.getElementById('item-cant').value = it.cant;
             document.getElementById('item-tipo').value = it.tipo;
             document.getElementById('item-detalles-final').value = it.detalles;
             document.getElementById('item-precio').value = it.precio;
-            itemsParaGuardar.splice(index, 1);
-            renderizarLista();
+            eliminarItem(index);
         }
 
         function renderizarLista() {
             const visor = document.getElementById('visor-items');
-            visor.innerHTML = ""; subtotalGlobal = 0;
+            visor.innerHTML = ""; 
+            subtotalGlobal = 0;
+
             itemsParaGuardar.forEach((it, index) => {
                 subtotalGlobal += it.precio;
                 visor.innerHTML += `
                 <div class="item-listado">
                     <div style="flex:1" onclick="editarItem(${index})">
-                        <b>${it.cant} ${it.tipo}</b> - $${it.precio}
+                        <b>${it.cant} ${it.tipo}</b> - $${it.precio.toFixed(2)}
                         <div class="detalles-texto">${it.detalles}</div>
                     </div>
-                    <i class="fas fa-trash" style="color:var(--danger); padding:10px;" onclick="itemsParaGuardar.splice(${index},1);renderizarLista();"></i>
+                    <i class="fas fa-trash" style="color:var(--danger); padding:10px;" onclick="eliminarItem(${index})"></i>
                 </div>`;
             });
+
             document.getElementById('txt-subtotal').innerText = "$" + subtotalGlobal.toFixed(2);
-            if(!idFirebaseActual) document.getElementById('precio-total').value = subtotalGlobal;
+            // El total a cobrar se actualiza solo si es orden nueva
+            if(!idFirebaseActual) document.getElementById('precio-total').value = subtotalGlobal.toFixed(2);
             calcularDiferencias();
         }
 
         function calcularDiferencias() {
+            const subtotal = subtotalGlobal;
             const totalCobrado = parseFloat(document.getElementById('precio-total').value) || 0;
             const abono = parseFloat(document.getElementById('abono-inicial').value) || 0;
-            
-            const descuento = subtotalGlobal - totalCobrado;
+            const descuento = subtotal - totalCobrado;
+
             document.getElementById('txt-descuento').innerText = (descuento > 0) ? `-$${descuento.toFixed(2)}` : "$0.00";
-            document.getElementById('txt-saldo-pendiente').innerText = "$" + (totalCobrado - abono).toFixed(2);
+            const saldo = totalCobrado - abono;
+            document.getElementById('txt-saldo-pendiente').innerText = "$" + saldo.toFixed(2);
+            document.getElementById('txt-saldo-pendiente').style.color = (saldo <= 0) ? "#00ff00" : "var(--gold)";
         }
 
         function acumularEnTexto() {
@@ -200,54 +214,6 @@
             document.getElementById('item-cant').value="1";
         }
 
-        // --- Lógica de Firebase (Guardar y Cargar) ---
-        async function guardarOrdenFinal() {
-            if(itemsParaGuardar.length === 0) return alert("Agrega artículos");
-            const tel = document.getElementById('cli-celular').value;
-            const nom = document.getElementById('cli-nombre').value;
-            
-            let idCarpeta = idFirebaseActual;
-
-            if(!idFirebaseActual) {
-                if(!clienteEncontradoID) {
-                    const snapC = await db.ref('contadores/CLN').once('value');
-                    let numC = (snapC.val() || 0) + 1;
-                    clienteEncontradoID = 'CLN' + numC.toString().padStart(9, '0');
-                    await db.ref('usuarios/' + clienteEncontradoID).set({ uid: clienteEncontradoID, nombre: nom, telefono: tel, tipo: 'CLIENTE', registroCompleto: false });
-                    await db.ref('contadores/CLN').set(numC);
-                }
-
-                const zapID = parseInt(session.uid.replace(/[^0-9]/g, ''));
-                const cliID = parseInt(clienteEncontradoID.replace(/[^0-9]/g, ''));
-                const sZ = (await db.ref(`contadores_stats/zpts/${session.uid}`).once('value')).val() || 0;
-                const sC = (await db.ref(`contadores_stats/clns/${clienteEncontradoID}`).once('value')).val() || 0;
-                const sR = (await db.ref(`contadores_stats/relaciones/${session.uid}_${clienteEncontradoID}`).once('value')).val() || 0;
-
-                idCarpeta = `ZPT${zapID}_CLN${cliID}-${sZ+1}-${sC+1}-${sR+1}`;
-                await db.ref(`contadores_stats/zpts/${session.uid}`).set(sZ+1);
-                await db.ref(`contadores_stats/clns/${clienteEncontradoID}`).set(sC+1);
-                await db.ref(`contadores_stats/relaciones/${session.uid}_${clienteEncontradoID}`).set(sR+1);
-            }
-
-            const data = {
-                ordenID: idCarpeta,
-                zapateroId: session.uid,
-                clienteId: clienteEncontradoID,
-                cliente: nom,
-                telefono: tel,
-                items: itemsParaGuardar,
-                subtotal: subtotalGlobal,
-                precioTotal: parseFloat(document.getElementById('precio-total').value),
-                abono: parseFloat(document.getElementById('abono-inicial').value),
-                saldo: parseFloat(document.getElementById('precio-total').value) - parseFloat(document.getElementById('abono-inicial').value),
-                timestamp: Date.now()
-            };
-
-            await db.ref('trabajos/' + idCarpeta).update(data);
-            alert("Orden Guardada");
-            cerrarModal();
-        }
-
         function verificarCliente(tel) {
             if(tel.length < 9) return;
             db.ref('usuarios').orderByChild('telefono').equalTo(tel).once('value', snap => {
@@ -259,77 +225,54 @@
             });
         }
 
-        function filtrarTrabajos() {
-            const b = document.getElementById('inputBusqueda').value.toLowerCase();
-            document.querySelectorAll('.order-card').forEach(c => {
-                c.style.display = c.innerText.toLowerCase().includes(b) ? "flex" : "none";
-            });
+        async function guardarOrdenFinal() {
+            if(itemsParaGuardar.length === 0) return alert("Agrega artículos");
+            const tel = document.getElementById('cli-celular').value;
+            const nom = document.getElementById('cli-nombre').value;
+            if(!nom || !tel) return alert("Falta nombre o celular");
+
+            let idCarpeta = idFirebaseActual;
+
+            if(!idFirebaseActual) {
+                // Si el cliente no existe, lo creamos con ID limpio
+                if(!clienteEncontradoID) {
+                    const snapC = await db.ref('contadores/CLN').once('value');
+                    let numC = (snapC.val() || 0) + 1;
+                    clienteEncontradoID = 'CLN' + numC; // ID limpio sin ceros
+                    await db.ref('usuarios/' + clienteEncontradoID).set({ uid: clienteEncontradoID, nombre: nom, telefono: tel, tipo: 'CLIENTE' });
+                    await db.ref('contadores/CLN').set(numC);
+                }
+
+                const zapNum = parseInt(myZapID.replace(/\D/g, ""));
+                const cliNum = parseInt(clienteEncontradoID.replace(/\D/g, ""));
+                
+                // Stats para el ID de la orden
+                const sZ = (await db.ref(`stats/z/${myZapID}`).once('value')).val() || 0;
+                idCarpeta = `ZPT${zapNum}_CLN${cliNum}_N${sZ+1}`;
+                await db.ref(`stats/z/${myZapID}`).set(sZ+1);
+            }
+
+            const data = {
+                ordenID: idCarpeta,
+                zapateroId: myZapID,
+                clienteId: clienteEncontradoID,
+                cliente: nom,
+                telefono: tel,
+                items: itemsParaGuardar,
+                subtotal: subtotalGlobal,
+                precioTotal: parseFloat(document.getElementById('precio-total').value) || 0,
+                abono: parseFloat(document.getElementById('abono-inicial').value) || 0,
+                saldo: (parseFloat(document.getElementById('precio-total').value) || 0) - (parseFloat(document.getElementById('abono-inicial').value) || 0),
+                timestamp: Date.now()
+            };
+
+            await db.ref('trabajos/' + idCarpeta).update(data);
+            alert("¡Orden Guardada con éxito!");
+            cerrarModal();
         }
-// --- LÓGICA DE CÁLCULOS AUTOMÁTICOS CORREGIDA ---
-
-function renderizarLista() {
-    const visor = document.getElementById('visor-items');
-    visor.innerHTML = ""; 
-    subtotalGlobal = 0;
-
-    // 1. Sumamos todos los items actuales
-    itemsParaGuardar.forEach((it, index) => {
-        subtotalGlobal += it.precio;
-        visor.innerHTML += `
-        <div class="item-listado">
-            <div style="flex:1" onclick="editarItem(${index})">
-                <b>${it.cant} ${it.tipo}</b> - $${it.precio.toFixed(2)}
-                <div class="detalles-texto">${it.detalles}</div>
-            </div>
-            <i class="fas fa-trash" style="color:var(--danger); padding:10px;" 
-               onclick="eliminarItem(${index})"></i>
-        </div>`;
-    });
-
-    // 2. Actualizamos el Subtotal en la pantalla
-    document.getElementById('txt-subtotal').innerText = "$" + subtotalGlobal.toFixed(2);
-    
-    // 3. ¡CLAVE!: El Total a cobrar se iguala al subtotal automáticamente 
-    // cada vez que la lista cambia (añadir o eliminar)
-    document.getElementById('precio-total').value = subtotalGlobal.toFixed(2);
-    
-    // 4. Ejecutamos el cálculo de saldos y descuentos
-    calcularDiferencias();
-}
-
-function eliminarItem(index) {
-    // Al eliminar de la lista, el renderizarLista() volverá a sumar todo desde cero
-    itemsParaGuardar.splice(index, 1);
-    renderizarLista();
-}
-
-function calcularDiferencias() {
-    const subtotal = subtotalGlobal;
-    const totalCobrado = parseFloat(document.getElementById('precio-total').value) || 0;
-    const abono = parseFloat(document.getElementById('abono-inicial').value) || 0;
-    
-    // El descuento es la diferencia entre el valor real (subtotal) y lo que decides cobrar
-    const descuento = subtotal - totalCobrado;
-    
-    // Si el descuento es positivo (cobras menos del subtotal), se muestra
-    if (descuento > 0) {
-        document.getElementById('txt-descuento').innerText = "-$" + descuento.toFixed(2);
-        document.getElementById('txt-descuento').style.color = "var(--danger)";
-    } else {
-        document.getElementById('txt-descuento').innerText = "$0.00";
-        document.getElementById('txt-descuento').style.color = "#888";
-    }
-
-    // El saldo es simplemente Total Cobrado - lo que ya pagó
-    const saldo = totalCobrado - abono;
-    document.getElementById('txt-saldo-pendiente').innerText = "$" + saldo.toFixed(2);
-    
-    // Cambio de color si ya está pagado
-    document.getElementById('txt-saldo-pendiente').style.color = (saldo <= 0) ? "#00ff00" : "var(--gold)";
-}
 
         function cargarTrabajos() {
-            db.ref('trabajos').orderByChild('zapateroId').equalTo(session.uid).on('value', snap => {
+            db.ref('trabajos').orderByChild('zapateroId').equalTo(myZapID).on('value', snap => {
                 const container = document.getElementById('lista-trabajos');
                 container.innerHTML = "";
                 snap.forEach(child => {
@@ -349,7 +292,7 @@ function calcularDiferencias() {
                 });
             });
         }
-        
+
         async function editarOrden(id) {
             const snap = await db.ref('trabajos/' + id).once('value');
             const o = snap.val();
@@ -362,6 +305,13 @@ function calcularDiferencias() {
             itemsParaGuardar = o.items || [];
             renderizarLista();
             document.getElementById('modal-orden').style.display = 'block';
+        }
+
+        function filtrarTrabajos() {
+            const b = document.getElementById('inputBusqueda').value.toLowerCase();
+            document.querySelectorAll('.order-card').forEach(c => {
+                c.style.display = c.innerText.toLowerCase().includes(b) ? "flex" : "none";
+            });
         }
 
         window.onload = cargarTrabajos;
