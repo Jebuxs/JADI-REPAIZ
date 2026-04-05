@@ -8,7 +8,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --gold: #FFD700; --dark: #000; --card: #111; --danger: #ff4444; }
+        :root { --gold: #FFD700; --dark: #000; --card: #111; --danger: #ff4444; --edit: #0088ff; }
         body { background: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding-bottom: 80px; }
         .header { padding: 15px; border-bottom: 1px solid #222; display: flex; align-items: center; background: #050505; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
         .btn-back { color: var(--gold); text-decoration: none; }
@@ -106,7 +106,7 @@
 
         <div style="display: flex; gap: 10px; margin-top: 20px;">
             <button onclick="cerrarModal()" style="flex:1; background:transparent; color:white; border:1px solid #444; padding:15px; border-radius:10px;">CANCELAR</button>
-            <button onclick="guardarOrdenFinal()" style="flex:1; background:var(--gold); color:black; border:none; padding:15px; border-radius:10px; font-weight:bold;">GUARDAR</button>
+            <button id="btn-guardar-principal" onclick="guardarOrdenFinal()" style="flex:1; background:var(--gold); color:black; border:none; padding:15px; border-radius:10px; font-weight:bold;">GUARDAR</button>
         </div>
     </div>
 
@@ -115,7 +115,6 @@
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         
-        // Limpiamos el ID del zapatero (quita ceros)
         const sessionStored = JSON.parse(localStorage.getItem('session_jadi')) || { uid: "ZPT1" };
         const myZapID = "ZPT" + parseInt(sessionStored.uid.replace(/\D/g, ""));
 
@@ -128,8 +127,14 @@
             idFirebaseActual = null;
             clienteEncontradoID = null;
             document.getElementById('modal-orden').style.display = 'block';
+            document.getElementById('titulo-modal').innerText = "Nueva Orden";
+            document.getElementById('titulo-modal').style.color = "var(--gold)";
+            document.getElementById('btn-guardar-principal').innerText = "GUARDAR";
+            document.getElementById('btn-guardar-principal').style.background = "var(--gold)";
+            
             document.getElementById('cli-celular').value = "";
             document.getElementById('cli-nombre').value = "";
+            document.getElementById('precio-total').value = "";
             document.getElementById('abono-inicial').value = "";
             itemsParaGuardar = [];
             renderizarLista();
@@ -182,8 +187,12 @@
             });
 
             document.getElementById('txt-subtotal').innerText = "$" + subtotalGlobal.toFixed(2);
-            // El total a cobrar se actualiza solo si es orden nueva
-            if(!idFirebaseActual) document.getElementById('precio-total').value = subtotalGlobal.toFixed(2);
+            
+            // Solo actualiza el precio-total si es una orden nueva
+            if(!idFirebaseActual) {
+                document.getElementById('precio-total').value = subtotalGlobal.toFixed(2);
+            }
+            
             calcularDiferencias();
         }
 
@@ -193,7 +202,7 @@
             const abono = parseFloat(document.getElementById('abono-inicial').value) || 0;
             const descuento = subtotal - totalCobrado;
 
-            document.getElementById('txt-descuento').innerText = (descuento > 0) ? `-$${descuento.toFixed(2)}` : "$0.00";
+            document.getElementById('txt-descuento').innerText = (descuento > 0.01) ? `-$${descuento.toFixed(2)}` : "$0.00";
             const saldo = totalCobrado - abono;
             document.getElementById('txt-saldo-pendiente').innerText = "$" + saldo.toFixed(2);
             document.getElementById('txt-saldo-pendiente').style.color = (saldo <= 0) ? "#00ff00" : "var(--gold)";
@@ -234,19 +243,16 @@
             let idCarpeta = idFirebaseActual;
 
             if(!idFirebaseActual) {
-                // Si el cliente no existe, lo creamos con ID limpio
                 if(!clienteEncontradoID) {
                     const snapC = await db.ref('contadores/CLN').once('value');
                     let numC = (snapC.val() || 0) + 1;
-                    clienteEncontradoID = 'CLN' + numC; // ID limpio sin ceros
+                    clienteEncontradoID = 'CLN' + numC;
                     await db.ref('usuarios/' + clienteEncontradoID).set({ uid: clienteEncontradoID, nombre: nom, telefono: tel, tipo: 'CLIENTE' });
                     await db.ref('contadores/CLN').set(numC);
                 }
 
                 const zapNum = parseInt(myZapID.replace(/\D/g, ""));
                 const cliNum = parseInt(clienteEncontradoID.replace(/\D/g, ""));
-                
-                // Stats para el ID de la orden
                 const sZ = (await db.ref(`stats/z/${myZapID}`).once('value')).val() || 0;
                 idCarpeta = `ZPT${zapNum}_CLN${cliNum}_N${sZ+1}`;
                 await db.ref(`stats/z/${myZapID}`).set(sZ+1);
@@ -267,7 +273,7 @@
             };
 
             await db.ref('trabajos/' + idCarpeta).update(data);
-            alert("¡Orden Guardada con éxito!");
+            alert(idFirebaseActual ? "¡Orden Actualizada!" : "¡Nueva Orden Guardada!");
             cerrarModal();
         }
 
@@ -296,15 +302,27 @@
         async function editarOrden(id) {
             const snap = await db.ref('trabajos/' + id).once('value');
             const o = snap.val();
+            
             idFirebaseActual = id;
             clienteEncontradoID = o.clienteId;
+            
+            // Cambios visuales para identificar que es EDICIÓN
+            document.getElementById('modal-orden').style.display = 'block';
+            document.getElementById('titulo-modal').innerText = "Editando Orden: " + o.ordenID;
+            document.getElementById('titulo-modal').style.color = "var(--edit)";
+            document.getElementById('btn-guardar-principal').innerText = "ACTUALIZAR";
+            document.getElementById('btn-guardar-principal').style.background = "var(--edit)";
+
             document.getElementById('cli-celular').value = o.telefono;
             document.getElementById('cli-nombre').value = o.cliente;
             document.getElementById('precio-total').value = o.precioTotal;
             document.getElementById('abono-inicial').value = o.abono;
+            
             itemsParaGuardar = o.items || [];
+            
+            // Actualizamos la lista y FORZAMOS el cálculo de saldos
             renderizarLista();
-            document.getElementById('modal-orden').style.display = 'block';
+            calcularDiferencias(); 
         }
 
         function filtrarTrabajos() {
