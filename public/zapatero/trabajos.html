@@ -265,6 +265,68 @@
                 c.style.display = c.innerText.toLowerCase().includes(b) ? "flex" : "none";
             });
         }
+// --- LÓGICA DE CÁLCULOS AUTOMÁTICOS CORREGIDA ---
+
+function renderizarLista() {
+    const visor = document.getElementById('visor-items');
+    visor.innerHTML = ""; 
+    subtotalGlobal = 0;
+
+    // 1. Sumamos todos los items actuales
+    itemsParaGuardar.forEach((it, index) => {
+        subtotalGlobal += it.precio;
+        visor.innerHTML += `
+        <div class="item-listado">
+            <div style="flex:1" onclick="editarItem(${index})">
+                <b>${it.cant} ${it.tipo}</b> - $${it.precio.toFixed(2)}
+                <div class="detalles-texto">${it.detalles}</div>
+            </div>
+            <i class="fas fa-trash" style="color:var(--danger); padding:10px;" 
+               onclick="eliminarItem(${index})"></i>
+        </div>`;
+    });
+
+    // 2. Actualizamos el Subtotal en la pantalla
+    document.getElementById('txt-subtotal').innerText = "$" + subtotalGlobal.toFixed(2);
+    
+    // 3. ¡CLAVE!: El Total a cobrar se iguala al subtotal automáticamente 
+    // cada vez que la lista cambia (añadir o eliminar)
+    document.getElementById('precio-total').value = subtotalGlobal.toFixed(2);
+    
+    // 4. Ejecutamos el cálculo de saldos y descuentos
+    calcularDiferencias();
+}
+
+function eliminarItem(index) {
+    // Al eliminar de la lista, el renderizarLista() volverá a sumar todo desde cero
+    itemsParaGuardar.splice(index, 1);
+    renderizarLista();
+}
+
+function calcularDiferencias() {
+    const subtotal = subtotalGlobal;
+    const totalCobrado = parseFloat(document.getElementById('precio-total').value) || 0;
+    const abono = parseFloat(document.getElementById('abono-inicial').value) || 0;
+    
+    // El descuento es la diferencia entre el valor real (subtotal) y lo que decides cobrar
+    const descuento = subtotal - totalCobrado;
+    
+    // Si el descuento es positivo (cobras menos del subtotal), se muestra
+    if (descuento > 0) {
+        document.getElementById('txt-descuento').innerText = "-$" + descuento.toFixed(2);
+        document.getElementById('txt-descuento').style.color = "var(--danger)";
+    } else {
+        document.getElementById('txt-descuento').innerText = "$0.00";
+        document.getElementById('txt-descuento').style.color = "#888";
+    }
+
+    // El saldo es simplemente Total Cobrado - lo que ya pagó
+    const saldo = totalCobrado - abono;
+    document.getElementById('txt-saldo-pendiente').innerText = "$" + saldo.toFixed(2);
+    
+    // Cambio de color si ya está pagado
+    document.getElementById('txt-saldo-pendiente').style.color = (saldo <= 0) ? "#00ff00" : "var(--gold)";
+}
 
         function cargarTrabajos() {
             db.ref('trabajos').orderByChild('zapateroId').equalTo(session.uid).on('value', snap => {
