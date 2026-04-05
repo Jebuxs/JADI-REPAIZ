@@ -169,6 +169,7 @@
             eliminarItem(index);
         }
 
+        // --- FUNCIÓN REVISADA: RECALCULO AUTOMÁTICO ---
         function renderizarLista() {
             const visor = document.getElementById('visor-items');
             visor.innerHTML = ""; 
@@ -188,10 +189,8 @@
 
             document.getElementById('txt-subtotal').innerText = "$" + subtotalGlobal.toFixed(2);
             
-            // Solo actualiza el precio-total si es una orden nueva
-            if(!idFirebaseActual) {
-                document.getElementById('precio-total').value = subtotalGlobal.toFixed(2);
-            }
+            // Recalcula el total automáticamente al añadir/quitar ítems
+            document.getElementById('precio-total').value = subtotalGlobal.toFixed(2);
             
             calcularDiferencias();
         }
@@ -306,7 +305,6 @@
             idFirebaseActual = id;
             clienteEncontradoID = o.clienteId;
             
-            // Cambios visuales para identificar que es EDICIÓN
             document.getElementById('modal-orden').style.display = 'block';
             document.getElementById('titulo-modal').innerText = "Editando Orden: " + o.ordenID;
             document.getElementById('titulo-modal').style.color = "var(--edit)";
@@ -315,13 +313,16 @@
 
             document.getElementById('cli-celular').value = o.telefono;
             document.getElementById('cli-nombre').value = o.cliente;
-            document.getElementById('precio-total').value = o.precioTotal;
             document.getElementById('abono-inicial').value = o.abono;
             
             itemsParaGuardar = o.items || [];
             
-            // Actualizamos la lista y FORZAMOS el cálculo de saldos
+            // Primero renderizamos (esto calcula el subtotalGlobal y precio-total inicial)
             renderizarLista();
+            
+            // Si el precio guardado era diferente al subtotal (descuento previo), lo respetamos aquí:
+            document.getElementById('precio-total').value = o.precioTotal;
+            
             calcularDiferencias(); 
         }
 
