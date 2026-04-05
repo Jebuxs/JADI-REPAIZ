@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat JADI REPAIZ</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --gold: #FFD700; --dark: #050505; --bubble-me: #005c4b; --bubble-other: #202c33; }
+        body { background: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; }
+        
+        /* Header */
+        .chat-header { padding: 10px 15px; background: #202c33; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #333; }
+        .back-btn { color: var(--gold); text-decoration: none; font-size: 20px; }
+        .user-info h4 { margin: 0; font-size: 16px; }
+        .user-info span { font-size: 12px; color: #aaa; }
+
+        /* Area de Mensajes */
+        #chat-container { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 8px; background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); background-opacity: 0.05; }
+        
+        .msg { max-width: 75%; padding: 8px 12px; border-radius: 8px; position: relative; font-size: 14px; line-height: 1.4; }
+        .msg.me { align-self: flex-end; background: var(--bubble-me); border-top-right-radius: 0; }
+        .msg.other { align-self: flex-start; background: var(--bubble-other); border-top-left-radius: 0; }
+        
+        .msg-img { width: 100%; max-width: 250px; border-radius: 8px; margin-bottom: 5px; cursor: pointer; }
+        
+        .msg-meta { display: flex; justify-content: flex-end; align-items: center; gap: 4px; font-size: 10px; color: rgba(255,255,255,0.6); margin-top: 4px; }
+        
+        /* Vistos */
+        .visto-icon { font-size: 14px; }
+        .visto-sent { color: #aaa; } /* Un visto */
+        .visto-delivered { color: #aaa; } /* Dos vistos */
+        .visto-read { color: #53bdeb; } /* Dos vistos azules */
+
+        /* Input area */
+        .input-area { background: #202c33; padding: 10px; display: flex; align-items: center; gap: 10px; }
+        .input-area input { flex: 1; background: #2a3942; border: none; padding: 12px; border-radius: 20px; color: white; outline: none; }
+        .btn-action { color: #8696a0; font-size: 22px; cursor: pointer; }
+        .btn-send { color: var(--gold); }
+    </style>
+</head>
+<body>
+
+    <div class="chat-header">
+        <a href="trabajos.html" class="back-btn"><i class="fas fa-arrow-left"></i></a>
+        <div class="user-info">
+            <h4 id="chat-user-name">Cargando...</h4>
+            <span id="chat-status">en línea</span>
+        </div>
+    </div>
+
+    <div id="chat-container"></div>
+
+    <div class="input-area">
+        <label for="file-input" class="btn-action"><i class="fas fa-paperclip"></i></label>
+        <input type="file" id="file-input" style="display:none" accept="image/*" onchange="subirImagen(this)">
+        
+        <input type="text" id="msg-input" placeholder="Escribe un mensaje..." onkeypress="if(event.key==='Enter') enviarTexto()">
+        
+        <div class="btn-action btn-send" onclick="enviarTexto()"><i class="fas fa-paper-plane"></i></div>
+    </div>
+
+    <script>
+        // Configuración de Firebase
+        const firebaseConfig = { 
+            databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com",
+            storageBucket: "jadi-repaiz.appspot.com" // Asegúrate de tener activado Storage
+        };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        
+        const db = firebase.database();
+        const storage = firebase.storage();
+        const session = JSON.parse(localStorage.getItem('session_jadi')) || { uid: "ZPT1", nombre: "Zapatero" };
+
+        // Obtener el ID del cliente de la URL (chat.html?id=CLN001)
+        const params = new URLSearchParams(window.location.search);
+        const receptorID = params.get('id');
+        const chatID = [session.uid, receptorID].sort().join("_"); // ID único de la sala
+
+        // Cargar Nombre del Receptor
+        db.ref('usuarios/' + receptorID).once('value', snap => {
+            if(snap.exists()) document.getElementById('chat-user-name').innerText = snap.val().nombre;
+        });
+
+        // 1. ESCUCHAR MENSAJES (TIEMPO REAL)
+        function cargarChat() {
+            db.ref('chats/' + chatID).on('child_added', snap => {
+                const m = snap.val();
+                const key = snap.key;
+                renderizarMensaje(m, key);
+                
+                // 4. MARCAR COMO LEÍDO (Si yo soy el receptor y no lo he leído)
+                if(m.sender !== session.uid && m.status !== 'read') {
+                    db.ref(`chats/${chatID}/${key}`).update({ status: 'read' });
+                }
+            });
+
+            // Escuchar cambios de estado (vistos)
+            db.ref('chats/' + chatID).on('child_changed', snap => {
+                const el = document.getElementById('meta-' + snap.key);
+                if(el) el.innerHTML = generarVistosHTML(snap.val().status);
+            });
+        }
+
+        // 2. ENVIAR TEXTO
+        async function enviarTexto() {
+            const input = document.getElementById('msg-input');
+            if(!input.value.trim()) return;
+
+            const nuevoMsg = {
+                sender: session.uid,
+                text: input.value,
+                timestamp: Date.now(),
+                status: 'sent', // 2. Visto enviado (1 visto)
+                tipo: 'texto'
+            };
+
+            const ref = db.ref('chats/' + chatID).push();
+            await ref.set(nuevoMsg);
+            
+            // Simulación de "Recibido" (2 vistos) - En una app real esto ocurre cuando el receptor tiene el chat abierto
+            setTimeout(() => {
+                ref.update({ status: 'delivered' });
+            }, 1000);
+
+            input.value = "";
+        }
+
+        // 5. ENVIAR IMÁGENES
+        async function subirImagen(input) {
+            const file = input.files[0];
+            if(!file) return;
+            
+            const refStorage = storage.ref(`chats/${chatID}/${Date.now()}_${file.name}`);
+            const task = await refStorage.put(file);
+            const url = await task.ref.getDownloadURL();
+
+            db.ref('chats/' + chatID).push().set({
+                sender: session.uid,
+                url: url,
+                timestamp: Date.now(),
+                status: 'sent',
+                tipo: 'imagen'
+            });
+        }
+
+        function renderizarMensaje(m, key) {
+            const container = document.getElementById('chat-container');
+            const esMio = m.sender === session.uid;
+            
+            let contenido = m.tipo === 'texto' ? m.text : `<img src="${m.url}" class="msg-img">`;
+            
+            const html = `
+                <div class="msg ${esMio ? 'me' : 'other'}">
+                    ${contenido}
+                    <div class="msg-meta" id="meta-${key}">
+                        ${new Date(m.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                        ${esMio ? generarVistosHTML(m.status) : ''}
+                    </div>
+                </div>
+            `;
+            container.innerHTML += html;
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function generarVistosHTML(status) {
+            if(status === 'sent') return '<i class="fas fa-check visto-icon visto-sent"></i>';
+            if(status === 'delivered') return '<i class="fas fa-check-double visto-icon visto-delivered"></i>';
+            if(status === 'read') return '<i class="fas fa-check-double visto-icon visto-read"></i>';
+            return '';
+        }
+
+        window.onload = cargarChat;
+    </script>
+</body>
+</html>
