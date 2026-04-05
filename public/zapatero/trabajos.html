@@ -10,26 +10,36 @@
     <style>
         :root { --gold: #FFD700; --dark: #000; --card: #111; --danger: #ff4444; }
         body { background: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding-bottom: 80px; }
+        
         .header { padding: 15px; border-bottom: 1px solid #222; display: flex; align-items: center; background: #050505; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
         .btn-back { color: var(--gold); text-decoration: none; }
+
         .search-container { padding: 15px; }
         .search-bar { background: #1a1a1a; border: 1px solid #333; padding: 10px; border-radius: 10px; display: flex; align-items: center; }
         .search-bar input { background: transparent; border: none; color: white; margin-left: 10px; width: 100%; outline: none; }
+
         .orders-container { padding: 0 15px; }
         .order-card { background: var(--card); border-radius: 15px; padding: 15px; margin-bottom: 15px; border: 1px solid #222; display: flex; justify-content: space-between; align-items: center; }
+
+        /* Iconos de Acción en la Tarjeta */
+        .card-actions { display: flex; gap: 15px; align-items: center; }
+        .btn-icon { color: #888; font-size: 18px; cursor: pointer; transition: 0.3s; }
+        .btn-icon:hover { color: var(--gold); }
+        .btn-chat { color: #00aaff; }
+
+        /* MODAL */
         #modal-orden { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark); z-index: 300; padding: 20px; box-sizing: border-box; overflow-y: auto; }
         input, textarea { width: 100%; padding: 12px; margin-bottom: 12px; background: #111; border: 1px solid #333; color: white; border-radius: 8px; box-sizing: border-box; outline: none; font-size: 16px; }
         label { font-size: 11px; color: var(--gold); margin-bottom: 5px; display: block; }
-        .row-flex { display: flex; gap: 8px; margin-bottom: 10px; align-items: center; }
-        .btn-mini-plus { background: #222; color: var(--gold); border: 1px solid var(--gold); border-radius: 8px; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-        #btn-invitar { display: none; background: #0066ff; color: white; border: none; padding: 10px; border-radius: 8px; width: 100%; font-weight: bold; margin-bottom: 15px; }
-        .fab { position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; background: var(--gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: black; font-size: 24px; border: none; z-index: 200; }
-        .item-listado { border-bottom: 1px solid #222; padding: 10px; font-size: 14px; display: flex; justify-content: space-between; align-items: flex-start; }
-        .item-info { flex: 1; }
-        .detalles-texto { font-size: 12px; color: #888; white-space: pre-wrap; margin-top: 4px; }
-        .btn-eliminar-item { color: var(--danger); background: transparent; border: none; font-size: 18px; }
+        
         .caja-totales { background: #0a0a0a; padding: 15px; border-radius: 12px; margin-top:15px; border: 1px solid #222; }
+        #txt-descuento-info { color: var(--danger); font-size: 12px; font-weight: bold; margin-bottom: 10px; display: none; }
         .badge-saldo { background: #222; color: #00ff00; padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-left: 5px; border: 1px solid #004400; }
+
+        .fab { position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; background: var(--gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: black; font-size: 24px; border: none; z-index: 200; box-shadow: 0 4px 15px rgba(255,215,0,0.3); }
+        
+        .item-listado { border-bottom: 1px solid #222; padding: 10px; display: flex; justify-content: space-between; }
+        .detalles-texto { font-size: 12px; color: #888; white-space: pre-wrap; }
     </style>
 </head>
 <body>
@@ -55,43 +65,36 @@
         <h2 id="titulo-modal" style="color: var(--gold); margin-top: 0;">Nueva Orden</h2>
         
         <label>CELULAR CLIENTE</label>
-        <input type="tel" id="cli-celular" placeholder="Ej: 0987654321" onkeyup="verificarCliente(this.value)">
-        <button id="btn-invitar" onclick="invitarCliente()">USUARIO NO REGISTRADO - ¿INVITAR?</button>
+        <input type="tel" id="cli-celular" onkeyup="verificarCliente(this.value)">
 
         <label>NOMBRE CLIENTE</label>
-        <input type="text" id="cli-nombre" placeholder="Nombre completo">
+        <input type="text" id="cli-nombre">
         
         <div id="form-item-caja" style="background: #080808; border-radius: 10px; padding: 12px; border: 1px dashed #444;">
-            <div class="row-flex">
-                <input type="number" id="item-cant" value="1" style="flex:0.4;">
-                <input type="text" id="item-tipo" placeholder="Zapato, Mochila..." style="flex:2;">
-            </div>
-            <div class="row-flex">
-                <input type="text" id="item-desc-input" placeholder="Detalle trabajo" style="flex:1;">
-                <div class="btn-mini-plus" onclick="acumularEnTexto()"><i class="fas fa-plus"></i></div>
-            </div>
-            <textarea id="item-detalles-final" placeholder="Resumen detalles..."></textarea>
-            <div class="row-flex">
-                <input type="number" id="item-precio" placeholder="Precio $">
-                <button onclick="bajarItem()" style="background:var(--gold); border:none; border-radius:8px; height:45px; width:60px;"><i class="fas fa-arrow-down"></i></button>
+            <input type="text" id="item-tipo" placeholder="¿Qué vas a reparar?">
+            <textarea id="item-detalles-final" placeholder="Detalles específicos..."></textarea>
+            <div style="display: flex; gap: 10px;">
+                <input type="number" id="item-precio" placeholder="Precio $" style="flex:1;">
+                <button onclick="bajarItem()" style="background:var(--gold); border:none; border-radius:8px; padding: 0 20px;"><i class="fas fa-arrow-down"></i></button>
             </div>
         </div>
 
         <div id="visor-items" style="margin-top:15px;"></div>
 
         <div class="caja-totales">
+            <div id="txt-descuento-info">REBAJA: -$0 (0%)</div>
             <label>TOTAL COBRADO $</label>
-            <input type="number" id="precio-total" value="0" oninput="calcularDiferencias()">
+            <input type="number" id="precio-total" oninput="calcularDiferencias()">
             <label>ABONO $</label>
-            <input type="number" id="abono-inicial" value="0" oninput="calcularDiferencias()">
-            <div style="color: #00ff00; font-weight: bold; display: flex; justify-content: space-between;">
+            <input type="number" id="abono-inicial" oninput="calcularDiferencias()">
+            <div style="color: #00ff00; font-weight: bold; display: flex; justify-content: space-between; margin-top: 5px;">
                 <span>SALDO:</span> <span id="txt-saldo-pendiente">$0</span>
             </div>
         </div>
 
         <div style="display: flex; gap: 10px; margin-top: 20px;">
             <button onclick="cerrarModal()" style="flex:1; background:transparent; color:white; border:1px solid #444; padding:15px; border-radius:10px;">CANCELAR</button>
-            <button id="btn-guardar-principal" onclick="guardarOrdenFinal()" style="flex:1; background:var(--gold); color:black; border:none; padding:15px; border-radius:10px; font-weight:bold;">GUARDAR ORDEN</button>
+            <button id="btn-guardar-principal" onclick="guardarOrdenFinal()" style="flex:1; background:var(--gold); color:black; border:none; padding:15px; border-radius:10px; font-weight:bold;">GUARDAR</button>
         </div>
     </div>
 
@@ -103,96 +106,41 @@
 
         let itemsParaGuardar = [];
         let totalRealSuma = 0;
-        let idFirebaseActual = null;
+        let idFirebaseActual = null; // Para saber si editamos
         let clienteEncontradoID = null;
 
-        // 1. VERIFICAR CLIENTE AUTOMÁTICO
-        function verificarCliente(tel) {
-            if(tel.length < 9) return;
-            db.ref('usuarios').orderByChild('telefono').equalTo(tel).once('value', snap => {
-                if(snap.exists()){
-                    const uid = Object.keys(snap.val())[0];
-                    const data = snap.val()[uid];
-                    document.getElementById('cli-nombre').value = data.nombre;
-                    clienteEncontradoID = data.uid || uid; // Guardamos su ID CLN
-                    document.getElementById('btn-invitar').style.display = "none";
-                } else {
-                    document.getElementById('btn-invitar').style.display = "block";
-                    clienteEncontradoID = null;
-                }
-            });
+        function abrirModal() {
+            idFirebaseActual = null;
+            document.getElementById('titulo-modal').innerText = "Nueva Orden";
+            document.getElementById('modal-orden').style.display = 'block';
+            itemsParaGuardar = [];
+            renderizarLista();
         }
 
-        async function guardarOrdenFinal() {
-            if(itemsParaGuardar.length === 0) return alert("Agrega artículos");
-            const tel = document.getElementById('cli-celular').value;
-            const nom = document.getElementById('cli-nombre').value;
-            const cobrado = parseFloat(document.getElementById('precio-total').value);
-            const abono = parseFloat(document.getElementById('abono-inicial').value);
+        function cerrarModal() { document.getElementById('modal-orden').style.display = 'none'; }
 
-            // 2. SI NO EXISTE, CREAR CLIENTE AUTOMÁTICAMENTE
-            if(!clienteEncontradoID) {
-                const snapC = await db.ref('contadores/CLN').once('value');
-                let numC = (snapC.val() || 0) + 1;
-                clienteEncontradoID = 'CLN' + numC.toString().padStart(9, '0');
-                await db.ref('usuarios/' + clienteEncontradoID).set({
-                    uid: clienteEncontradoID,
-                    nombre: nom,
-                    telefono: tel,
-                    tipo: 'CLIENTE',
-                    totalTrabajos: 0,
-                    registroCompleto: false
-                });
-                await db.ref('contadores/CLN').set(numC);
-            }
-
-            // 3. GENERAR ID INTELIGENTE (ZPT1_CLN1234-Z-C-H)
-            // Obtener contadores para el ID
-            const zapIDShort = session.uid.replace(/[^0-9]/g, ''); // Quita ceros y letras: ZPT0001 -> 1
-            const cliIDShort = clienteEncontradoID.replace(/[^0-9]/g, '');
-
-            // Incrementar contadores globales y específicos
-            const snapZapGlobal = await db.ref(`contadores_stats/zpts/${session.uid}/total`).once('value');
-            const totalZap = (snapZapGlobal.val() || 0) + 1;
-
-            const snapCliGlobal = await db.ref(`contadores_stats/clns/${clienteEncontradoID}/total`).once('value');
-            const totalCli = (snapCliGlobal.val() || 0) + 1;
-
-            const snapRelacion = await db.ref(`contadores_stats/relaciones/${session.uid}_${clienteEncontradoID}`).once('value');
-            const totalJuntos = (snapRelacion.val() || 0) + 1;
-
-            const idCarpetaInteligente = `ZPT${parseInt(zapIDShort)}_CLN${parseInt(cliIDShort)}-${totalZap}-${totalCli}-${totalJuntos}`;
-
-            const data = {
-                ordenID: idCarpetaInteligente,
-                zapateroId: session.uid,
-                clienteId: clienteEncontradoID,
-                cliente: nom,
-                telefono: tel,
-                items: itemsParaGuardar,
-                precioTotal: cobrado,
-                abono: abono,
-                saldo: (cobrado - abono),
-                timestamp: Date.now(),
-                estado: 'Recibido'
-            };
-
-            // Guardar Orden
-            await db.ref('trabajos/' + idCarpetaInteligente).set(data);
+        // --- CARGAR PARA EDITAR ---
+        async function editarOrden(id) {
+            const snap = await db.ref('trabajos/' + id).once('value');
+            if(!snap.exists()) return;
+            const o = snap.val();
             
-            // Actualizar contadores en la BD
-            await db.ref(`contadores_stats/zpts/${session.uid}/total`).set(totalZap);
-            await db.ref(`contadores_stats/clns/${clienteEncontradoID}/total`).set(totalCli);
-            await db.ref(`contadores_stats/relaciones/${session.uid}_${clienteEncontradoID}`).set(totalJuntos);
-
-            alert("Orden Creada: " + idCarpetaInteligente);
-            cerrarModal();
+            idFirebaseActual = id; // El ID inteligente que ya tiene
+            clienteEncontradoID = o.clienteId;
+            
+            document.getElementById('titulo-modal').innerText = "Editando " + o.ordenID;
+            document.getElementById('cli-celular').value = o.telefono;
+            document.getElementById('cli-nombre').value = o.cliente;
+            document.getElementById('precio-total').value = o.precioTotal;
+            document.getElementById('abono-inicial').value = o.abono;
+            itemsParaGuardar = o.items || [];
+            
+            renderizarLista();
+            document.getElementById('modal-orden').style.display = 'block';
         }
 
-        // SOPORTE INTERFAZ
         function bajarItem() {
             const it = {
-                cant: document.getElementById('item-cant').value,
                 tipo: document.getElementById('item-tipo').value,
                 detalles: document.getElementById('item-detalles-final').value,
                 precio: parseFloat(document.getElementById('item-precio').value) || 0
@@ -200,7 +148,9 @@
             if(!it.tipo) return;
             itemsParaGuardar.push(it);
             renderizarLista();
-            limpiarCamposItem();
+            document.getElementById('item-tipo').value="";
+            document.getElementById('item-detalles-final').value="";
+            document.getElementById('item-precio').value="";
         }
 
         function renderizarLista() {
@@ -209,31 +159,96 @@
             itemsParaGuardar.forEach((it, index) => {
                 totalRealSuma += it.precio;
                 visor.innerHTML += `<div class="item-listado">
-                    <div class="item-info"><b>${it.cant} ${it.tipo}</b> - $${it.precio}<div class="detalles-texto">${it.detalles}</div></div>
-                    <button class="btn-eliminar-item" onclick="itemsParaGuardar.splice(${index},1);renderizarLista();"><i class="fas fa-times"></i></button>
+                    <div><b>${it.tipo}</b> - $${it.precio}<div class="detalles-texto">${it.detalles}</div></div>
+                    <button style="color:red; background:none; border:none;" onclick="itemsParaGuardar.splice(${index},1);renderizarLista();">×</button>
                 </div>`;
             });
-            document.getElementById('precio-total').value = totalRealSuma;
+            // Solo actualizamos el total si es una orden nueva o no se ha modificado manualmente
+            if(!idFirebaseActual) document.getElementById('precio-total').value = totalRealSuma;
             calcularDiferencias();
         }
 
         function calcularDiferencias() {
-            const c = parseFloat(document.getElementById('precio-total').value) || 0;
-            const a = parseFloat(document.getElementById('abono-inicial').value) || 0;
-            document.getElementById('txt-saldo-pendiente').innerText = "$" + (c - a).toFixed(2);
+            const cobrado = parseFloat(document.getElementById('precio-total').value) || 0;
+            const abono = parseFloat(document.getElementById('abono-inicial').value) || 0;
+            const infoDesc = document.getElementById('txt-descuento-info');
+
+            // Lógica de Descuento (RESTAURADA)
+            if(cobrado < totalRealSuma && totalRealSuma > 0){
+                const diff = totalRealSuma - cobrado;
+                const porc = ((diff / totalRealSuma) * 100).toFixed(1);
+                infoDesc.innerHTML = `REBAJA: -$${diff.toFixed(2)} (${porc}%)`;
+                infoDesc.style.display = "block";
+            } else {
+                infoDesc.style.display = "none";
+            }
+            document.getElementById('txt-saldo-pendiente').innerText = "$" + (cobrado - abono).toFixed(2);
         }
 
-        function acumularEnTexto() {
-            const i = document.getElementById('item-desc-input');
-            const v = document.getElementById('item-detalles-final');
-            if(!i.value) return;
-            v.value += (v.value ? "\n" : "") + "- " + i.value;
-            i.value = ""; i.focus();
+        async function guardarOrdenFinal() {
+            if(itemsParaGuardar.length === 0) return alert("Agrega un trabajo");
+            
+            let idCarpeta = idFirebaseActual;
+
+            if(!idFirebaseActual) {
+                // Lógica de ID Inteligente (Nueva Orden)
+                const snapC = await db.ref('contadores/CLN').once('value');
+                let numC = (snapC.val() || 0) + 1;
+                if(!clienteEncontradoID) {
+                    clienteEncontradoID = 'CLN' + numC.toString().padStart(9, '0');
+                    await db.ref('contadores/CLN').set(numC);
+                }
+
+                const zapID = parseInt(session.uid.replace(/[^0-9]/g, ''));
+                const cliID = parseInt(clienteEncontradoID.replace(/[^0-9]/g, ''));
+                
+                const sZ = (await db.ref(`contadores_stats/zpts/${session.uid}`).once('value')).val() || 0;
+                const sC = (await db.ref(`contadores_stats/clns/${clienteEncontradoID}`).once('value')).val() || 0;
+                const sR = (await db.ref(`contadores_stats/relaciones/${session.uid}_${clienteEncontradoID}`).once('value')).val() || 0;
+
+                idCarpeta = `ZPT${zapID}_CLN${cliID}-${sZ+1}-${sC+1}-${sR+1}`;
+                
+                // Actualizar contadores
+                await db.ref(`contadores_stats/zpts/${session.uid}`).set(sZ+1);
+                await db.ref(`contadores_stats/clns/${clienteEncontradoID}`).set(sC+1);
+                await db.ref(`contadores_stats/relaciones/${session.uid}_${clienteEncontradoID}`).set(sR+1);
+            }
+
+            const data = {
+                ordenID: idCarpeta,
+                zapateroId: session.uid,
+                clienteId: clienteEncontradoID,
+                cliente: document.getElementById('cli-nombre').value,
+                telefono: document.getElementById('cli-celular').value,
+                items: itemsParaGuardar,
+                precioTotal: parseFloat(document.getElementById('precio-total').value),
+                abono: parseFloat(document.getElementById('abono-inicial').value),
+                saldo: parseFloat(document.getElementById('precio-total').value) - parseFloat(document.getElementById('abono-inicial').value),
+                timestamp: Date.now()
+            };
+
+            await db.ref('trabajos/' + idCarpeta).update(data);
+            alert("Orden Guardada");
+            cerrarModal();
         }
 
-        function abrirModal() { document.getElementById('modal-orden').style.display = 'block'; itemsParaGuardar = []; renderizarLista(); }
-        function cerrarModal() { document.getElementById('modal-orden').style.display = 'none'; }
-        function limpiarCamposItem() { document.getElementById('item-tipo').value=""; document.getElementById('item-detalles-final').value=""; document.getElementById('item-precio').value=""; }
+        function verificarCliente(tel) {
+            if(tel.length < 9) return;
+            db.ref('usuarios').orderByChild('telefono').equalTo(tel).once('value', snap => {
+                if(snap.exists()){
+                    const data = Object.values(snap.val())[0];
+                    document.getElementById('cli-nombre').value = data.nombre;
+                    clienteEncontradoID = data.uid;
+                }
+            });
+        }
+
+        function filtrarTrabajos() {
+            const b = document.getElementById('inputBusqueda').value.toLowerCase();
+            document.querySelectorAll('.order-card').forEach(c => {
+                c.style.display = c.innerText.toLowerCase().includes(b) ? "flex" : "none";
+            });
+        }
 
         function cargarTrabajos() {
             db.ref('trabajos').orderByChild('zapateroId').equalTo(session.uid).on('value', snap => {
@@ -241,11 +256,22 @@
                 container.innerHTML = "";
                 snap.forEach(child => {
                     const o = child.val();
-                    container.innerHTML += `<div class="order-card">
-                        <div style="flex:1;"><h3 style="color:var(--gold); margin:0;">${o.cliente}</h3>
-                        <div style="font-size:10px; color:#aaa;">ID: ${o.ordenID}</div>
-                        <div style="font-weight:bold;">Total: $${o.precioTotal} <span class="badge-saldo">Saldo: $${o.saldo}</span></div></div>
-                    </div>`;
+                    const k = child.key;
+                    const saldoColor = o.saldo > 0 ? '#ffaa00' : '#00ff00';
+                    container.innerHTML += `
+                        <div class="order-card">
+                            <div style="flex:1;">
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                                    <h3 style="color:var(--gold); margin:0;">${o.cliente}</h3>
+                                    <div class="card-actions">
+                                        <i class="fas fa-comment-dots btn-icon btn-chat" onclick="window.location.href='chat.html?id=${o.clienteId}'"></i>
+                                        <i class="fas fa-edit btn-icon" onclick="editarOrden('${k}')"></i>
+                                    </div>
+                                </div>
+                                <div style="font-size:10px; color:#aaa;">ID: ${o.ordenID}</div>
+                                <div style="font-weight:bold; margin-top:5px;">Total: $${o.precioTotal} <span class="badge-saldo" style="color:${saldoColor}; border-color:${saldoColor}">Saldo: $${o.saldo}</span></div>
+                            </div>
+                        </div>`;
                 });
             });
         }
