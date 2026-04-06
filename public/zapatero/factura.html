@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comprobante - JADI REPAIZ</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --gold: #FFD700; --dark: #000; --gray: #1a1a1a; }
+        body { background: #050505; color: white; font-family: 'Courier New', Courier, monospace; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        
+        /* Contenedor del Ticket */
+        .ticket { background: white; color: black; width: 100%; max-width: 350px; padding: 25px; box-sizing: border-box; box-shadow: 0 10px 30px rgba(255, 215, 0, 0.2); border-radius: 2px; position: relative; }
+        .ticket::after { content: ""; position: absolute; bottom: -10px; left: 0; width: 100%; height: 10px; background: linear-gradient(-45deg, white 5px, transparent 0), linear-gradient(45deg, white 5px, transparent 0); background-size: 10px 10px; }
+
+        .logo-area { text-align: center; border-bottom: 2px dashed #ccc; padding-bottom: 15px; margin-bottom: 15px; }
+        .brand-name { font-weight: bold; font-size: 22px; letter-spacing: 2px; margin: 0; }
+        .slogan { font-size: 10px; color: #555; text-transform: uppercase; }
+
+        .info-section { font-size: 12px; margin-bottom: 15px; line-height: 1.4; }
+        .info-row { display: flex; justify-content: space-between; margin-bottom: 5px; }
+        
+        .table-header { border-top: 1px solid black; border-bottom: 1px solid black; padding: 5px 0; margin-bottom: 10px; font-weight: bold; display: flex; font-size: 12px; }
+        .item-row { display: flex; font-size: 12px; margin-bottom: 8px; border-bottom: 0.5px solid #eee; padding-bottom: 5px; }
+        
+        .col-desc { flex: 2; }
+        .col-price { flex: 1; text-align: right; }
+
+        .totals-area { margin-top: 15px; border-top: 2px solid black; padding-top: 10px; }
+        .total-row { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 4px; }
+        .grand-total { font-size: 20px; font-weight: bold; margin-top: 10px; padding-top: 5px; border-top: 1px solid #ccc; }
+
+        .footer-msg { text-align: center; font-size: 10px; margin-top: 25px; color: #666; font-style: italic; }
+
+        /* Botones de Acción */
+        .actions { margin-top: 30px; display: flex; gap: 15px; width: 100%; max-width: 350px; }
+        .btn { flex: 1; padding: 15px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-wa { background: #25D366; color: white; }
+        .btn-dl { background: var(--gold); color: black; }
+        .btn-back { background: #333; color: white; text-decoration: none; position: absolute; top: 20px; left: 20px; padding: 10px; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
+    </style>
+</head>
+<body>
+
+    <a href="trabajos.html" class="btn-back"><i class="fas fa-arrow-left"></i></a>
+
+    <div id="capture-area">
+        <div class="ticket" id="ticket-content">
+            <div class="logo-area">
+                <h1 class="brand-name">JADI REPAIZ</h1>
+                <div class="slogan">El alma en tus pasos</div>
+            </div>
+
+            <div class="info-section">
+                <div class="info-row"><span>ORDEN:</span> <b id="f-orden">-</b></div>
+                <div class="info-row"><span>FECHA:</span> <span id="f-fecha">-</span></div>
+                <div class="info-row"><span>CLIENTE:</span> <b id="f-cliente">-</b></div>
+                <div class="info-row"><span>TELÉFONO:</span> <span id="f-tel">-</span></div>
+            </div>
+
+            <div class="table-header">
+                <span class="col-desc">DESCRIPCIÓN</span>
+                <span class="col-price">TOTAL</span>
+            </div>
+
+            <div id="f-items-container">
+                </div>
+
+            <div class="totals-area">
+                <div class="total-row"><span>Total Servicio:</span> <b id="f-total">$0.00</b></div>
+                <div class="total-row"><span>Abono:</span> <b id="f-abono">$0.00</b></div>
+                <div class="total-row grand-total" id="f-row-saldo">
+                    <span>SALDO:</span> <span id="f-saldo">$0.00</span>
+                </div>
+            </div>
+
+            <div class="footer-msg">
+                "Gracias por confiar en nuestras manos experto. Sus pasos son nuestra pasión."
+                <br><br>
+                <b>Quito - Ecuador</b>
+            </div>
+        </div>
+    </div>
+
+    <div class="actions">
+        <button class="btn btn-dl" onclick="descargarTicket()"><i class="fas fa-camera"></i> CAPTURAR</button>
+        <button class="btn btn-wa" onclick="enviarWhatsApp()"><i class="fab fa-whatsapp"></i> ENVIAR</button>
+    </div>
+
+    <script>
+        const firebaseConfig = { databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com" };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const orderId = urlParams.get('id');
+
+        async function cargarDatosFactura() {
+            if(!orderId) return alert("No se encontró la orden");
+
+            const snap = await db.ref('trabajos/' + orderId).once('value');
+            if(!snap.exists()) return alert("Error al cargar datos");
+
+            const o = snap.val();
+
+            // Llenar cabecera
+            document.getElementById('f-orden').innerText = o.ordenID;
+            document.getElementById('f-fecha').innerText = new Date(o.timestamp).toLocaleDateString();
+            document.getElementById('f-cliente').innerText = o.cliente;
+            document.getElementById('f-tel').innerText = o.telefono;
+
+            // Llenar items
+            const container = document.getElementById('f-items-container');
+            o.items.forEach(it => {
+                container.innerHTML += `
+                    <div class="item-row">
+                        <div class="col-desc">${it.tipo}<br><small style="color:#777">${it.detalles || ''}</small></div>
+                        <div class="col-price">$${it.precio.toFixed(2)}</div>
+                    </div>`;
+            });
+
+            // Llenar totales
+            document.getElementById('f-total').innerText = "$" + o.precioTotal.toFixed(2);
+            document.getElementById('f-abono').innerText = "$" + o.abono.toFixed(2);
+            document.getElementById('f-saldo').innerText = "$" + o.saldo.toFixed(2);
+
+            // Estilo visual según saldo
+            if(o.saldo <= 0) {
+                document.getElementById('f-row-saldo').style.color = "#008000";
+                document.getElementById('f-saldo').innerText = "¡PAGADO!";
+            }
+        }
+
+        function descargarTicket() {
+            const area = document.getElementById('capture-area');
+            html2canvas(area, { backgroundColor: "#050505", scale: 2 }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `Ticket_JADI_${document.getElementById('f-cliente').innerText}.png`;
+                link.href = canvas.toDataURL();
+                link.click();
+            });
+        }
+
+        function enviarWhatsApp() {
+            const tel = document.getElementById('f-tel').innerText;
+            if(tel === "S/N" || tel.length < 7) return alert("El cliente no tiene un número válido registrado.");
+            
+            const msg = `Hola ${document.getElementById('f-cliente').innerText}, JADI REPAIZ te envía el comprobante de tu orden ${document.getElementById('f-orden').innerText}. Total: ${document.getElementById('f-total').innerText}, Saldo: ${document.getElementById('f-saldo').innerText}.`;
+            const url = `https://wa.me/593${tel.startsWith('0') ? tel.substring(1) : tel}?text=${encodeURIComponent(msg)}`;
+            window.open(url, '_blank');
+        }
+
+        window.onload = cargarDatosFactura;
+    </script>
+</body>
+</html>
