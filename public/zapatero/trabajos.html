@@ -126,7 +126,6 @@
         let idFirebaseActual = null;
         let clienteEncontradoID = null;
 
-        // Cargar Diccionario Global de Sugerencias
         function cargarSugerencias() {
             db.ref('global_dictionary').on('value', snap => {
                 const list = document.getElementById('lista-sugerencias');
@@ -160,16 +159,13 @@
 
         function bajarItem() {
             const it = {
-                cant: 1, // Siempre 1 según pedido
+                cant: 1,
                 tipo: document.getElementById('item-tipo').value.trim(),
                 detalles: document.getElementById('item-detalles-final').value,
                 precio: parseFloat(document.getElementById('item-precio').value) || 0
             };
             if(!it.tipo) return;
-
-            // Guardar en diccionario global si es nuevo
             db.ref('global_dictionary/' + it.tipo.toLowerCase()).set(true);
-
             itemsParaGuardar.push(it);
             renderizarLista();
             limpiarFormItem();
@@ -192,7 +188,6 @@
             const visor = document.getElementById('visor-items');
             visor.innerHTML = ""; 
             subtotalGlobal = 0;
-
             itemsParaGuardar.forEach((it, index) => {
                 subtotalGlobal += it.precio;
                 visor.innerHTML += `
@@ -204,18 +199,15 @@
                     <i class="fas fa-trash" style="color:var(--danger); padding:10px;" onclick="eliminarItem(${index})"></i>
                 </div>`;
             });
-
             document.getElementById('txt-subtotal').innerText = "$" + subtotalGlobal.toFixed(2);
             document.getElementById('precio-total').value = subtotalGlobal.toFixed(2);
             calcularDiferencias();
         }
 
         function calcularDiferencias() {
-            const subtotal = subtotalGlobal;
             const totalCobrado = parseFloat(document.getElementById('precio-total').value) || 0;
             const abono = parseFloat(document.getElementById('abono-inicial').value) || 0;
-            const descuento = subtotal - totalCobrado;
-
+            const descuento = subtotalGlobal - totalCobrado;
             document.getElementById('txt-descuento').innerText = (descuento > 0.01) ? `-$${descuento.toFixed(2)}` : "$0.00";
             const saldo = totalCobrado - abono;
             document.getElementById('txt-saldo-pendiente').innerText = "$" + saldo.toFixed(2);
@@ -247,26 +239,24 @@
             });
         }
 
+        // --- LÓGICA DE ESTRUCTURA UNIFICADA ---
         async function guardarOrdenFinal() {
             if(itemsParaGuardar.length === 0) return alert("Agrega artículos");
             const nom = document.getElementById('cli-nombre').value.trim();
             const tel = document.getElementById('cli-celular').value.trim();
-            
-            if(!nom) return alert("Por favor, ingresa al menos el nombre del cliente.");
+            if(!nom) return alert("Ingresa el nombre del cliente.");
 
             let idCarpeta = idFirebaseActual;
 
             if(!idFirebaseActual) {
-                // LÓGICA DE USUARIO HUÉRFANO O REGISTRADO
+                // Si no hay teléfono, generamos un ID secuencial de "S/N"
                 if(!tel) {
-                    // CASO S/N (Sin Número)
-                    const zapNum = myZapID.replace(/\D/g, "");
                     const snapSN = await db.ref(`contadores/SN_${myZapID}`).once('value');
                     let numSN = (snapSN.val() || 0) + 1;
-                    clienteEncontradoID = `S/N_ZPT${zapNum}-${numSN}`;
+                    clienteEncontradoID = `SN${numSN}`; // Estructura simple para el ID del cliente
                     await db.ref(`contadores/SN_${myZapID}`).set(numSN);
                 } else if(!clienteEncontradoID) {
-                    // REGISTRO NUEVO CON CELULAR
+                    // Si hay teléfono pero no existe el cliente en la DB
                     const snapC = await db.ref('contadores/CLN').once('value');
                     let numC = (snapC.val() || 0) + 1;
                     clienteEncontradoID = 'CLN' + numC;
@@ -274,10 +264,9 @@
                     await db.ref('contadores/CLN').set(numC);
                 }
 
-                const zapNumFinal = parseInt(myZapID.replace(/\D/g, ""));
+                // ESTRUCTURA UNIFICADA: ZPT1_CLN1_N1 o ZPT1_SN1_N1
                 const sZ = (await db.ref(`stats/z/${myZapID}`).once('value')).val() || 0;
-                // Formato de carpeta: ZPT[X]_IDCLIENTE_N[Z]
-                idCarpeta = `ZPT${zapNumFinal}_${clienteEncontradoID}_N${sZ+1}`;
+                idCarpeta = `${myZapID}_${clienteEncontradoID}_N${sZ+1}`;
                 await db.ref(`stats/z/${myZapID}`).set(sZ+1);
             }
 
@@ -296,7 +285,7 @@
             };
 
             await db.ref('trabajos/' + idCarpeta).update(data);
-            alert(idFirebaseActual ? "¡Orden Actualizada!" : "¡Nueva Orden Guardada!\nID: " + idCarpeta);
+            alert("Orden Guardada con ID: " + idCarpeta);
             cerrarModal();
         }
 
@@ -305,8 +294,6 @@
                 const container = document.getElementById('lista-trabajos');
                 container.innerHTML = "";
                 if(!snap.exists()) return;
-                
-                // Convertir a array para ordenar por fecha (más reciente arriba)
                 let lista = [];
                 snap.forEach(child => { lista.push({key: child.key, ...child.val()}); });
                 lista.sort((a,b) => b.timestamp - a.timestamp);
