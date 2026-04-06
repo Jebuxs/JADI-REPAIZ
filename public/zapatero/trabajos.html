@@ -235,11 +235,13 @@
                     const data = Object.values(snap.val())[0];
                     document.getElementById('cli-nombre').value = data.nombre;
                     clienteEncontradoID = data.uid;
+                } else {
+                    clienteEncontradoID = null;
                 }
             });
         }
 
-        // --- LÓGICA DE ESTRUCTURA UNIFICADA ---
+        // --- LÓGICA DE GUARDADO CON MIGRACIÓN DE SN A CLN ---
         async function guardarOrdenFinal() {
             if(itemsParaGuardar.length === 0) return alert("Agrega artículos");
             const nom = document.getElementById('cli-nombre').value.trim();
@@ -247,24 +249,50 @@
             if(!nom) return alert("Ingresa el nombre del cliente.");
 
             let idCarpeta = idFirebaseActual;
+            let viejaCarpetaParaBorrar = null;
 
+            // 1. SI ES UNA EDICIÓN Y PASAMOS DE "SN" A "CON TELÉFONO"
+            if(idFirebaseActual && tel && tel !== "" && clienteEncontradoID && clienteEncontradoID.startsWith('SN')) {
+                viejaCarpetaParaBorrar = idFirebaseActual;
+                
+                const snapC = await db.ref('contadores/CLN').once('value');
+                let numC = (snapC.val() || 0) + 1;
+                clienteEncontradoID = 'CLN' + numC;
+                await db.ref('contadores/CLN').set(numC);
+
+                await db.ref('usuarios/' + clienteEncontradoID).set({
+                    uid: clienteEncontradoID,
+                    nombre: nom,
+                    telefono: tel,
+                    tipo: 'CLIENTE',
+                    registroCompleto: false
+                });
+
+                const parteSecuencial = idFirebaseActual.split('_').pop();
+                idCarpeta = `${myZapID}_${clienteEncontradoID}_${parteSecuencial}`;
+            }
+
+            // 2. SI ES UNA ORDEN NUEVA
             if(!idFirebaseActual) {
-                // Si no hay teléfono, generamos un ID secuencial de "S/N"
                 if(!tel) {
                     const snapSN = await db.ref(`contadores/SN_${myZapID}`).once('value');
                     let numSN = (snapSN.val() || 0) + 1;
-                    clienteEncontradoID = `SN${numSN}`; // Estructura simple para el ID del cliente
+                    clienteEncontradoID = `SN${numSN}`;
                     await db.ref(`contadores/SN_${myZapID}`).set(numSN);
                 } else if(!clienteEncontradoID) {
-                    // Si hay teléfono pero no existe el cliente en la DB
                     const snapC = await db.ref('contadores/CLN').once('value');
                     let numC = (snapC.val() || 0) + 1;
                     clienteEncontradoID = 'CLN' + numC;
-                    await db.ref('usuarios/' + clienteEncontradoID).set({ uid: clienteEncontradoID, nombre: nom, telefono: tel, tipo: 'CLIENTE' });
+                    await db.ref('usuarios/' + clienteEncontradoID).set({
+                        uid: clienteEncontradoID,
+                        nombre: nom,
+                        telefono: tel,
+                        tipo: 'CLIENTE',
+                        registroCompleto: false
+                    });
                     await db.ref('contadores/CLN').set(numC);
                 }
 
-                // ESTRUCTURA UNIFICADA: ZPT1_CLN1_N1 o ZPT1_SN1_N1
                 const sZ = (await db.ref(`stats/z/${myZapID}`).once('value')).val() || 0;
                 idCarpeta = `${myZapID}_${clienteEncontradoID}_N${sZ+1}`;
                 await db.ref(`stats/z/${myZapID}`).set(sZ+1);
@@ -284,8 +312,13 @@
                 timestamp: Date.now()
             };
 
+            // Borrar carpeta antigua si el ID cambió durante la migración de SN a CLN
+            if(viejaCarpetaParaBorrar && viejaCarpetaParaBorrar !== idCarpeta) {
+                await db.ref('trabajos/' + viejaCarpetaParaBorrar).remove();
+            }
+
             await db.ref('trabajos/' + idCarpeta).update(data);
-            alert("Orden Guardada con ID: " + idCarpeta);
+            alert("Orden Guardada: " + idCarpeta);
             cerrarModal();
         }
 
