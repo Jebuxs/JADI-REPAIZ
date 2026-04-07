@@ -5,22 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Módulo Zapatero - J.A.D.I REPAIZ</title>
 
-    <script src="../js/estilo_visual.js"></script>
+    <script src="/js/estilo_visual.js"></script>
+    <script src="/js/controlador_jadi.js"></script>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
     <style>
-        /* Estilos estructurales específicos que el JS no cubre */
+        /* Estilos estructurales específicos */
         .header {
             display: flex; justify-content: space-between; align-items: center; 
             padding: 10px 25px; border-bottom: 1px solid #D4AF37; background: #050505;
             position: sticky; top: 0; z-index: 1000;
         }
         .header-actions { display: flex; align-items: center; gap: 15px; }
-        .profile-btn img { width: 32px; height: 32px; border-radius: 50%; border: 1px solid #D4AF37; }
+        .profile-btn-img { width: 32px; height: 32px; border-radius: 50%; border: 1px solid #D4AF37; object-fit: cover; }
         
+        /* Dashboard Stats */
         .dashboard-stats {
             display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 25px;
         }
@@ -28,8 +30,22 @@
         .stat-card span { font-size: 1.4rem; font-weight: bold; display: block; }
         .stat-card p { font-size: 9px; color: #666; margin: 0; text-transform: uppercase; }
 
+        /* Selector de Estilo Visual (Estilo prueba.html) */
+        .selector-visual-box {
+            background: rgba(255,255,255,0.03);
+            border: 1px dashed #444;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+        select#selector-tema {
+            background: #111; color: #D4AF37; border: 1px solid #D4AF37;
+            padding: 8px; border-radius: 8px; font-size: 12px; width: 100%; max-width: 300px;
+        }
+
         .grid-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
-        .card { text-decoration: none; color: white; } /* La tarjeta hereda el estilo .card-jadi del JS */
+        .card-jadi { text-decoration: none; color: white; transition: 0.3s; } 
         
         .color-new { color: #ff4d4d; }
         .color-proc { color: #4dadff; }
@@ -44,12 +60,12 @@
             <span style="color: #FFF; font-size: 9px; letter-spacing: 4px; text-transform: uppercase;">REPAIZ</span>
         </div>
         <div class="header-actions">
-            <a href="../dashboard.html" style="color: #666; text-decoration: none;" title="Dashboard Master">
-                <i class="fas fa-th-large"></i>
+            <a href="/admin/dashboard.html" style="color: #666; text-decoration: none;" title="Admin Master">
+                <i class="fas fa-crown"></i>
             </a>
             <a href="perfil.html" style="text-decoration: none; display: flex; align-items: center; gap: 8px;">
-                <span id="header-user-name" style="color: white; font-size: 11px; font-weight: bold;">...</span>
-                <img id="user-photo" src="https://via.placeholder.com/32" alt="Perfil">
+                <span id="header-user-name" style="color: white; font-size: 11px; font-weight: bold;">Cargando...</span>
+                <img id="user-photo" class="profile-btn-img" src="https://via.placeholder.com/32" alt="Perfil">
             </a>
         </div>
     </div>
@@ -64,6 +80,17 @@
             <div id="display-id" style="background: #1a1a1a; color: #D4AF37; padding: 4px 12px; border-radius: 20px; font-size: 10px; border: 1px solid #333;">ID: ...</div>
         </div>
 
+        <div class="selector-visual-box">
+            <label style="display: block; font-size: 10px; color: #888; margin-bottom: 8px; text-transform: uppercase;">Configuración Visual de Taller</label>
+            <select id="selector-tema" onchange="cambiarApariencia(this.value)">
+                <option value="elegante">👑 Dorado J.A.D.I</option>
+                <option value="azul">⚡ Azul Eléctrico</option>
+                <option value="tomate">🍅 Tomate</option>
+                <option value="verde">🔋 Verde Fosfo</option>
+                <option value="estandar">⚪ Estándar</option>
+            </select>
+        </div>
+
         <div class="dashboard-stats">
             <div class="stat-card"><i class="fas fa-bell color-new"></i><span id="count-nuevos">0</span><p>Nuevos</p></div>
             <div class="stat-card"><i class="fas fa-hammer color-proc"></i><span id="count-proceso">0</span><p>En Proceso</p></div>
@@ -71,22 +98,22 @@
         </div>
 
         <div class="grid-container">
-            <a href="local.html" class="card-jadi card">
+            <a href="local.html" class="card-jadi">
                 <i class="fas fa-store" style="font-size: 24px; color: #D4AF37;"></i>
                 <h3 style="font-size: 12px; margin-top: 10px;">Mi Local</h3>
                 <p style="font-size: 9px; color: #666;">Vitrina y Ubicación</p>
             </a>
-            <a href="inventario.html" class="card-jadi card">
+            <a href="inventario.html" class="card-jadi">
                 <i class="fas fa-boxes-stacked" style="font-size: 24px; color: #D4AF37;"></i>
                 <h3 style="font-size: 12px; margin-top: 10px;">Inventarios</h3>
                 <p style="font-size: 9px; color: #666;">Suelas y Materiales</p>
             </a>
-            <a href="clientes.html" class="card-jadi card">
+            <a href="clientes.html" class="card-jadi">
                 <i class="fas fa-address-book" style="font-size: 24px; color: #D4AF37;"></i>
                 <h3 style="font-size: 12px; margin-top: 10px;">Clientes</h3>
                 <p style="font-size: 9px; color: #666;">Base de Datos y QR</p>
             </a>
-            <a href="trabajos.html" class="card-jadi card">
+            <a href="trabajos.html" class="card-jadi">
                 <i class="fas fa-tools" style="font-size: 24px; color: #D4AF37;"></i>
                 <h3 style="font-size: 12px; margin-top: 10px;">Trabajos</h3>
                 <p style="font-size: 9px; color: #666;">Órdenes y Avances</p>
@@ -104,17 +131,22 @@
     </div>
 
     <script>
-        // Configuración Firebase
+        // Configuración Firebase (Revisar si es la correcta)
         const firebaseConfig = { databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com" };
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
         window.onload = function() {
-            // Aplicar el estilo elegante desde el JS
-            if(typeof JadiEstilo !== 'undefined') JadiEstilo.aplicar('elegante');
+            // 1. APLICAR ESTILO GUARDADO
+            const temaActual = localStorage.getItem('jadi_tema_preferido') || 'elegante';
+            document.getElementById('selector-tema').value = temaActual;
+            if(typeof JadiEstilo !== 'undefined') JadiEstilo.aplicar(temaActual);
 
+            // 2. CARGAR SESIÓN Y SEGURIDAD
             const session = JSON.parse(localStorage.getItem('session_jadi'));
-            if (session) {
+            
+            // Verificación de ROL usando el controlador_jadi (Seguridad)
+            if (session && session.rol === 'zapatero') {
                 document.getElementById('display-nombre').innerText = "Maestro " + (session.nombre || "J.A.D.I");
                 document.getElementById('header-user-name').innerText = (session.nombre || "Usuario");
                 document.getElementById('display-id').innerText = "ID: " + (session.uid || "ZPT-PRO");
@@ -125,9 +157,18 @@
 
                 actualizarEstadisticas(session.uid);
             } else {
-                window.location.href = "../index.html";
+                // Si no es zapatero o no hay sesión, fuera.
+                window.location.href = "/index.html";
             }
         };
+
+        // Función para cambiar apariencia en tiempo real
+        function cambiarApariencia(color) {
+            if(typeof JadiEstilo !== 'undefined') {
+                JadiEstilo.aplicar(color);
+                localStorage.setItem('jadi_tema_preferido', color);
+            }
+        }
 
         function actualizarEstadisticas(uid) {
             db.ref('trabajos').orderByChild('maestroId').equalTo(uid).on('value', snap => {
@@ -148,7 +189,7 @@
             e.preventDefault();
             if(confirm("¿Cerrar sesión?")) {
                 localStorage.removeItem('session_jadi');
-                window.location.href = "../index.html";
+                window.location.href = "/index.html";
             }
         };
     </script>
