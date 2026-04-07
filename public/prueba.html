@@ -6,7 +6,7 @@
     <title>JADI - Laboratorio de Estilos</title>
 
     <script src="/js/estilo_visual.js"></script>
-    <script src="/js/controlador_jadi.js"></script>
+    <script src="/js/modal_trabajos.js"></script>
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
@@ -39,30 +39,24 @@
     </div>
 
     <script>
-        // Al cargar, aplicamos lo que esté guardado
         window.onload = () => {
             const temaGuardado = localStorage.getItem('jadi_tema_preferido') || 'elegante';
             document.getElementById('selector-tema').value = temaGuardado;
             
-            // Verificamos si el archivo estilo_visual.js cargó correctamente
+            // Verificamos si existe el objeto JadiEstilo (que viene de estilo_visual.js)
             if (typeof JadiEstilo !== 'undefined') {
                 JadiEstilo.aplicar(temaGuardado);
-                console.log("✅ Estilo Visual conectado.");
-            } else {
-                console.error("❌ No se encontró estilo_visual.js");
             }
         };
 
-        // Función corregida para el onchange
         function probarEstilo(color) {
             if (typeof JadiEstilo !== 'undefined') {
                 JadiEstilo.aplicar(color);
                 localStorage.setItem('jadi_tema_preferido', color);
             } else {
-                alert("🚨 Error: No se detecta el archivo 'estilo_visual.js'. Revisa que esté en la carpeta /js/");
+                alert("🚨 Error: Sigo sin detectar 'estilo_visual.js'. \n\nREVISA: ¿Ya corregiste el nombre en GitHub? Decía 'esrilo' con R.");
             }
         }
     </script>
-
 </body>
 </html>
