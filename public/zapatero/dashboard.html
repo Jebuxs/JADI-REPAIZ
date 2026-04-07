@@ -138,9 +138,9 @@
             const session = JSON.parse(localStorage.getItem('session_jadi'));
             
             // Validamos que el rol sea zapatero o ADM
-            if (session && (session.rol === 'zapatero' || session.rol === 'ADM')) {
+            if (session && (session.rolCodigo === 'zapatero' || session.rolCodigo === 'ADM')) {
                 
-                const esAdmin = (session.rol === 'ADM');
+                const esAdmin = (session.rolCodigo === 'ADM');
                 document.getElementById('display-nombre').innerText = (esAdmin ? "Administrador " : "Maestro ") + (session.nombre || "J.A.D.I");
                 document.getElementById('header-user-name').innerText = (session.nombre || "Usuario");
                 document.getElementById('display-id').innerText = "ID: " + (session.uid || "ROOT");
