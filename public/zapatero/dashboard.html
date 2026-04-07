@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Maestro - J.A.D.I REPAIZ</title>
+    <title>Dashboard J.A.D.I REPAIZ</title>
 
     <script src="/js/estilo_visual.js"></script>
     <script src="/js/controlador_jadi.js"></script>
@@ -29,9 +29,8 @@
         .stat-card p { font-size: 9px; color: #666; margin: 0; text-transform: uppercase; }
 
         .selector-visual-box {
-            background: rgba(255,255,255,0.03);
-            border: 1px dashed #444; padding: 15px;
-            border-radius: 12px; margin-bottom: 25px; text-align: center;
+            background: rgba(255,255,255,0.03); border: 1px dashed #444; 
+            padding: 15px; border-radius: 12px; margin-bottom: 25px; text-align: center;
         }
         select#selector-tema {
             background: #111; color: #D4AF37; border: 1px solid #D4AF37;
@@ -135,24 +134,24 @@
             document.getElementById('selector-tema').value = temaActual;
             if(typeof JadiEstilo !== 'undefined') JadiEstilo.aplicar(temaActual);
 
-            // 2. SEGURIDAD CON LLAVE MAESTRA
+            // 2. SEGURIDAD REVISADA (ROL ADM)
             const session = JSON.parse(localStorage.getItem('session_jadi'));
             
-            // Permitimos entrar si es zapatero O si eres el super admin
-            if (session && (session.rol === 'zapatero' || session.rol === 'supe_admin' || session.rol === 'super_admin')) {
+            // Validamos que el rol sea zapatero o ADM
+            if (session && (session.rol === 'zapatero' || session.rol === 'ADM')) {
                 
-                const esAdmin = (session.rol !== 'zapatero');
+                const esAdmin = (session.rol === 'ADM');
                 document.getElementById('display-nombre').innerText = (esAdmin ? "Administrador " : "Maestro ") + (session.nombre || "J.A.D.I");
                 document.getElementById('header-user-name').innerText = (session.nombre || "Usuario");
                 document.getElementById('display-id').innerText = "ID: " + (session.uid || "ROOT");
-                document.getElementById('display-local').innerText = session.empresaNombre || "Central J.A.D.I";
-                document.getElementById('local-footer').innerText = session.empresaNombre || "Sucursal Principal";
+                document.getElementById('display-local').innerText = session.empresaNombre || "Sucursal J.A.D.I";
+                document.getElementById('local-footer').innerText = session.empresaNombre || "Principal";
                 
                 if(session.foto) document.getElementById('user-photo').src = session.foto;
 
                 actualizarEstadisticas(session.uid);
             } else {
-                // Si no hay sesión o el rol no coincide, expulsar
+                // Si el rol en BD es diferente a zapatero o ADM, te bota
                 window.location.href = "/index.html";
             }
         };
