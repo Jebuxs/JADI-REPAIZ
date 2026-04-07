@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard J.A.D.I REPAIZ</title>
+    <title>Módulo Zapatero - J.A.D.I REPAIZ</title>
 
     <script src="/js/estilo_visual.js"></script>
     <script src="/js/controlador_jadi.js"></script>
@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
     <style>
+        /* Estilos estructurales específicos */
         .header {
             display: flex; justify-content: space-between; align-items: center; 
             padding: 10px 25px; border-bottom: 1px solid #D4AF37; background: #050505;
@@ -21,6 +22,7 @@
         .header-actions { display: flex; align-items: center; gap: 15px; }
         .profile-btn-img { width: 32px; height: 32px; border-radius: 50%; border: 1px solid #D4AF37; object-fit: cover; }
         
+        /* Dashboard Stats */
         .dashboard-stats {
             display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 25px;
         }
@@ -28,9 +30,14 @@
         .stat-card span { font-size: 1.4rem; font-weight: bold; display: block; }
         .stat-card p { font-size: 9px; color: #666; margin: 0; text-transform: uppercase; }
 
+        /* Selector de Estilo Visual */
         .selector-visual-box {
-            background: rgba(255,255,255,0.03); border: 1px dashed #444; 
-            padding: 15px; border-radius: 12px; margin-bottom: 25px; text-align: center;
+            background: rgba(255,255,255,0.03);
+            border: 1px dashed #444;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            text-align: center;
         }
         select#selector-tema {
             background: #111; color: #D4AF37; border: 1px solid #D4AF37;
@@ -57,7 +64,7 @@
                 <i class="fas fa-crown"></i>
             </a>
             <a href="perfil.html" style="text-decoration: none; display: flex; align-items: center; gap: 8px;">
-                <span id="header-user-name" style="color: white; font-size: 11px; font-weight: bold;">...</span>
+                <span id="header-user-name" style="color: white; font-size: 11px; font-weight: bold;">Cargando...</span>
                 <img id="user-photo" class="profile-btn-img" src="https://via.placeholder.com/32" alt="Perfil">
             </a>
         </div>
@@ -67,14 +74,14 @@
         
         <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 25px;">
             <div>
-                <h2 id="display-nombre" style="text-align: left; margin: 0; border-left: 5px solid #D4AF37; padding-left: 15px;">Bienvenido</h2>
-                <div id="display-local" style="color: #888; font-size: 12px; margin-left: 20px;">Cargando sucursal...</div>
+                <h2 id="display-nombre" style="text-align: left; margin: 0; border-left: 5px solid #D4AF37; padding-left: 15px;">Bienvenido Maestro</h2>
+                <div id="display-local" style="color: #888; font-size: 12px; margin-left: 20px;">...</div>
             </div>
             <div id="display-id" style="background: #1a1a1a; color: #D4AF37; padding: 4px 12px; border-radius: 20px; font-size: 10px; border: 1px solid #333;">ID: ...</div>
         </div>
 
         <div class="selector-visual-box">
-            <label style="display: block; font-size: 10px; color: #888; margin-bottom: 8px; text-transform: uppercase;">Estilo Visual del Sistema</label>
+            <label style="display: block; font-size: 10px; color: #888; margin-bottom: 8px; text-transform: uppercase;">Configuración Visual de Taller</label>
             <select id="selector-tema" onchange="cambiarApariencia(this.value)">
                 <option value="elegante">👑 Dorado J.A.D.I</option>
                 <option value="azul">⚡ Azul Eléctrico</option>
@@ -94,22 +101,18 @@
             <a href="local.html" class="card-jadi">
                 <i class="fas fa-store" style="font-size: 24px; color: #D4AF37;"></i>
                 <h3 style="font-size: 12px; margin-top: 10px;">Mi Local</h3>
-                <p style="font-size: 9px; color: #666;">Vitrina y Ubicación</p>
             </a>
             <a href="inventario.html" class="card-jadi">
                 <i class="fas fa-boxes-stacked" style="font-size: 24px; color: #D4AF37;"></i>
                 <h3 style="font-size: 12px; margin-top: 10px;">Inventarios</h3>
-                <p style="font-size: 9px; color: #666;">Suelas y Materiales</p>
             </a>
             <a href="clientes.html" class="card-jadi">
                 <i class="fas fa-address-book" style="font-size: 24px; color: #D4AF37;"></i>
                 <h3 style="font-size: 12px; margin-top: 10px;">Clientes</h3>
-                <p style="font-size: 9px; color: #666;">Base de Datos y QR</p>
             </a>
             <a href="trabajos.html" class="card-jadi">
                 <i class="fas fa-tools" style="font-size: 24px; color: #D4AF37;"></i>
                 <h3 style="font-size: 12px; margin-top: 10px;">Trabajos</h3>
-                <p style="font-size: 9px; color: #666;">Órdenes y Avances</p>
             </a>
         </div>
 
@@ -134,24 +137,23 @@
             document.getElementById('selector-tema').value = temaActual;
             if(typeof JadiEstilo !== 'undefined') JadiEstilo.aplicar(temaActual);
 
-            // 2. SEGURIDAD REVISADA (ROL ADM)
+            // 2. CARGAR SESIÓN Y SEGURIDAD (CORREGIDO)
             const session = JSON.parse(localStorage.getItem('session_jadi'));
             
-            // Validamos que el rol sea zapatero o ADM
-            if (session && (session.rolCodigo === 'zapatero' || session.rolCodigo === 'ADM')) {
+            // LA LÍNEA MÁGICA: Ahora permite entrar a zapateros y a ti (ADM)
+            if (session && (session.rolCodigo === 'zapatero' || session.rolCodigo === 'ADM' || session.rol === 'zapatero' || session.rol === 'ADM')) {
                 
-                const esAdmin = (session.rolCodigo === 'ADM');
-                document.getElementById('display-nombre').innerText = (esAdmin ? "Administrador " : "Maestro ") + (session.nombre || "J.A.D.I");
+                document.getElementById('display-nombre').innerText = (session.rolCodigo === 'ADM' ? "Administrador " : "Maestro ") + (session.nombre || "J.A.D.I");
                 document.getElementById('header-user-name').innerText = (session.nombre || "Usuario");
-                document.getElementById('display-id').innerText = "ID: " + (session.uid || "ROOT");
-                document.getElementById('display-local').innerText = session.empresaNombre || "Sucursal J.A.D.I";
-                document.getElementById('local-footer').innerText = session.empresaNombre || "Principal";
+                document.getElementById('display-id').innerText = "ID: " + (session.uid || "ZPT-PRO");
+                document.getElementById('display-local').innerText = session.empresaNombre || "Local Independiente";
+                document.getElementById('local-footer').innerText = session.empresaNombre || "Sucursal Principal";
                 
                 if(session.foto) document.getElementById('user-photo').src = session.foto;
 
                 actualizarEstadisticas(session.uid);
             } else {
-                // Si el rol en BD es diferente a zapatero o ADM, te bota
+                // Si no coincide el rol, al index
                 window.location.href = "/index.html";
             }
         };
@@ -164,7 +166,6 @@
         }
 
         function actualizarEstadisticas(uid) {
-            if(!uid) return;
             db.ref('trabajos').orderByChild('maestroId').equalTo(uid).on('value', snap => {
                 let n = 0, p = 0, l = 0;
                 snap.forEach(c => {
