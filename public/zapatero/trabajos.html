@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Trabajos - JADI REPAIZ</title>
+
+    <script src="../js/estilo_visual.js"></script>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <script src="../js/ia/alimentar_ia.js"></script>
+
+    <style>
+        .selector-mini {
+            display: flex; justify-content: center; gap: 8px; margin-bottom: 20px;
+        }
+        .dot-color {
+            width: 25px; height: 25px; border-radius: 50%; cursor: pointer; border: 2px solid #fff;
+        }
+        /* Estilos del Modal */
+        .modal {
+            display: none; position: fixed; z-index: 2000; left: 0; top: 0; 
+            width: 100%; height: 100%; background: rgba(0,0,0,0.9);
+        }
+        .modal-content {
+            margin: 10% auto; padding: 20px; width: 90%; max-width: 500px;
+            border: 1px solid #D4AF37; position: relative;
+        }
+        .close-modal {
+            position: absolute; right: 15px; top: 10px; font-size: 24px; cursor: pointer; color: #D4AF37;
+        }
+        .item-reparacion {
+            display: flex; justify-content: space-between; background: #222; 
+            padding: 10px; margin-top: 5px; border-radius: 5px; font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="selector-mini">
+        <div class="dot-color" style="background: #D4AF37;" onclick="cambiarEstilo('elegante')" title="Elegante"></div>
+        <div class="dot-color" style="background: #0074D9;" onclick="cambiarEstilo('azul')" title="Azul"></div>
+        <div class="dot-color" style="background: #FF6347;" onclick="cambiarEstilo('tomate')" title="Tomate"></div>
+        <div class="dot-color" style="background: #39FF14;" onclick="cambiarEstilo('verde')" title="Verde"></div>
+    </div>
+
+    <div class="card-jadi">
+        <h2><i class="fas fa-hammer"></i> Nuevo Trabajo</h2>
+        
+        <form id="form-trabajo">
+            <label>Tipo de Artículo</label>
+            <select id="categoria" required>
+                <option value="calzado">Calzado (Zapatos/Botas)</option>
+                <option value="marroquineria">Marroquinería (Bolsos/Carteras)</option>
+                <option value="prendas_cuero">Prendas de Vestir (Chompas)</option>
+            </select>
+
+            <label>Material</label>
+            <input type="text" id="material" placeholder="Ej: Cuero, Gamuza, Sintético" required>
+
+            <label>Imagen del Estado Actual (URL)</label>
+            <input type="text" id="url_foto" placeholder="Link de la foto para la IA">
+
+            <button type="button" onclick="abrirModal()" style="background: #444; margin-top: 15px;">
+                <i class="fas fa-list-ul"></i> AGREGAR DETALLES / LISTADO
+            </button>
+
+            <div id="lista-resumen" style="margin-top: 10px; font-size: 12px; color: #aaa;">
+                </div>
+
+            <button type="submit" id="btn-finalizar" style="margin-top: 30px;">
+                FINALIZAR Y ENVIAR A IA
+            </button>
+        </form>
+    </div>
+
+    <div id="modalDetalles" class="modal">
+        <div class="modal-content card-jadi">
+            <span class="close-modal" onclick="cerrarModal()">&times;</span>
+            <h3 style="color: #D4AF37; text-align: center;">Detalle de Reparación</h3>
+            
+            <div style="display: flex; gap: 5px;">
+                <input type="text" id="input-tarea" placeholder="Ej: Cambio de suela">
+                <button type="button" onclick="agregarItem()" style="width: 50px; margin: 0; margin-top: 5px;">+</button>
+            </div>
+
+            <div id="contenedor-items" style="margin-top: 15px; max-height: 200px; overflow-y: auto;">
+                </div>
+
+            <button type="button" onclick="cerrarModal()" style="background: #D4AF37; color: #000; margin-top: 20px;">
+                LISTO
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let itemsReparacion = [];
+
+        window.onload = () => {
+            const tema = localStorage.getItem('jadi_tema_preferido') || 'elegante';
+            JadiEstilo.aplicar(tema);
+        };
+
+        function cambiarEstilo(color) {
+            JadiEstilo.aplicar(color);
+            localStorage.setItem('jadi_tema_preferido', color);
+        }
+
+        // Funciones del Modal
+        function abrirModal() { document.getElementById('modalDetalles').style.display = 'block'; }
+        function cerrarModal() { document.getElementById('modalDetalles').style.display = 'none'; }
+
+        function agregarItem() {
+            const tarea = document.getElementById('input-tarea').value;
+            if (tarea) {
+                itemsReparacion.push(tarea);
+                actualizarLista();
+                document.getElementById('input-tarea').value = '';
+            }
+        }
+
+        function actualizarLista() {
+            const cont = document.getElementById('contenedor-items');
+            const resumen = document.getElementById('lista-resumen');
+            cont.innerHTML = '';
+            resumen.innerHTML = '<strong>Tareas:</strong> ' + itemsReparacion.join(', ');
+            
+            itemsReparacion.forEach((item, index) => {
+                cont.innerHTML += `
+                    <div class="item-reparacion">
+                        ${item} <i class="fas fa-trash" onclick="eliminarItem(${index})" style="color: #ff4d4d; cursor: pointer;"></i>
+                    </div>`;
+            });
+        }
+
+        function eliminarItem(index) {
+            itemsReparacion.splice(index, 1);
+            actualizarLista();
+        }
+
+        // 3. EDUCAR A LA IA AL ENVIAR
+        document.getElementById('form-trabajo').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const datosParaIA = {
+                categoria: document.getElementById('categoria').value,
+                material: document.getElementById('material').value,
+                url_foto: document.getElementById('url_foto').value,
+                descripcion: itemsReparacion.join(' | '),
+                tipo_trabajo: "Reparación Técnica"
+            };
+
+            const btn = document.getElementById('btn-finalizar');
+            btn.innerText = "EDUCANDO IA...";
+            btn.disabled = true;
+
+            // Llamada al cerebro de la IA que creamos antes
+            const res = await JadiIA_Alimentador.alimentarConocimiento(datosParaIA);
+
+            if(res.success) {
+                alert("Trabajo guardado. ¡La IA de JADI ha aprendido algo nuevo! ✅");
+                location.reload();
+            } else {
+                alert("Error: " + res.error);
+                btn.disabled = false;
+                btn.innerText = "FINALIZAR Y ENVIAR A IA";
+            }
+        });
+    </script>
+</body>
+</html>
