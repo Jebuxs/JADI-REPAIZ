@@ -2,198 +2,26 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editar Orden - JADI REPAIZ</title>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        :root { --gold: #FFD700; --dark: #000; --card: #111; --edit: #0088ff; --danger: #ff4444; }
-        body { background: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; }
-        .header { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; }
-        .btn-back { color: var(--gold); text-decoration: none; font-size: 20px; }
-        
-        .section-title { color: var(--gold); font-size: 12px; text-transform: uppercase; margin-bottom: 10px; display: block; }
-        input, textarea { width: 100%; padding: 12px; margin-bottom: 15px; background: #111; border: 1px solid #333; color: white; border-radius: 8px; box-sizing: border-box; outline: none; }
-        
-        .caja-items { background: var(--card); border-radius: 12px; padding: 15px; border: 1px solid #222; margin-bottom: 20px; }
-        .item-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #222; }
-        
-        .caja-pago { background: #0a0a0a; padding: 15px; border-radius: 12px; border: 1px dashed var(--gold); }
-        .flex-pago { display: flex; gap: 10px; }
-        
-        .btn-update { width: 100%; background: var(--edit); color: white; border: none; padding: 18px; border-radius: 12px; font-weight: bold; font-size: 16px; margin-top: 20px; cursor: pointer; }
-        .info-migracion { background: rgba(0, 136, 255, 0.1); border: 1px solid var(--edit); padding: 10px; border-radius: 8px; font-size: 12px; color: #add8e6; margin-bottom: 15px; display: none; }
-    </style>
+    <title>JADI - Editar Orden</title>
+    <script src="../js/estilo_visual.js"></script>
+    <script src="../js/modal_trabajos.js"></script>
 </head>
 <body>
 
-    <div class="header">
-        <a href="trabajos.html" class="btn-back"><i class="fas fa-arrow-left"></i></a>
-        <h2 style="margin:0;">Editar Orden</h2>
-    </div>
+    <div class="card-jadi">
+        <h2><i class="fas fa-edit"></i> Modificar Trabajo</h2>
+        <p>Utiliza este módulo para corregir o actualizar datos.</p>
+        
+        <button id="btn-accion-modal">EDITAR ORDEN EXISTENTE</button>
 
-    <div id="loader" style="text-align:center; padding: 50px; color: var(--gold);">
-        <i class="fas fa-spinner fa-spin fa-2x"></i><br>Cargando datos...
-    </div>
-
-    <div id="content" style="display:none;">
-        <div id="msg-migracion" class="info-migracion">
-            <i class="fas fa-user-plus"></i> Se detectó un nuevo número. Se creará un perfil oficial para este cliente.
-        </div>
-
-        <span class="section-title">Datos del Cliente</span>
-        <input type="text" id="edit-nombre" placeholder="Nombre del cliente">
-        <input type="tel" id="edit-telefono" placeholder="Celular (ej: 0987654321)" oninput="detectarCambioTel()">
-
-        <span class="section-title">Resumen de Trabajo</span>
-        <div class="caja-items" id="lista-items-edit"></div>
-
-        <span class="section-title">Control de Pagos</span>
-        <div class="caja-pago">
-            <label style="font-size: 11px; color: #888;">Total del Servicio $</label>
-            <input type="number" id="edit-total" oninput="recalcular()">
-            
-            <div class="flex-pago">
-                <div style="flex:1;">
-                    <label style="font-size: 11px; color: #888;">Abono $</label>
-                    <input type="number" id="edit-abono" oninput="recalculate()">
-                </div>
-                <div style="flex:1;">
-                    <label style="font-size: 11px; color: #888;">Saldo Restante $</label>
-                    <input type="number" id="edit-saldo" readonly style="background: #000; color: var(--gold); font-weight: bold;">
-                </div>
-            </div>
-        </div>
-
-        <button class="btn-update" onclick="procesarActualizacion()">
-            <i class="fas fa-save"></i> ACTUALIZAR ORDEN
-        </button>
+        <br><br>
+        <a href="dashboard.html" style="color: gray; font-size: 12px; text-decoration: none;">
+            <i class="fas fa-arrow-left"></i> Volver al Panel
+        </a>
     </div>
 
     <script>
-        const firebaseConfig = { databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com" };
-        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-
-        // Obtener ID de la URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const orderIdOriginal = urlParams.get('id');
-        
-        let datosOriginales = null;
-        let esMigracion = false;
-
-        async function cargarOrden() {
-            if(!orderIdOriginal) return alert("ID no encontrado");
-            
-            const snap = await db.ref('trabajos/' + orderIdOriginal).once('value');
-            if(!snap.exists()) return alert("La orden no existe");
-            
-            datosOriginales = snap.val();
-            
-            // Llenar campos
-            document.getElementById('edit-nombre').value = datosOriginales.cliente;
-            document.getElementById('edit-telefono').value = (datosOriginales.telefono === "S/N") ? "" : datosOriginales.telefono;
-            document.getElementById('edit-total').value = datosOriginales.precioTotal;
-            document.getElementById('edit-abono').value = datosOriginales.abono;
-            document.getElementById('edit-saldo').value = datosOriginales.saldo;
-
-            // Listar items
-            const container = document.getElementById('lista-items-edit');
-            datosOriginales.items.forEach(it => {
-                container.innerHTML += `
-                    <div class="item-row">
-                        <span>${it.tipo}</span>
-                        <b>$${it.precio}</b>
-                    </div>`;
-            });
-
-            document.getElementById('loader').style.display = 'none';
-            document.getElementById('content').style.display = 'block';
-        }
-
-        function recalcular() {
-            const total = parseFloat(document.getElementById('edit-total').value) || 0;
-            const abono = parseFloat(document.getElementById('edit-abono').value) || 0;
-            document.getElementById('edit-saldo').value = (total - abono).toFixed(2);
-        }
-
-        function detectarCambioTel() {
-            const telActual = document.getElementById('edit-telefono').value.trim();
-            // Si antes no tenía tel (S/N) y ahora tiene algo de 10 dígitos
-            if(datosOriginales.telefono === "S/N" && telActual.length >= 9) {
-                esMigracion = true;
-                document.getElementById('msg-migracion').style.display = 'block';
-            } else {
-                esMigracion = false;
-                document.getElementById('msg-migracion').style.display = 'none';
-            }
-        }
-
-        async function procesarActualizacion() {
-            const nuevoNombre = document.getElementById('edit-nombre').value.trim();
-            const nuevoTel = document.getElementById('edit-telefono').value.trim();
-            const nuevoTotal = parseFloat(document.getElementById('edit-total').value);
-            const nuevoAbono = parseFloat(document.getElementById('edit-abono').value);
-            const nuevoSaldo = nuevoTotal - nuevoAbono;
-
-            let finalClientID = datosOriginales.clienteId;
-            let finalOrderID = orderIdOriginal;
-            let viejaOrdenBorrar = null;
-
-            // --- LÓGICA DE MIGRACIÓN JADI REPAIZ ---
-            if(esMigracion) {
-                // 1. Generar nuevo ID CLN oficial
-                const snapC = await db.ref('contadores/CLN').once('value');
-                let numC = (snapC.val() || 0) + 1;
-                finalClientID = 'CLN' + numC;
-                await db.ref('contadores/CLN').set(numC);
-
-                // 2. Crear usuario con "invitacionPendiente"
-                await db.ref('usuarios/' + finalClientID).set({
-                    uid: finalClientID,
-                    nombre: nuevoNombre,
-                    telefono: nuevoTel,
-                    tipo: 'CLIENTE',
-                    registroCompleto: false,
-                    invitacionPendiente: true, // Campo para el Admin
-                    fechaCreacion: Date.now()
-                });
-
-                // 3. Preparar cambio de ID de Carpeta (ZPT_CLN_N)
-                viejaOrdenBorrar = orderIdOriginal;
-                const partes = orderIdOriginal.split('_');
-                finalOrderID = `${partes[0]}_${finalClientID}_${partes[2]}`;
-            }
-
-            const dataActualizada = {
-                ...datosOriginales,
-                cliente: nuevoNombre,
-                telefono: nuevoTel || "S/N",
-                clienteId: finalClientID,
-                ordenID: finalOrderID,
-                precioTotal: nuevoTotal,
-                abono: nuevoAbono,
-                saldo: nuevoSaldo,
-                ultimaEdicion: Date.now()
-            };
-
-            try {
-                // Si cambió el ID por migración, borramos el viejo y creamos el nuevo
-                if(viejaOrdenBorrar) {
-                    await db.ref('trabajos/' + viejaOrdenBorrar).remove();
-                }
-                
-                await db.ref('trabajos/' + finalOrderID).update(dataActualizada);
-                
-                alert("Orden actualizada con éxito.");
-                window.location.href = 'trabajos.html';
-            } catch (e) {
-                alert("Error al actualizar");
-            }
-        }
-
-        window.onload = cargarOrden;
+        window.onload = () => { JadiEstilo.aplicar('elegante'); };
     </script>
 </body>
 </html>
