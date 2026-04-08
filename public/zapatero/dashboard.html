@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Módulo Zapatero - J.A.D.I REPAIZ</title>
+    <title>Dashboard J.A.D.I REPAIZ</title>
 
     <script src="/js/estilo_visual.js"></script>
     <script src="/js/controlador_jadi.js"></script>
@@ -13,117 +13,59 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
     <style>
-        /* Estilos estructurales específicos */
-        .header {
-            display: flex; justify-content: space-between; align-items: center; 
-            padding: 10px 25px; border-bottom: 1px solid #D4AF37; background: #050505;
-            position: sticky; top: 0; z-index: 1000;
-        }
-        .header-actions { display: flex; align-items: center; gap: 15px; }
-        .profile-btn-img { width: 32px; height: 32px; border-radius: 50%; border: 1px solid #D4AF37; object-fit: cover; }
+        :root { --gold: #fbc02d; }
+        body { margin: 0; background: #000; color: white; font-family: 'Segoe UI', sans-serif; }
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 15px 25px; border-bottom: 1px solid var(--gold); background: #050505; }
+        .profile-btn-img { width: 35px; height: 35px; border-radius: 50%; border: 1px solid var(--gold); object-fit: cover; }
         
-        /* Dashboard Stats */
-        .dashboard-stats {
-            display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 25px;
-        }
-        .stat-card { background: #111; border: 1px solid #222; padding: 12px 5px; border-radius: 12px; text-align: center; }
-        .stat-card span { font-size: 1.4rem; font-weight: bold; display: block; }
-        .stat-card p { font-size: 9px; color: #666; margin: 0; text-transform: uppercase; }
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 20px; }
+        .stat-box { background: #111; padding: 15px; border-radius: 12px; text-align: center; border: 1px solid #222; }
+        .stat-box span { font-size: 1.5rem; font-weight: bold; display: block; color: var(--gold); }
+        .stat-box p { font-size: 10px; color: #888; margin: 5px 0 0; text-transform: uppercase; }
 
-        /* Selector de Estilo Visual */
-        .selector-visual-box {
-            background: rgba(255,255,255,0.03);
-            border: 1px dashed #444;
-            padding: 15px;
-            border-radius: 12px;
-            margin-bottom: 25px;
-            text-align: center;
-        }
-        select#selector-tema {
-            background: #111; color: #D4AF37; border: 1px solid #D4AF37;
-            padding: 8px; border-radius: 8px; font-size: 12px; width: 100%; max-width: 300px;
-        }
-
-        .grid-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
-        .card-jadi { text-decoration: none; color: white; transition: 0.3s; } 
+        .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; padding: 20px; }
+        .menu-card { background: #111; padding: 25px; border-radius: 15px; text-align: center; text-decoration: none; color: white; border: 1px solid #222; transition: 0.3s; }
+        .menu-card i { font-size: 24px; color: var(--gold); margin-bottom: 10px; display: block; }
         
-        .color-new { color: #ff4d4d; }
-        .color-proc { color: #4dadff; }
-        .color-ready { color: #4dff88; }
+        .welcome-section { padding: 20px 25px; }
+        .badge-role { background: var(--gold); color: black; padding: 2px 10px; border-radius: 10px; font-size: 10px; font-weight: bold; margin-left: 10px; }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <div style="line-height: 1;">
-            <h1 style="color: #D4AF37; margin: 0; font-size: 22px; letter-spacing: 3px;">J.A.D.I</h1>
-            <span style="color: #FFF; font-size: 9px; letter-spacing: 4px; text-transform: uppercase;">REPAIZ</span>
+        <div>
+            <span style="color: var(--gold); font-weight: 900; font-size: 1.2rem;">J.A.D.I</span>
+            <span style="font-size: 0.7rem; letter-spacing: 2px; display: block;">REPAIZ</span>
         </div>
-        <div class="header-actions">
-            <a href="/admin/dashboard.html" style="color: #666; text-decoration: none;" title="Admin Master">
-                <i class="fas fa-crown"></i>
-            </a>
-            <a href="perfil.html" style="text-decoration: none; display: flex; align-items: center; gap: 8px;">
-                <span id="header-user-name" style="color: white; font-size: 11px; font-weight: bold;">Cargando...</span>
-                <img id="user-photo" class="profile-btn-img" src="https://via.placeholder.com/32" alt="Perfil">
-            </a>
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <span id="user-name-top" style="font-size: 12px;">...</span>
+            <img id="user-photo" class="profile-btn-img" src="https://via.placeholder.com/35" alt="P">
         </div>
     </div>
 
-    <div style="padding: 20px; max-width: 900px; margin: auto;">
-        
-        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 25px;">
-            <div>
-                <h2 id="display-nombre" style="text-align: left; margin: 0; border-left: 5px solid #D4AF37; padding-left: 15px;">Bienvenido Maestro</h2>
-                <div id="display-local" style="color: #888; font-size: 12px; margin-left: 20px;">...</div>
-            </div>
-            <div id="display-id" style="background: #1a1a1a; color: #D4AF37; padding: 4px 12px; border-radius: 20px; font-size: 10px; border: 1px solid #333;">ID: ...</div>
-        </div>
+    <div class="welcome-section">
+        <h2 style="margin: 0; font-size: 1.5rem;">Hola, <span id="display-nombre">Maestro</span><span id="role-badge" class="badge-role">ZPT</span></h2>
+        <p id="display-local" style="color: #666; margin: 5px 0;">Cargando local...</p>
+    </div>
 
-        <div class="selector-visual-box">
-            <label style="display: block; font-size: 10px; color: #888; margin-bottom: 8px; text-transform: uppercase;">Configuración Visual de Taller</label>
-            <select id="selector-tema" onchange="cambiarApariencia(this.value)">
-                <option value="elegante">👑 Dorado J.A.D.I</option>
-                <option value="azul">⚡ Azul Eléctrico</option>
-                <option value="tomate">🍅 Tomate</option>
-                <option value="verde">🔋 Verde Fosfo</option>
-                <option value="estandar">⚪ Estándar</option>
-            </select>
-        </div>
+    <div class="stats-grid">
+        <div class="stat-box"><span id="count-nuevos">0</span><p>Nuevos</p></div>
+        <div class="stat-box"><span id="count-proceso">0</span><p>Proceso</p></div>
+        <div class="stat-box"><span id="count-listos">0</span><p>Listos</p></div>
+    </div>
 
-        <div class="dashboard-stats">
-            <div class="stat-card"><i class="fas fa-bell color-new"></i><span id="count-nuevos">0</span><p>Nuevos</p></div>
-            <div class="stat-card"><i class="fas fa-hammer color-proc"></i><span id="count-proceso">0</span><p>En Proceso</p></div>
-            <div class="stat-card"><i class="fas fa-check-circle color-ready"></i><span id="count-listos">0</span><p>Terminados</p></div>
-        </div>
+    <div class="menu-grid">
+        <a href="trabajos.html" class="menu-card"><i class="fas fa-hammer"></i>Trabajos</a>
+        <a href="clientes.html" class="menu-card"><i class="fas fa-users"></i>Clientes</a>
+        <a href="inventario.html" class="menu-card"><i class="fas fa-box"></i>Stock</a>
+        <a href="perfil.html" class="menu-card"><i class="fas fa-user-cog"></i>Perfil</a>
+    </div>
 
-        <div class="grid-container">
-            <a href="local.html" class="card-jadi">
-                <i class="fas fa-store" style="font-size: 24px; color: #D4AF37;"></i>
-                <h3 style="font-size: 12px; margin-top: 10px;">Mi Local</h3>
-            </a>
-            <a href="inventario.html" class="card-jadi">
-                <i class="fas fa-boxes-stacked" style="font-size: 24px; color: #D4AF37;"></i>
-                <h3 style="font-size: 12px; margin-top: 10px;">Inventarios</h3>
-            </a>
-            <a href="clientes.html" class="card-jadi">
-                <i class="fas fa-address-book" style="font-size: 24px; color: #D4AF37;"></i>
-                <h3 style="font-size: 12px; margin-top: 10px;">Clientes</h3>
-            </a>
-            <a href="trabajos.html" class="card-jadi">
-                <i class="fas fa-tools" style="font-size: 24px; color: #D4AF37;"></i>
-                <h3 style="font-size: 12px; margin-top: 10px;">Trabajos</h3>
-            </a>
-        </div>
-
-        <div style="background: #050505; color: #D4AF37; border: 1px solid #332b00; padding: 15px; border-radius: 12px; text-align: center; margin-top: 30px; font-size: 12px;">
-            <i class="fas fa-shield-halved"></i> <strong>SISTEMA J.A.D.I ACTIVO</strong>
-            <div style="font-size: 9px; color: #666; margin-top: 4px;">Monitor real de <span id="local-footer">...</span></div>
-        </div>
-
-        <a href="#" id="logout-trigger" style="display: block; text-align: center; color: #444; text-decoration: none; margin-top: 30px; font-size: 12px;">
-            <i class="fas fa-power-off"></i> CERRAR SESIÓN
-        </a>
+    <div style="text-align: center; margin-top: 20px;">
+        <button onclick="cerrarSesion()" style="background: none; border: none; color: #444; font-size: 12px; cursor: pointer;">
+            <i class="fas fa-power-off"></i> CERRAR SESIÓN MAESTRA
+        </button>
     </div>
 
     <script>
@@ -132,45 +74,40 @@
         const db = firebase.database();
 
         window.onload = function() {
-            // 1. APLICAR ESTILO
-            const temaActual = localStorage.getItem('jadi_tema_preferido') || 'elegante';
-            document.getElementById('selector-tema').value = temaActual;
-            if(typeof JadiEstilo !== 'undefined') JadiEstilo.aplicar(temaActual);
-
-            // 2. CARGAR SESIÓN Y SEGURIDAD (CORREGIDO)
+            // 1. Cargar Sesión del LocalStorage
             const session = JSON.parse(localStorage.getItem('session_jadi'));
-            
-            // LA LÍNEA MÁGICA: Ahora permite entrar a zapateros y a ti (ADM)
-            if (session && (session.rolCodigo === 'zapatero' || session.rolCodigo === 'ADM' || session.rol === 'zapatero' || session.rol === 'ADM')) {
+
+            // 2. SEGURIDAD: Validamos contra los códigos reales de tu Login (ZPT y ADM)
+            if (session && (session.rolCodigo === 'ZPT' || session.rolCodigo === 'ADM')) {
                 
-                document.getElementById('display-nombre').innerText = (session.rolCodigo === 'ADM' ? "Administrador " : "Maestro ") + (session.nombre || "J.A.D.I");
-                document.getElementById('header-user-name').innerText = (session.nombre || "Usuario");
-                document.getElementById('display-id').innerText = "ID: " + (session.uid || "ZPT-PRO");
-                document.getElementById('display-local').innerText = session.empresaNombre || "Local Independiente";
-                document.getElementById('local-footer').innerText = session.empresaNombre || "Sucursal Principal";
-                
+                // Llenar datos en pantalla
+                document.getElementById('display-nombre').innerText = session.nombre || "Usuario";
+                document.getElementById('user-name-top').innerText = (session.nombre || "Usuario").split(' ')[0];
+                document.getElementById('display-local').innerText = session.empresaNombre || "J.A.D.I REPAIZ";
+                document.getElementById('role-badge').innerText = session.rolCodigo;
+
                 if(session.foto) document.getElementById('user-photo').src = session.foto;
 
-                actualizarEstadisticas(session.uid);
+                // Aplicar tema visual si existe la librería
+                if(typeof JadiEstilo !== 'undefined') {
+                    const tema = localStorage.getItem('jadi_tema_preferido') || 'elegante';
+                    JadiEstilo.aplicar(tema);
+                }
+
+                cargarEstadisticas(session.uid);
             } else {
-                // Si no coincide el rol, al index
-                window.location.href = "/index.html";
+                // Si no tiene el rol correcto, fuera
+                console.log("Acceso denegado. Rol:", session ? session.rolCodigo : "Ninguno");
+                window.location.href = "../index.html";
             }
         };
 
-        function cambiarApariencia(color) {
-            if(typeof JadiEstilo !== 'undefined') {
-                JadiEstilo.aplicar(color);
-                localStorage.setItem('jadi_tema_preferido', color);
-            }
-        }
-
-        function actualizarEstadisticas(uid) {
+        function cargarEstadisticas(uid) {
             db.ref('trabajos').orderByChild('maestroId').equalTo(uid).on('value', snap => {
                 let n = 0, p = 0, l = 0;
                 snap.forEach(c => {
                     const est = c.val().estado;
-                    if(est === 'Recibido' || est === 'Nuevo') n++;
+                    if(est === 'Nuevo') n++;
                     else if(est === 'En Proceso') p++;
                     else if(est === 'Listo') l++;
                 });
@@ -180,13 +117,12 @@
             });
         }
 
-        document.getElementById('logout-trigger').onclick = function(e) {
-            e.preventDefault();
-            if(confirm("¿Cerrar sesión?")) {
+        function cerrarSesion() {
+            if(confirm("¿Cerrar el sistema Maestro?")) {
                 localStorage.removeItem('session_jadi');
-                window.location.href = "/index.html";
+                window.location.href = "../index.html";
             }
-        };
+        }
     </script>
 </body>
 </html>
