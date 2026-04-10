@@ -3,130 +3,215 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trabajos | J.A.D.I REPAIZ</title>
-
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>Gestión de Trabajos - JADI REPAIZ</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="/js/estilo_visual.js"></script>
-
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
     <style>
-        :root {
-            --gold: #D4AF37;
-            --bg-dark: #000000;
-            --bg-card: #0d0d0d;
-            --border-color: #1a1a1a;
-            --text-main: #ffffff;
-            --text-muted: #888;
-        }
+        :root { --gold: #D4AF37; --dark: #000; --card: #0a0a0a; --border: #1a1a1a; }
+        body { background: var(--dark); color: white; font-family: 'Inter', sans-serif; margin: 0; padding-bottom: 90px; }
+        
+        /* Header & Search */
+        .header { padding: 15px; border-bottom: 1px solid var(--gold); display: flex; align-items: center; background: #000; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+        .search-container { padding: 15px; background: #000; }
+        .search-bar { background: #111; border: 1px solid #333; padding: 12px; border-radius: 10px; display: flex; align-items: center; }
+        .search-bar input { background: transparent; border: none; color: white; margin-left: 10px; width: 100%; outline: none; font-size: 14px; }
+        
+        /* Cards de Trabajo */
+        .orders-container { padding: 0 15px; max-height: 60vh; overflow-y: auto; }
+        .order-card { background: var(--card); border-radius: 12px; padding: 18px; margin-bottom: 15px; border: 1px solid var(--border); position: relative; }
+        .client-name { font-size: 16px; font-weight: 700; margin: 0; color: #fff; }
+        .order-id { font-size: 10px; color: #666; text-transform: uppercase; }
+        
+        .card-actions { display: flex; gap: 20px; margin-top: 15px; border-top: 1px solid #1a1a1a; padding-top: 12px; justify-content: flex-end; }
+        .btn-icon { font-size: 18px; cursor: pointer; transition: 0.2s; }
+        .icon-bill { color: var(--gold); }
+        .icon-chat { color: #888; }
+        .icon-edit { color: #3498db; }
 
-        body {
-            margin: 0; background-color: var(--bg-dark); color: var(--text-main);
-            font-family: 'Inter', sans-serif; min-height: 100vh;
-        }
+        /* Estados (h, i, j) */
+        .status-container { display: flex; gap: 5px; margin-top: 12px; }
+        .status-btn { flex: 1; padding: 7px; font-size: 9px; border-radius: 6px; border: 1px solid #222; background: #111; color: #555; font-weight: 800; text-align: center; cursor: pointer; text-transform: uppercase; }
+        .status-btn.active { border-color: var(--gold); color: var(--gold); background: rgba(212, 175, 55, 0.1); }
 
-        .header {
-            display: flex; justify-content: space-between; align-items: center; 
-            padding: 15px 20px; background: #000; border-bottom: 1px solid var(--gold);
-        }
+        /* Modal Nueva Orden */
+        #modal-orden { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark); z-index: 300; padding: 20px; overflow-y: auto; }
+        input, textarea { width: 100%; padding: 12px; margin-bottom: 12px; background: #111; border: 1px solid #333; color: white; border-radius: 8px; outline: none; }
+        label { font-size: 11px; color: var(--gold); margin-bottom: 5px; display: block; font-weight: 700; }
 
-        .search-area { padding: 15px; background: #000; }
-        .search-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 8px; }
-        .search-grid input {
-            background: #111; border: 1px solid #333; padding: 10px;
-            border-radius: 8px; color: white; font-size: 13px;
-        }
-
-        .section-header { padding: 15px 20px 5px; font-size: 11px; color: #fff; text-transform: uppercase; letter-spacing: 2px; }
-
-        /* Contenedor con Scroll */
-        #contenedorTrabajos {
-            max-height: 50vh; overflow-y: auto; padding: 10px 0;
-        }
-
-        .card-trabajo {
-            background: var(--bg-card); margin: 0 15px 12px; padding: 15px;
-            border-radius: 12px; border: 1px solid var(--border-color);
-            position: relative;
-        }
-
-        .card-top { display: flex; justify-content: space-between; align-items: flex-start; }
-        .card-actions { display: flex; gap: 15px; }
-        .card-actions i { font-size: 17px; cursor: pointer; }
-        .fa-file-invoice { color: #f1c40f; }
-        .fa-comment-dots { color: #3498db; }
-        .fa-edit { color: #fff; }
-
-        .client-name { font-size: 15px; font-weight: 700; }
-        .client-id { font-size: 10px; color: var(--text-muted); }
-
-        .money-line { margin: 10px 0; font-size: 13px; }
-        .money-line b { color: var(--gold); }
-
-        .status-selector { display: flex; gap: 5px; margin-top: 10px; }
-        .status-pill {
-            flex: 1; font-size: 8px; padding: 6px; border-radius: 5px;
-            border: 1px solid #222; text-align: center; color: #555; font-weight: 700;
-        }
-        .status-pill.active { border-color: var(--gold); color: var(--gold); background: rgba(212,175,55,0.1); }
-
-        .card-solicitud {
-            background: #0a0a0a; border-left: 3px solid var(--gold);
-            margin: 0 15px 8px; padding: 12px; border-radius: 8px;
-            display: flex; justify-content: space-between; align-items: center;
-        }
-
-        .btn-add {
-            position: fixed; bottom: 25px; right: 25px;
-            background: var(--gold); width: 55px; height: 55px;
-            border-radius: 50%; display: flex; justify-content: center; align-items: center;
-            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
-        }
+        .fab { position: fixed; bottom: 25px; right: 25px; width: 60px; height: 60px; background: var(--gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: black; font-size: 24px; border: none; box-shadow: 0 4px 20px rgba(212, 175, 55, 0.4); }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <i class="fas fa-arrow-left" onclick="window.location.href='dashboard.html'"></i>
-        <div style="font-weight: 700; font-size: 14px;">TRABAJOS LOCAL</div>
-        <i class="fas fa-sync-alt" onclick="window.location.reload()"></i>
+        <a href="dashboard.html" class="btn-back" style="color: var(--gold);"><i class="fas fa-arrow-left"></i></a>
+        <h2 style="margin:0; font-size: 1.1rem; letter-spacing: 1px;">TRABAJOS LOCAL</h2>
+        <i class="fas fa-sync-alt" onclick="location.reload()" style="color: var(--gold); cursor: pointer;"></i>
     </div>
 
-    <div class="search-area">
-        <div class="search-grid">
-            <input type="text" id="busqueda" placeholder="Nombre o ID...">
-            <input type="date" id="fechaFiltro">
+    <div class="search-container">
+        <div class="search-bar">
+            <i class="fas fa-search" style="color: #444;"></i>
+            <input type="text" id="inputBusqueda" onkeyup="filtrarTrabajos()" placeholder="Buscar por Nombre, ID o Celular...">
         </div>
     </div>
 
-    <div class="section-header">Órdenes en Taller</div>
-    <div id="contenedorTrabajos">
-        <p style="text-align: center; color: #444;">Buscando en base de datos...</p>
+    <div class="orders-container" id="lista-trabajos">
+        <p style="text-align: center; color: #444; margin-top: 20px;">Cargando pedidos...</p>
     </div>
 
-    <div class="section-header">Solicitudes de Clientes</div>
-    <div id="contenedorSolicitudes"></div>
+    <button class="fab" onclick="abrirModal()"><i class="fas fa-plus"></i></button>
 
-    <a href="nueva_orden.html" class="btn-add">
-        <i class="fas fa-plus" style="color: #000; font-size: 20px;"></i>
-    </a>
+    <div id="modal-orden">
+        <h2 style="color: var(--gold); margin-top: 0; border-bottom: 1px solid #222; padding-bottom: 10px;">Nueva Orden</h2>
+        <label>CLIENTE</label>
+        <input type="text" id="cli-nombre" placeholder="Nombre completo">
+        
+        <label>DETALLE DE REPARACIÓN</label>
+        <textarea id="item-detalles-final" rows="3" placeholder="Ej: Cambio de suelas, costura..."></textarea>
+        
+        <div style="display: flex; gap: 10px;">
+            <div style="flex: 1;">
+                <label>TOTAL $</label>
+                <input type="number" id="precio-total" value="0" oninput="calcularSaldo()">
+            </div>
+            <div style="flex: 1;">
+                <label>ABONO $</label>
+                <input type="number" id="abono-inicial" value="0" oninput="calcularSaldo()">
+            </div>
+        </div>
+
+        <div style="background: #0a0a0a; padding: 15px; border-radius: 10px; margin: 10px 0;">
+            <span style="font-size: 13px;">SALDO PENDIENTE:</span>
+            <span id="txt-saldo-pendiente" style="float: right; color: var(--gold); font-weight: 900;">$0.00</span>
+        </div>
+
+        <label>TELÉFONO</label>
+        <input type="tel" id="cli-celular" placeholder="0987654321">
+
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button onclick="cerrarModal()" style="flex:1; background:transparent; border:1px solid #444; color:white; padding:15px; border-radius:10px;">CANCELAR</button>
+            <button onclick="guardarOrdenFinal()" style="flex:1; background:var(--gold); border:none; color:black; padding:15px; border-radius:10px; font-weight:bold;">GUARDAR</button>
+        </div>
+    </div>
 
     <script>
-        // CONFIGURACIÓN (Ajusta si tu URL de DB es distinta)
         const firebaseConfig = { databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com" };
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
+        
+        const session = JSON.parse(localStorage.getItem('session_jadi')) || { uid: "ZPT1" };
+        const myZapID = "ZPT" + parseInt(session.uid.replace(/\D/g, ""));
 
-        window.onload = function() {
-            // Aplicar estilo sin que rompa el código
-            try {
-                const tema = localStorage.getItem('jadi_tema_preferido') || 'elegante';
-                if(typeof JadiEstilo !== 'undefined') JadiEstilo.aplicar(tema);
-            } catch(e) { console.log("Error de estilo:", e); }
+        // 1. APLICAR ESTILO VISUAL
+        window.onload = () => {
+            const tema = localStorage.getItem('jadi_tema_preferido') || 'elegante';
+            if(typeof JadiEstilo !== 'undefined') JadiEstilo.aplicar(tema);
+            escucharTrabajos();
+        };
 
-            const session = JSON.parse(localStorage.getItem('session_jadi'));
-            if(!session) { window.location.href = "/index.html"; return; }
+        // 8. LÓGICA EN TIEMPO REAL
+        function escucharTrabajos() {
+            db.ref('trabajos').on('value', snap => {
+                const container = document.getElementById('lista-trabajos');
+                container.innerHTML = "";
+                
+                if(!snap.exists()) {
+                    container.innerHTML = "<p style='text-align:center; color:#444;'>No hay trabajos registrados.</p>";
+                    return;
+                }
 
-            cargar
+                snap.forEach(child => {
+                    const o = child.val();
+                    const id = child.key;
+                    const esListo = o.estado === 'Listo' || o.estado === 'Finalizado';
+
+                    container.innerHTML += `
+                        <div class="order-card">
+                            <div style="display:flex; justify-content:space-between">
+                                <div>
+                                    <p class="client-name">${o.cliente}</p>
+                                    <span class="order-id">${id}</span>
+                                </div>
+                                <div style="text-align:right">
+                                    <span style="font-size:12px; color:var(--gold); font-weight:800">$${o.precioTotal}</span><br>
+                                    <span style="font-size:10px; color:#666">Saldo: $${o.saldo}</span>
+                                </div>
+                            </div>
+
+                            <div class="status-container">
+                                <div class="status-btn ${o.estado === 'Recibido' ? 'active' : ''}" onclick="cambiarEstado('${id}','Recibido')">Recibido</div>
+                                <div class="status-btn ${o.estado === 'En Proceso' ? 'active' : ''}" onclick="cambiarEstado('${id}','En Proceso')">Proceso</div>
+                                <div class="status-btn ${esListo ? 'active' : ''}" onclick="cambiarEstado('${id}','Listo')">Listo</div>
+                            </div>
+
+                            <div class="card-actions">
+                                <i class="fas fa-file-invoice btn-icon icon-bill" onclick="location.href='factura.html?id=${id}'"></i>
+                                <i class="fas fa-comment-dots btn-icon icon-chat" onclick="location.href='chat.html?id=${o.clienteId}'"></i>
+                                <i class="fas fa-edit btn-icon icon-edit" onclick="location.href='editar_orden.html?id=${id}'"></i>
+                            </div>
+                        </div>`;
+                });
+            });
+        }
+
+        function cambiarEstado(id, nuevoEstado) {
+            db.ref('trabajos/' + id).update({ estado: nuevoEstado });
+        }
+
+        function calcularSaldo() {
+            const t = parseFloat(document.getElementById('precio-total').value) || 0;
+            const a = parseFloat(document.getElementById('abono-inicial').value) || 0;
+            document.getElementById('txt-saldo-pendiente').innerText = "$" + (t - a).toFixed(2);
+        }
+
+        async function guardarOrdenFinal() {
+            const nom = document.getElementById('cli-nombre').value.trim();
+            const det = document.getElementById('item-detalles-final').value.trim();
+            const total = parseFloat(document.getElementById('precio-total').value) || 0;
+            const abono = parseFloat(document.getElementById('abono-inicial').value) || 0;
+
+            if(!nom || !det) return alert("Por favor, llena los campos básicos.");
+
+            // Lógica de ID de Carpeta: ZPT1_CLN7_N2
+            const snapCount = await db.ref(`stats/z/${myZapID}`).once('value');
+            const nextNum = (snapCount.val() || 0) + 1;
+            const idOrden = `${myZapID}_CLN_N${nextNum}`;
+
+            const nuevaOrden = {
+                cliente: nom,
+                detalle: det,
+                precioTotal: total,
+                abono: abono,
+                saldo: total - abono,
+                estado: 'Recibido',
+                zapateroId: myZapID,
+                clienteId: "CLN_PROVISIONAL",
+                timestamp: Date.now()
+            };
+
+            await db.ref('trabajos/' + idOrden).set(nuevaOrden);
+            await db.ref(`stats/z/${myZapID}`).set(nextNum);
+            
+            cerrarModal();
+            alert("Orden Guardada con ID: " + idOrden);
+        }
+
+        function filtrarTrabajos() {
+            const busqueda = document.getElementById('inputBusqueda').value.toLowerCase();
+            const cards = document.querySelectorAll('.order-card');
+            cards.forEach(c => {
+                c.style.display = c.innerText.toLowerCase().includes(busqueda) ? "block" : "none";
+            });
+        }
+
+        function abrirModal() { document.getElementById('modal-orden').style.display = 'block'; }
+        function cerrarModal() { document.getElementById('modal-orden').style.display = 'none'; }
+    </script>
+</body>
+</html>
