@@ -3,101 +3,130 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Trabajos | J.A.D.I REPAIZ</title>
+    <title>Trabajos | J.A.D.I REPAIZ</title>
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
-    <script src="/js/estilo_visual.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="/js/estilo_visual.js"></script>
 
     <style>
         :root {
             --gold: #D4AF37;
             --bg-dark: #000000;
-            --bg-card: #0a0a0a;
+            --bg-card: #0d0d0d;
             --border-color: #1a1a1a;
-            --text-main: #E6E8ED;
+            --text-main: #ffffff;
             --text-muted: #888;
-            --shadow-premium: 0 4px 20px rgba(0,0,0,0.8);
         }
 
         body {
             margin: 0; background-color: var(--bg-dark); color: var(--text-main);
-            font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased;
+            font-family: 'Inter', sans-serif; min-height: 100vh;
         }
 
-        /* 2 & 3: HEADER */
         .header {
             display: flex; justify-content: space-between; align-items: center; 
-            padding: 12px 20px; background: #000;
-            border-bottom: 1px solid var(--gold); position: sticky; top: 0; z-index: 1000;
+            padding: 15px 20px; background: #000; border-bottom: 1px solid var(--gold);
         }
-        .header i { font-size: 18px; color: var(--gold); cursor: pointer; transition: 0.3s; }
 
-        /* 4: PANEL DE BÚSQUEDA */
-        .search-area { padding: 15px 20px; background: #000; }
-        .search-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 10px; }
+        .search-area { padding: 15px; background: #000; }
+        .search-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 8px; }
         .search-grid input {
-            background: #0f0f0f; border: 1px solid #333;
-            padding: 10px 15px; border-radius: 8px; color: white; font-size: 13px; outline: none;
-        }
-        .search-grid input:focus { border-color: var(--gold); }
-
-        .section-header {
-            padding: 10px 20px; font-size: 11px; color: #fff;
-            text-transform: uppercase; letter-spacing: 2px; font-weight: 800;
+            background: #111; border: 1px solid #333; padding: 10px;
+            border-radius: 8px; color: white; font-size: 13px;
         }
 
-        /* 5: GRUPO TRABAJOS LOCAL (SCROLL) */
-        .scroll-container {
-            max-height: 55vh; overflow-y: auto; padding-bottom: 10px;
-        }
-        .scroll-container::-webkit-scrollbar { width: 3px; }
-        .scroll-container::-webkit-scrollbar-thumb { background: var(--gold); }
+        .section-header { padding: 15px 20px 5px; font-size: 11px; color: #fff; text-transform: uppercase; letter-spacing: 2px; }
 
-        /* ESTILO TARJETAS (Punto 5) */
+        /* Contenedor con Scroll */
+        #contenedorTrabajos {
+            max-height: 50vh; overflow-y: auto; padding: 10px 0;
+        }
+
         .card-trabajo {
-            background: var(--bg-card); margin: 0 15px 10px; padding: 15px;
-            border-radius: 10px; border: 1px solid var(--border-color);
-            box-shadow: var(--shadow-premium); position: relative;
+            background: var(--bg-card); margin: 0 15px 12px; padding: 15px;
+            border-radius: 12px; border: 1px solid var(--border-color);
+            position: relative;
         }
-        
-        .card-top { display: flex; justify-content: space-between; align-items: center; }
-        
-        /* 5.1 ICONOS SUPERIOR DERECHA */
-        .card-actions { display: flex; gap: 12px; }
-        .card-actions i { font-size: 16px; color: #3498db; cursor: pointer; }
-        .card-actions i.fa-file-invoice { color: #f1c40f; }
-        .card-actions i.fa-comment-dots { color: #95a5a6; }
 
-        .client-name { font-size: 15px; font-weight: 700; color: #fff; }
-        .client-id { font-size: 10px; color: var(--text-muted); text-transform: uppercase; }
-        
-        .money-box { margin: 10px 0; font-size: 12px; color: #fff; }
-        .money-box b { color: var(--gold); }
-        .saldo-tag { color: var(--gold); font-weight: 700; margin-left: 10px; }
+        .card-top { display: flex; justify-content: space-between; align-items: flex-start; }
+        .card-actions { display: flex; gap: 15px; }
+        .card-actions i { font-size: 17px; cursor: pointer; }
+        .fa-file-invoice { color: #f1c40f; }
+        .fa-comment-dots { color: #3498db; }
+        .fa-edit { color: #fff; }
 
-        /* ESTADOS (h, i, j) */
-        .status-badge {
-            position: absolute; top: 15px; right: 80px;
-            font-size: 9px; padding: 3px 8px; border-radius: 5px;
-            border: 1px solid var(--gold); color: var(--gold);
-            text-transform: uppercase; font-weight: 900;
-        }
+        .client-name { font-size: 15px; font-weight: 700; }
+        .client-id { font-size: 10px; color: var(--text-muted); }
+
+        .money-line { margin: 10px 0; font-size: 13px; }
+        .money-line b { color: var(--gold); }
 
         .status-selector { display: flex; gap: 5px; margin-top: 10px; }
         .status-pill {
             flex: 1; font-size: 8px; padding: 6px; border-radius: 5px;
-            border: 1px solid #222; text-align: center;
-            color: #555; cursor: pointer; font-weight: 700; text-transform: uppercase;
+            border: 1px solid #222; text-align: center; color: #555; font-weight: 700;
         }
-        .status-pill.active { border-color: var(--gold); color: var(--gold); background: rgba(212,175,55,0.05); }
+        .status-pill.active { border-color: var(--gold); color: var(--gold); background: rgba(212,175,55,0.1); }
 
-        /* 6: SOLICITUDES CLIENTE */
         .card-solicitud {
             background: #0a0a0a; border-left: 3px solid var(--gold);
             margin: 0 15px 8px; padding: 12px; border-radius: 8px;
             display: flex; justify-content: space-between; align-items: center;
-            cursor: pointer;
+        }
+
+        .btn-add {
+            position: fixed; bottom: 25px; right: 25px;
+            background: var(--gold); width: 55px; height: 55px;
+            border-radius: 50%; display: flex; justify-content: center; align-items: center;
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <i class="fas fa-arrow-left" onclick="window.location.href='dashboard.html'"></i>
+        <div style="font-weight: 700; font-size: 14px;">TRABAJOS LOCAL</div>
+        <i class="fas fa-sync-alt" onclick="window.location.reload()"></i>
+    </div>
+
+    <div class="search-area">
+        <div class="search-grid">
+            <input type="text" id="busqueda" placeholder="Nombre o ID...">
+            <input type="date" id="fechaFiltro">
+        </div>
+    </div>
+
+    <div class="section-header">Órdenes en Taller</div>
+    <div id="contenedorTrabajos">
+        <p style="text-align: center; color: #444;">Buscando en base de datos...</p>
+    </div>
+
+    <div class="section-header">Solicitudes de Clientes</div>
+    <div id="contenedorSolicitudes"></div>
+
+    <a href="nueva_orden.html" class="btn-add">
+        <i class="fas fa-plus" style="color: #000; font-size: 20px;"></i>
+    </a>
+
+    <script>
+        // CONFIGURACIÓN (Ajusta si tu URL de DB es distinta)
+        const firebaseConfig = { databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com" };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        window.onload = function() {
+            // Aplicar estilo sin que rompa el código
+            try {
+                const tema = localStorage.getItem('jadi_tema_preferido') || 'elegante';
+                if(typeof JadiEstilo !== 'undefined') JadiEstilo.aplicar(tema);
+            } catch(e) { console.log("Error de estilo:", e); }
+
+            const session = JSON.parse(localStorage.getItem('session_jadi'));
+            if(!session) { window.location.href = "/index.html"; return; }
+
+            cargar
