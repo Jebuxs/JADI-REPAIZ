@@ -3,15 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trabajos J.A.D.I REPAIZ - Premium</title>
+    <title>Gestión de Trabajos | J.A.D.I REPAIZ</title>
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
+    <script src="/js/estilo_visual.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    
-    <script src="/js/estilo_visual.js"></script>
 
     <style>
         :root {
@@ -22,191 +21,227 @@
             --text-main: #E6E8ED;
             --text-muted: #9499A6;
             --shadow-premium: 0 10px 30px rgba(0,0,0,0.5);
-            --font-family: 'Inter', sans-serif;
         }
 
         body {
             margin: 0; background-color: var(--bg-dark); color: var(--text-main);
-            font-family: var(--font-family); -webkit-font-smoothing: antialiased;
-            padding-bottom: 100px;
+            font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
         }
 
-        /* HEADER PREMIUM */
+        /* 2 & 3: HEADER */
         .header {
             display: flex; justify-content: space-between; align-items: center; 
-            padding: 15px 20px; background: rgba(10, 11, 16, 0.95);
+            padding: 15px 20px; background: rgba(10, 11, 16, 0.98);
             border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 1000;
             backdrop-filter: blur(10px);
         }
-        .header i { font-size: 20px; color: var(--gold); cursor: pointer; transition: 0.3s; }
-        .header i:hover { transform: scale(1.2); }
+        .header i { font-size: 20px; color: var(--gold); cursor: pointer; padding: 5px; }
 
-        /* PANEL DE BUSQUEDA */
-        .search-container { padding: 20px; background: var(--bg-dark); }
-        .search-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .search-box input {
-            width: 100%; padding: 12px; background: var(--bg-card); border: 1px solid var(--border-color);
-            border-radius: 12px; color: white; font-size: 14px; box-sizing: border-box;
+        /* 4: PANEL DE BÚSQUEDA */
+        .search-area { padding: 20px; background: var(--bg-dark); }
+        .search-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 10px; }
+        .search-grid input {
+            background: var(--bg-card); border: 1px solid var(--border-color);
+            padding: 12px; border-radius: 12px; color: white; font-size: 14px; outline: none;
         }
-        .search-box input:focus { border-color: var(--gold); outline: none; }
+        .search-grid input:focus { border-color: var(--gold); }
 
-        .section-title {
+        .section-header {
             padding: 15px 20px; font-size: 11px; color: var(--gold);
-            text-transform: uppercase; letter-spacing: 2px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 2px; font-weight: 800;
         }
 
-        /* TARJETAS DE TRABAJO LOCAL */
+        /* CONTENEDOR CON SCROLL (Punto 5) */
+        .scroll-container {
+            max-height: 450px; /* Ajustable según necesidad */
+            overflow-y: auto;
+            padding-bottom: 20px;
+        }
+        /* Custom Scrollbar Premium */
+        .scroll-container::-webkit-scrollbar { width: 4px; }
+        .scroll-container::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 10px; }
+
+        /* 5: TARJETAS DE TRABAJO LOCAL */
         .card-trabajo {
             background: var(--bg-card); margin: 0 20px 15px; padding: 20px;
-            border-radius: 16px; border: 1px solid var(--border-color);
-            position: relative; box-shadow: var(--shadow-premium);
+            border-radius: 18px; border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-premium); position: relative;
         }
-        .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
-        .card-actions { display: flex; gap: 15px; }
-        .card-actions i { color: var(--gold); font-size: 18px; cursor: pointer; }
-
-        .info-name { font-size: 16px; font-weight: 700; color: var(--text-main); }
-        .info-id { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
-        .info-money { display: flex; gap: 20px; margin: 15px 0; font-size: 14px; }
-        .saldo { color: #FF5252; font-weight: 700; }
-
-        /* SELECTOR DE ESTADO */
-        .status-bar { display: flex; gap: 8px; margin-top: 15px; }
-        .status-btn {
-            flex: 1; font-size: 10px; padding: 8px 5px; border-radius: 8px;
-            border: 1px solid var(--border-color); text-align: center; color: var(--text-muted);
-            cursor: pointer; font-weight: 600; text-transform: uppercase;
+        .card-top { display: flex; justify-content: space-between; align-items: flex-start; }
+        
+        /* 5.1: ICONOS SUPERIOR DERECHA */
+        .card-actions { display: flex; gap: 14px; }
+        .card-actions i { 
+            font-size: 18px; color: var(--gold); cursor: pointer; 
+            transition: 0.2s; opacity: 0.8;
         }
-        .status-btn.active { border-color: var(--gold); color: var(--gold); background: rgba(212, 175, 55, 0.1); }
+        .card-actions i:hover { opacity: 1; transform: scale(1.1); }
 
-        /* TARJETAS DE SOLICITUD */
+        .client-name { font-size: 16px; font-weight: 700; color: #fff; }
+        .client-id { font-size: 12px; color: var(--text-muted); }
+        
+        .money-box { display: flex; gap: 20px; margin: 15px 0; font-size: 13px; }
+        .money-box b { color: #fff; }
+        .saldo-tag { color: #FF5252; font-weight: 700; }
+
+        /* ESTADOS (h, i, j) */
+        .status-selector { display: flex; gap: 6px; margin-top: 15px; }
+        .status-pill {
+            flex: 1; font-size: 9px; padding: 7px; border-radius: 8px;
+            border: 1px solid var(--border-color); text-align: center;
+            color: var(--text-muted); cursor: pointer; font-weight: 700; text-transform: uppercase;
+        }
+        .status-pill.active {
+            border-color: var(--gold); color: var(--gold); background: rgba(212, 175, 55, 0.1);
+        }
+
+        /* 6: TARJETAS SOLICITUD CLIENTE */
         .card-solicitud {
-            background: var(--bg-card); border-left: 4px solid var(--gold);
+            background: #1a1c23; border-left: 4px solid var(--gold);
             margin: 0 20px 10px; padding: 15px; border-radius: 12px;
             display: flex; justify-content: space-between; align-items: center;
-            cursor: pointer; transition: 0.3s;
+            cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
-        .card-solicitud:hover { transform: translateX(5px); }
 
-        /* VENTANA EMERGENTE (MODAL) */
+        /* 6.b: VENTANA EMERGENTE (MODAL) */
         .modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); z-index: 2000; justify-content: center; align-items: center;
-            backdrop-filter: blur(5px);
+            background: rgba(0,0,0,0.9); z-index: 2000; justify-content: center; align-items: center;
+            backdrop-filter: blur(8px);
         }
         .modal-content {
-            background: var(--bg-card); width: 85%; max-width: 400px; padding: 25px;
-            border-radius: 20px; border: 1px solid var(--border-color); box-shadow: var(--shadow-premium);
+            background: var(--bg-card); width: 85%; max-width: 380px; padding: 25px;
+            border-radius: 24px; border: 1px solid var(--border-color); position: relative;
         }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .close-x { position: absolute; right: 20px; top: 20px; color: var(--text-muted); font-size: 20px; cursor: pointer; }
 
-        /* BOTON AGREGAR */
-        .btn-float {
+        /* 7: BOTÓN FLOTANTE NUEVA ORDEN */
+        .btn-new-order {
             position: fixed; bottom: 30px; right: 25px;
             background: var(--gold); width: 60px; height: 60px;
             border-radius: 50%; display: flex; justify-content: center; align-items: center;
-            box-shadow: 0 8px 25px rgba(212, 175, 55, 0.4); text-decoration: none;
-            transition: 0.3s;
+            box-shadow: 0 8px 25px rgba(212, 175, 55, 0.4); text-decoration: none; z-index: 500;
         }
-        .btn-float:hover { transform: scale(1.1) rotate(90deg); }
-        .btn-float i { color: black; font-size: 24px; }
+        .btn-new-order i { color: #000; font-size: 24px; }
     </style>
 </head>
 <body>
 
     <div class="header">
         <i class="fas fa-arrow-left" onclick="window.location.href='dashboard.html'"></i>
-        <div style="text-align: center;">
-            <div style="font-size: 14px; font-weight: 700; letter-spacing: 1px;">TRABAJOS</div>
-            <div style="font-size: 9px; color: var(--text-muted); letter-spacing: 3px;">J.A.D.I REPAIZ</div>
+        <div style="text-align: center; line-height: 1;">
+            <span style="font-weight: 800; font-size: 15px; letter-spacing: 1px;">TRABAJOS</span><br>
+            <span style="font-size: 9px; color: var(--text-muted);">GESTOR DE TALLER</span>
         </div>
         <i class="fas fa-sync-alt" onclick="window.location.reload()"></i>
     </div>
 
-    <div class="search-container">
+    <div class="search-area">
         <div class="search-grid">
-            <input type="text" id="busquedaGeneral" placeholder="CI / Celular / ID">
-            <input type="date" id="filtroFecha">
+            <input type="text" id="searchMain" placeholder="Buscar por CI, Celular o ID...">
+            <input type="date" id="searchDate">
         </div>
     </div>
 
-    <div class="section-title">Grupo Trabajos Local</div>
-    <div id="contenedorLocal">
+    <div class="section-header">Grupo Trabajos Local</div>
+    <div class="scroll-container" id="listaLocal">
+        
         <div class="card-trabajo">
-            <div class="card-header">
+            <div class="card-top">
                 <div>
-                    <div class="info-name">David Villa</div>
-                    <div class="info-id">ID: #REPA-9923</div>
+                    <div class="client-name">David Villa</div>
+                    <div class="client-id">ID: 2026-ZPT01</div>
                 </div>
                 <div class="card-actions">
-                    <i class="fas fa-file-invoice" onclick="location.href='facturar.html'"></i>
-                    <i class="fas fa-comment-dots" onclick="location.href='chat.html'"></i>
-                    <i class="fas fa-edit" onclick="location.href='editar.html'"></i>
+                    <i class="fas fa-file-invoice" onclick="location.href='facturar.html'" title="Facturar"></i>
+                    <i class="fas fa-comment-dots" onclick="location.href='chat.html'" title="Chat"></i>
+                    <i class="fas fa-edit" onclick="location.href='editar.html'" title="Editar"></i>
                 </div>
             </div>
-            <div class="info-money">
-                <span>Total: <strong>$15.00</strong></span>
-                <span class="saldo">Saldo: $5.00</span>
+            
+            <div class="money-box">
+                <span>Total: <b>$25.00</b></span>
+                <span class="saldo-tag">Saldo: $10.00</span>
             </div>
-            <div class="status-bar">
-                <div class="status-btn active">Recibido</div>
-                <div class="status-btn">En Proceso</div>
-                <div class="status-btn">Finalizado</div>
+
+            <div class="status-selector">
+                <div class="status-pill active">Recibido</div>
+                <div class="status-pill">En Proceso</div>
+                <div class="status-pill">Finalizado</div>
             </div>
         </div>
+
     </div>
 
-    <div class="section-title">Grupo Solicitudes de Reparación</div>
-    <div id="contenedorSolicitudes">
-        <div class="card-solicitud" onclick="verDetalleSolicitud()">
+    <div class="section-header">Solicitudes de Reparación</div>
+    <div id="listaSolicitudes">
+        
+        <div class="card-solicitud" onclick="abrirModal()">
             <div>
-                <div style="font-weight: 600;">Carlos Andrade</div>
-                <div style="font-size: 11px; color: var(--text-muted);"><i class="fas fa-map-marker-alt"></i> a 0.8 km</div>
+                <div style="font-weight: 700;">Usuario Cliente</div>
+                <div style="font-size: 11px; color: var(--text-muted);">
+                    <i class="fas fa-map-marker-alt"></i> a 1.5 km
+                </div>
             </div>
-            <div style="background: var(--gold-dim); color: var(--gold); padding: 5px 12px; border-radius: 15px; font-size: 11px; font-weight: 700;">
-                2 items
+            <div style="text-align: right;">
+                <span style="background: var(--gold-dim); color: var(--gold); padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700;">
+                    3 Objetos
+                </span>
             </div>
         </div>
+
     </div>
 
-    <div id="modalPremium" class="modal">
+    <div id="modalSolicitud" class="modal">
         <div class="modal-content">
-            <div class="modal-header">
-                <span style="font-weight: 700; color: var(--gold);">DETALLE SOLICITUD</span>
-                <i class="fas fa-times" onclick="cerrarModal()" style="cursor: pointer; color: var(--text-muted);"></i>
+            <i class="fas fa-times close-x" onclick="cerrarModal()"></i>
+            <h3 style="color: var(--gold); margin-top: 0; font-size: 18px;">Detalle de Trabajo</h3>
+            <div style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 15px; font-size: 13px; line-height: 1.8; color: #ccc;">
+                • 1, zapatilla, coser al ruedo<br>
+                • 1, mochila, cambio de cierre<br>
+                • 1, guante de box, coser
             </div>
-            <div style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; font-size: 13px; line-height: 2;">
-                • 1, Zapatilla, Cocer al ruedo<br>
-                • 1, Mochila, Cambio de cierre<br>
-                • 1, Guante Box, Cocer
-            </div>
-            <button onclick="aceptar()" style="width: 100%; padding: 15px; margin-top: 20px; border-radius: 12px; background: var(--gold); border: none; font-weight: 800; cursor: pointer;">ACEPTAR Y REGISTRAR</button>
+            <button onclick="aceptar()" style="width: 100%; padding: 15px; margin-top: 20px; border-radius: 12px; background: var(--gold); border: none; font-weight: 800; color: #000; cursor: pointer;">
+                ACEPTAR SOLICITUD
+            </button>
         </div>
     </div>
 
-    <a href="nueva_orden.html" class="btn-float">
+    <a href="nueva_orden.html" class="btn-new-order">
         <i class="fas fa-plus"></i>
     </a>
 
     <script>
-        // Configuración Firebase (Asegúrate que sea la tuya)
-        const firebaseConfig = { databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com" };
-        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-
+        // Punto 1: Persistencia de Estilo Visual
         window.onload = function() {
-            // SEGURIDAD Y ESTILO
-            const session = JSON.parse(localStorage.getItem('session_jadi'));
-            if (!session) window.location.href = "/index.html";
-
-            // Aplicar Estilo del Dashboard
             const tema = localStorage.getItem('jadi_tema_preferido') || 'elegante';
             if(typeof JadiEstilo !== 'undefined') JadiEstilo.aplicar(tema);
+
+            // Verificar Sesión
+            const session = JSON.parse(localStorage.getItem('session_jadi'));
+            if(!session) window.location.href = "/index.html";
         };
 
-        function verDetalleSolicitud() { document.getElementById('modalPremium').style.display = 'flex'; }
-        function cerrarModal() { document.getElementById('modalPremium').style.display = 'none'; }
-        function aceptar() { alert("Orden añadida!"); cerrarModal(); }
+        // Lógica Modal (6.b)
+        function abrirModal() {
+            document.getElementById('modalSolicitud').style.display = 'flex';
+        }
+
+        function cerrarModal() {
+            document.getElementById('modalSolicitud').style.display = 'none';
+        }
+
+        function aceptar() {
+            alert("Solicitud aceptada. Se registrará en el taller.");
+            cerrarModal();
+        }
+
+        // Cerrar modal si se clica fuera
+        window.onclick = function(event) {
+            const modal = document.getElementById('modalSolicitud');
+            if (event.target == modal) cerrarModal();
+        }
     </script>
 </body>
 </html>
