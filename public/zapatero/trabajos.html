@@ -1,247 +1,79 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Trabajos | J.A.D.I REPAIZ</title>
+<div class="section-header">Grupo Trabajos Local</div>
+<div class="scroll-container" id="contenedor-trabajos-real">
+    <div id="loading-msg" style="text-align:center; padding:20px; color:var(--text-muted);">Cargando base de datos...</div>
+</div>
 
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
-    <script src="/js/estilo_visual.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+<script>
+    // 1. CONFIGURACIÓN FIREBASE
+    const firebaseConfig = { databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com" };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
-    <style>
-        :root {
-            --gold: #D4AF37;
-            --bg-dark: #0A0B10;
-            --bg-card: #16181D;
-            --border-color: #2D3139;
-            --text-main: #E6E8ED;
-            --text-muted: #9499A6;
-            --shadow-premium: 0 10px 30px rgba(0,0,0,0.5);
-        }
+    window.onload = function() {
+        const session = JSON.parse(localStorage.getItem('session_jadi'));
+        if (!session) { window.location.href = "/index.html"; return; }
 
-        body {
-            margin: 0; background-color: var(--bg-dark); color: var(--text-main);
-            font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased;
-            overflow-x: hidden;
-        }
+        // Aplicar estilo visual guardado
+        const tema = localStorage.getItem('jadi_tema_preferido') || 'elegante';
+        if(typeof JadiEstilo !== 'undefined') JadiEstilo.aplicar(tema);
 
-        /* 2 & 3: HEADER */
-        .header {
-            display: flex; justify-content: space-between; align-items: center; 
-            padding: 15px 20px; background: rgba(10, 11, 16, 0.98);
-            border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 1000;
-            backdrop-filter: blur(10px);
-        }
-        .header i { font-size: 20px; color: var(--gold); cursor: pointer; padding: 5px; }
+        // 2. LEER DATOS EN TIEMPO REAL
+        cargarTrabajosDesdeFirebase(session.uid);
+    };
 
-        /* 4: PANEL DE BÚSQUEDA */
-        .search-area { padding: 20px; background: var(--bg-dark); }
-        .search-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 10px; }
-        .search-grid input {
-            background: var(--bg-card); border: 1px solid var(--border-color);
-            padding: 12px; border-radius: 12px; color: white; font-size: 14px; outline: none;
-        }
-        .search-grid input:focus { border-color: var(--gold); }
-
-        .section-header {
-            padding: 15px 20px; font-size: 11px; color: var(--gold);
-            text-transform: uppercase; letter-spacing: 2px; font-weight: 800;
-        }
-
-        /* CONTENEDOR CON SCROLL (Punto 5) */
-        .scroll-container {
-            max-height: 450px; /* Ajustable según necesidad */
-            overflow-y: auto;
-            padding-bottom: 20px;
-        }
-        /* Custom Scrollbar Premium */
-        .scroll-container::-webkit-scrollbar { width: 4px; }
-        .scroll-container::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 10px; }
-
-        /* 5: TARJETAS DE TRABAJO LOCAL */
-        .card-trabajo {
-            background: var(--bg-card); margin: 0 20px 15px; padding: 20px;
-            border-radius: 18px; border: 1px solid var(--border-color);
-            box-shadow: var(--shadow-premium); position: relative;
-        }
-        .card-top { display: flex; justify-content: space-between; align-items: flex-start; }
+    function cargarTrabajosDesdeFirebase(maestroId) {
+        const refTrabajos = db.ref('trabajos');
         
-        /* 5.1: ICONOS SUPERIOR DERECHA */
-        .card-actions { display: flex; gap: 14px; }
-        .card-actions i { 
-            font-size: 18px; color: var(--gold); cursor: pointer; 
-            transition: 0.2s; opacity: 0.8;
-        }
-        .card-actions i:hover { opacity: 1; transform: scale(1.1); }
+        // Escuchamos los cambios
+        refTrabajos.orderByChild('maestroId').equalTo(maestroId).on('value', snapshot => {
+            const contenedor = document.getElementById('contenedor-trabajos-real');
+            contenedor.innerHTML = ''; // Limpiamos para actualizar
 
-        .client-name { font-size: 16px; font-weight: 700; color: #fff; }
-        .client-id { font-size: 12px; color: var(--text-muted); }
-        
-        .money-box { display: flex; gap: 20px; margin: 15px 0; font-size: 13px; }
-        .money-box b { color: #fff; }
-        .saldo-tag { color: #FF5252; font-weight: 700; }
+            if (!snapshot.exists()) {
+                contenedor.innerHTML = '<div style="text-align:center; padding:40px; color:#444;">No tienes órdenes registradas.</div>';
+                return;
+            }
 
-        /* ESTADOS (h, i, j) */
-        .status-selector { display: flex; gap: 6px; margin-top: 15px; }
-        .status-pill {
-            flex: 1; font-size: 9px; padding: 7px; border-radius: 8px;
-            border: 1px solid var(--border-color); text-align: center;
-            color: var(--text-muted); cursor: pointer; font-weight: 700; text-transform: uppercase;
-        }
-        .status-pill.active {
-            border-color: var(--gold); color: var(--gold); background: rgba(212, 175, 55, 0.1);
-        }
+            snapshot.forEach(childSnapshot => {
+                const data = childSnapshot.val();
+                const idDoc = childSnapshot.key;
 
-        /* 6: TARJETAS SOLICITUD CLIENTE */
-        .card-solicitud {
-            background: #1a1c23; border-left: 4px solid var(--gold);
-            margin: 0 20px 10px; padding: 15px; border-radius: 12px;
-            display: flex; justify-content: space-between; align-items: center;
-            cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        }
+                // Creamos la tarjeta con tu diseño Premium
+                const tarjeta = `
+                    <div class="card-trabajo">
+                        <div class="card-top">
+                            <div>
+                                <div class="client-name">${data.clienteNombre || 'Sin Nombre'}</div>
+                                <div class="client-id">ID: ${idDoc}</div>
+                            </div>
+                            <div class="card-actions">
+                                <i class="fas fa-file-invoice" onclick="location.href='facturar.html?id=${idDoc}'"></i>
+                                <i class="fas fa-comment-dots" onclick="location.href='chat.html?id=${idDoc}'"></i>
+                                <i class="fas fa-edit" onclick="location.href='editar.html?id=${idDoc}'"></i>
+                            </div>
+                        </div>
+                        
+                        <div class="money-box">
+                            <span>Total: <b>$${data.total || '0.00'}</b></span>
+                            <span class="saldo-tag">Saldo: $${data.saldo || '0.00'}</span>
+                        </div>
 
-        /* 6.b: VENTANA EMERGENTE (MODAL) */
-        .modal {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9); z-index: 2000; justify-content: center; align-items: center;
-            backdrop-filter: blur(8px);
-        }
-        .modal-content {
-            background: var(--bg-card); width: 85%; max-width: 380px; padding: 25px;
-            border-radius: 24px; border: 1px solid var(--border-color); position: relative;
-        }
-        .close-x { position: absolute; right: 20px; top: 20px; color: var(--text-muted); font-size: 20px; cursor: pointer; }
+                        <div class="status-selector">
+                            <div class="status-pill ${data.estado === 'Recibido' ? 'active' : ''}" onclick="actualizarEstado('${idDoc}', 'Recibido')">Recibido</div>
+                            <div class="status-pill ${data.estado === 'En Proceso' ? 'active' : ''}" onclick="actualizarEstado('${idDoc}', 'En Proceso')">En Proceso</div>
+                            <div class="status-pill ${data.estado === 'Finalizado' ? 'active' : ''}" onclick="actualizarEstado('${idDoc}', 'Finalizado')">Finalizado</div>
+                        </div>
+                    </div>
+                `;
+                contenedor.innerHTML += tarjeta;
+            });
+        });
+    }
 
-        /* 7: BOTÓN FLOTANTE NUEVA ORDEN */
-        .btn-new-order {
-            position: fixed; bottom: 30px; right: 25px;
-            background: var(--gold); width: 60px; height: 60px;
-            border-radius: 50%; display: flex; justify-content: center; align-items: center;
-            box-shadow: 0 8px 25px rgba(212, 175, 55, 0.4); text-decoration: none; z-index: 500;
-        }
-        .btn-new-order i { color: #000; font-size: 24px; }
-    </style>
-</head>
-<body>
-
-    <div class="header">
-        <i class="fas fa-arrow-left" onclick="window.location.href='dashboard.html'"></i>
-        <div style="text-align: center; line-height: 1;">
-            <span style="font-weight: 800; font-size: 15px; letter-spacing: 1px;">TRABAJOS</span><br>
-            <span style="font-size: 9px; color: var(--text-muted);">GESTOR DE TALLER</span>
-        </div>
-        <i class="fas fa-sync-alt" onclick="window.location.reload()"></i>
-    </div>
-
-    <div class="search-area">
-        <div class="search-grid">
-            <input type="text" id="searchMain" placeholder="Buscar por CI, Celular o ID...">
-            <input type="date" id="searchDate">
-        </div>
-    </div>
-
-    <div class="section-header">Grupo Trabajos Local</div>
-    <div class="scroll-container" id="listaLocal">
-        
-        <div class="card-trabajo">
-            <div class="card-top">
-                <div>
-                    <div class="client-name">David Villa</div>
-                    <div class="client-id">ID: 2026-ZPT01</div>
-                </div>
-                <div class="card-actions">
-                    <i class="fas fa-file-invoice" onclick="location.href='facturar.html'" title="Facturar"></i>
-                    <i class="fas fa-comment-dots" onclick="location.href='chat.html'" title="Chat"></i>
-                    <i class="fas fa-edit" onclick="location.href='editar.html'" title="Editar"></i>
-                </div>
-            </div>
-            
-            <div class="money-box">
-                <span>Total: <b>$25.00</b></span>
-                <span class="saldo-tag">Saldo: $10.00</span>
-            </div>
-
-            <div class="status-selector">
-                <div class="status-pill active">Recibido</div>
-                <div class="status-pill">En Proceso</div>
-                <div class="status-pill">Finalizado</div>
-            </div>
-        </div>
-
-    </div>
-
-    <div class="section-header">Solicitudes de Reparación</div>
-    <div id="listaSolicitudes">
-        
-        <div class="card-solicitud" onclick="abrirModal()">
-            <div>
-                <div style="font-weight: 700;">Usuario Cliente</div>
-                <div style="font-size: 11px; color: var(--text-muted);">
-                    <i class="fas fa-map-marker-alt"></i> a 1.5 km
-                </div>
-            </div>
-            <div style="text-align: right;">
-                <span style="background: var(--gold-dim); color: var(--gold); padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700;">
-                    3 Objetos
-                </span>
-            </div>
-        </div>
-
-    </div>
-
-    <div id="modalSolicitud" class="modal">
-        <div class="modal-content">
-            <i class="fas fa-times close-x" onclick="cerrarModal()"></i>
-            <h3 style="color: var(--gold); margin-top: 0; font-size: 18px;">Detalle de Trabajo</h3>
-            <div style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 15px; font-size: 13px; line-height: 1.8; color: #ccc;">
-                • 1, zapatilla, coser al ruedo<br>
-                • 1, mochila, cambio de cierre<br>
-                • 1, guante de box, coser
-            </div>
-            <button onclick="aceptar()" style="width: 100%; padding: 15px; margin-top: 20px; border-radius: 12px; background: var(--gold); border: none; font-weight: 800; color: #000; cursor: pointer;">
-                ACEPTAR SOLICITUD
-            </button>
-        </div>
-    </div>
-
-    <a href="nueva_orden.html" class="btn-new-order">
-        <i class="fas fa-plus"></i>
-    </a>
-
-    <script>
-        // Punto 1: Persistencia de Estilo Visual
-        window.onload = function() {
-            const tema = localStorage.getItem('jadi_tema_preferido') || 'elegante';
-            if(typeof JadiEstilo !== 'undefined') JadiEstilo.aplicar(tema);
-
-            // Verificar Sesión
-            const session = JSON.parse(localStorage.getItem('session_jadi'));
-            if(!session) window.location.href = "/index.html";
-        };
-
-        // Lógica Modal (6.b)
-        function abrirModal() {
-            document.getElementById('modalSolicitud').style.display = 'flex';
-        }
-
-        function cerrarModal() {
-            document.getElementById('modalSolicitud').style.display = 'none';
-        }
-
-        function aceptar() {
-            alert("Solicitud aceptada. Se registrará en el taller.");
-            cerrarModal();
-        }
-
-        // Cerrar modal si se clica fuera
-        window.onclick = function(event) {
-            const modal = document.getElementById('modalSolicitud');
-            if (event.target == modal) cerrarModal();
-        }
-    </script>
-</body>
-</html>
+    // Función para cambiar el estado desde la tarjeta (Extra)
+    function actualizarEstado(id, nuevoEstado) {
+        db.ref('trabajos/' + id).update({ estado: nuevoEstado })
+          .then(() => console.log("Estado actualizado"))
+          .catch(err => alert("Error: " + err.message));
+    }
+</script>
