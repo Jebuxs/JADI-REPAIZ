@@ -3,185 +3,297 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Trabajos - J.A.D.I REPAIZ</title>
+    <title>Dashboard J.A.D.I REPAIZ - Premium</title>
 
     <script src="/js/estilo_visual.js"></script>
+    <script src="/js/controlador_jadi.js"></script>
+    
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
     <style>
-        :root { --gold: #fbc02d; --dark-card: #111; }
-        body { margin: 0; background: #000; color: white; font-family: 'Segoe UI', sans-serif; padding-bottom: 80px; }
-        
-        /* HEADER */
-        .header { 
+        /* --- VARIABLES PREMIUM (Inspiradas en modo oscuro de alta gama) --- */
+        :root {
+            --gold: #D4AF37;
+            --gold-dim: rgba(212, 175, 55, 0.1);
+            --bg-dark: #0A0B10; /* Fondo casi negro, muy profundo */
+            --bg-card: #16181D; /* Tarjetas gris oscuro azulado */
+            --border-color: #2D3139; /* Bordes sutiles */
+            --text-main: #E6E8ED;
+            --text-muted: #9499A6;
+            --shadow-premium: 0 10px 30px rgba(0,0,0,0.5);
+            --font-family: 'Inter', -apple-system, sans-serif;
+        }
+
+        body {
+            margin: 0;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: var(--font-family);
+            -webkit-font-smoothing: antialiased;
+            padding-bottom: 40px;
+        }
+
+        /* --- HEADER PREMIUM --- */
+        .header {
             display: flex; justify-content: space-between; align-items: center; 
-            padding: 15px; border-bottom: 1px solid var(--gold); background: #050505;
-            position: sticky; top: 0; z-index: 100;
+            padding: 15px 25px; 
+            background: rgba(10, 11, 16, 0.95);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky; top: 0; z-index: 1000;
+            backdrop-filter: blur(10px); /* Efecto cristal esmerilado */
         }
-        .header i { font-size: 20px; color: var(--gold); cursor: pointer; }
-
-        /* PANEL BUSQUEDA */
-        .search-container { padding: 15px; background: #0a0a0a; }
-        .search-box { 
-            display: flex; gap: 10px; margin-bottom: 10px; 
-        }
-        .search-box input, .search-box data { 
-            flex: 1; padding: 10px; background: #1a1a1a; border: 1px solid #333; color: white; border-radius: 8px; font-size: 13px;
-        }
-
-        /* SECCIONES */
-        .section-title { 
-            padding: 10px 15px; font-size: 12px; color: var(--gold); 
-            text-transform: uppercase; letter-spacing: 2px; font-weight: bold; background: #0f0f0f;
-        }
-
-        /* TARJETAS DE TRABAJO LOCAL */
-        .card-trabajo {
-            background: var(--dark-card); margin: 10px 15px; padding: 15px; 
-            border-radius: 12px; border: 1px solid #222; position: relative;
-        }
-        .card-actions { position: absolute; top: 15px; right: 15px; display: flex; gap: 12px; }
-        .card-actions i { color: var(--gold); font-size: 16px; cursor: pointer; }
         
-        .info-main { font-weight: bold; font-size: 15px; margin-bottom: 5px; }
-        .info-sub { font-size: 12px; color: #888; }
-        .info-money { display: flex; gap: 15px; margin-top: 10px; font-size: 13px; }
-        .total { color: #fff; }
-        .saldo { color: #ff4d4d; font-weight: bold; }
+        .header-brand { line-height: 1; text-align: left; }
+        .logo-j { color: var(--gold); font-weight: 900; font-size: 24px; letter-spacing: -1px; }
+        .logo-r { color: var(--text-main); font-size: 10px; letter-spacing: 4px; text-transform: uppercase; opacity: 0.8; }
 
-        /* ESTADOS */
-        .status-container { display: flex; gap: 5px; margin-top: 12px; }
-        .status-btn { 
-            flex: 1; font-size: 9px; padding: 5px; border-radius: 5px; 
-            border: 1px solid #333; text-align: center; color: #555; cursor: pointer;
+        .header-actions { display: flex; align-items: center; gap: 18px; }
+        .profile-btn-img { 
+            width: 36px; height: 36px; 
+            border-radius: 50%; 
+            border: 2px solid var(--border-color); 
+            object-fit: cover;
+            transition: border-color 0.3s;
         }
-        .status-btn.active { border-color: var(--gold); color: var(--gold); background: rgba(252, 192, 45, 0.1); }
+        .profile-btn-img:hover { border-color: var(--gold); }
+        .icon-crown { color: var(--text-muted); font-size: 18px; transition: color 0.3s; }
+        .icon-crown:hover { color: var(--gold); }
 
-        /* SOLICITUDES CLIENTE */
-        .card-solicitud {
-            background: #111; border-left: 4px solid var(--gold);
-            margin: 10px 15px; padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;
+        /* --- CONTENEDOR PRINCIPAL --- */
+        .main-container { padding: 30px 20px; max-width: 1000px; margin: auto; }
+
+        /* --- SECCIÓN BIENVENIDA --- */
+        .welcome-box {
+            display: flex; justify-content: space-between; align-items: center; 
+            margin-bottom: 35px; background: var(--bg-card); 
+            padding: 20px; border-radius: 16px; border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-premium);
+        }
+        .welcome-text h2 { margin: 0; font-size: 26px; font-weight: 700; color: var(--text-main); }
+        .welcome-text p { margin: 5px 0 0; color: var(--text-muted); font-size: 14px; }
+        .badge-id { 
+            background: var(--gold-dim); color: var(--gold); 
+            padding: 6px 14px; border-radius: 20px; 
+            font-size: 11px; font-weight: 600; border: 1px solid rgba(212,175,55,0.3);
         }
 
-        /* VENTANA EMERGENTE */
-        .modal { 
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center; 
+        /* --- ESTADÍSTICAS (Estilo Tarjeta Elevada) --- */
+        .dashboard-stats {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 35px;
         }
-        .modal-content { 
-            background: #1a1a1a; width: 85%; max-width: 400px; padding: 20px; border-radius: 15px; border: 1px solid var(--gold);
+        .stat-card { 
+            background: var(--bg-card); 
+            border: 1px solid var(--border-color); 
+            padding: 20px 10px; 
+            border-radius: 16px; 
+            text-align: center; 
+            transition: transform 0.3s, border-color 0.3s;
+            box-shadow: var(--shadow-premium);
         }
-        .close-modal { float: right; color: #666; font-size: 20px; cursor: pointer; }
+        .stat-card:hover { transform: translateY(-3px); border-color: var(--gold); }
+        .stat-card i { font-size: 20px; margin-bottom: 10px; display: block; }
+        .stat-card span { font-size: 32px; font-weight: 700; display: block; color: var(--text-main); line-height: 1; }
+        .stat-card p { font-size: 11px; color: var(--text-muted); margin: 8px 0 0; text-transform: uppercase; letter-spacing: 1px; }
 
-        /* BOTON FLOTANTE */
-        .btn-add {
-            position: fixed; bottom: 25px; right: 25px; 
-            background: var(--gold); width: 55px; height: 55px; 
-            border-radius: 50%; display: flex; justify-content: center; align-items: center;
-            box-shadow: 0 4px 15px rgba(251, 192, 45, 0.4); text-decoration: none;
+        /* --- SELECTOR VISUAL (Borde Punteado Estilo GitHub) --- */
+        .selector-visual-box {
+            background: transparent;
+            border: 2px dashed var(--border-color);
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 35px;
+            text-align: center;
         }
-        .btn-add i { color: black; font-size: 24px; }
+        .selector-label { display: block; font-size: 11px; color: var(--text-muted); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+        select#selector-tema {
+            background: var(--bg-card); color: var(--gold); border: 1px solid var(--border-color);
+            padding: 12px 20px; border-radius: 12px; font-size: 14px; width: 100%; max-width: 350px;
+            appearance: none; cursor: pointer; text-align: center; font-weight: 600;
+            transition: border-color 0.3s;
+        }
+        select#selector-tema:focus { border-color: var(--gold); outline: none; }
+
+        /* --- GRILLA DE MENÚ PREMIUM --- */
+        .grid-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+        .card-jadi { 
+            text-decoration: none; color: var(--text-main); 
+            background: var(--bg-card); padding: 30px 20px; 
+            border-radius: 20px; border: 1px solid var(--border-color); 
+            text-align: center; 
+            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: var(--shadow-premium);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        } 
+        .card-jadi:hover { 
+            transform: scale(1.03); 
+            border-color: var(--gold); 
+            background: rgba(22, 24, 29, 0.7);
+        }
+        .card-jadi i { font-size: 32px; color: var(--gold); margin-bottom: 15px; }
+        .card-jadi h3 { font-size: 14px; font-weight: 600; margin: 0; letter-spacing: 0.5px; }
+
+        /* --- FOOTER Y LOGOUT --- */
+        .system-badge {
+            background: var(--bg-card); color: var(--text-muted); 
+            border: 1px solid var(--border-color); padding: 18px; 
+            border-radius: 16px; text-align: center; margin-top: 40px; 
+            font-size: 13px; box-shadow: var(--shadow-premium);
+        }
+        .system-badge strong { color: var(--gold); letter-spacing: 1px; }
+
+        .btn-logout { 
+            display: inline-block; text-align: center; color: var(--text-muted); 
+            text-decoration: none; margin-top: 30px; font-size: 13px; font-weight: 500;
+            padding: 10px 20px; border-radius: 20px; transition: color 0.3s, background 0.3s;
+        }
+        .btn-logout:hover { color: var(--text-main); background: rgba(255,255,255,0.05); }
+
+        /* Colores de estado nítidos */
+        .color-new { color: #FF5252; }
+        .color-proc { color: #448AFF; }
+        .color-ready { color: #00E676; }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <i class="fas fa-arrow-left" onclick="location.href='dashboard.html'"></i>
-        <span style="font-weight: bold; letter-spacing: 2px;">GESTIÓN DE TRABAJOS</span>
-        <i class="fas fa-sync-alt" onclick="location.reload()"></i>
-    </div>
-
-    <div class="search-container">
-        <div class="search-box">
-            <input type="text" id="inputBusqueda" placeholder="Buscar por CI, Celular o ID...">
+        <div class="header-brand">
+            <span class="logo-j">J.A.D.I</span>
+            <span class="logo-r">REPAIZ</span>
         </div>
-        <div class="search-box">
-            <input type="date" id="filterFecha">
-        </div>
-    </div>
-
-    <div class="section-title">Grupo Trabajos Local</div>
-    <div id="contenedorTrabajos">
-        <div class="card-trabajo">
-            <div class="card-actions">
-                <i class="fas fa-file-invoice" onclick="location.href='facturar.html'"></i>
-                <i class="fas fa-comment-dots" onclick="location.href='chat.html'"></i>
-                <i class="fas fa-edit" onclick="location.href='editar.html'"></i>
-            </div>
-            <div class="info-main">Juan Perez</div>
-            <div class="info-sub">ID: CLN000234 | Calzado</div>
-            <div class="info-money">
-                <span class="total">Total: $25.00</span>
-                <span class="saldo">Saldo: $10.00</span>
-            </div>
-            <div class="status-container">
-                <div class="status-btn active">RECIBIDO</div>
-                <div class="status-btn">EN PROCESO</div>
-                <div class="status-btn">FINALIZADO</div>
-            </div>
+        <div class="header-actions">
+            <a href="/admin/dashboard.html" class="icon-crown" title="Admin Master">
+                <i class="fas fa-crown"></i>
+            </a>
+            <a href="perfil.html" style="text-decoration: none; display: flex; align-items: center; gap: 10px;">
+                <span id="header-user-name" style="color: var(--text-main); font-size: 12px; font-weight: 600;">...</span>
+                <img id="user-photo" class="profile-btn-img" src="https://via.placeholder.com/36" alt="P">
+            </a>
         </div>
     </div>
 
-    <div class="section-title">Solicitudes de Clientes</div>
-    <div id="contenedorSolicitudes">
-        <div class="card-solicitud" onclick="abrirDetalleSolicitud()">
-            <div>
-                <div style="font-weight: bold;">Maria Garcia</div>
-                <div style="font-size: 10px; color: #666;"><i class="fas fa-map-marker-alt"></i> a 1.2 km</div>
+    <div class="main-container">
+        
+        <div class="welcome-box">
+            <div class="welcome-text">
+                <h2 id="display-nombre">Bienvenido</h2>
+                <p id="display-local">Cargando ubicación...</p>
             </div>
-            <div style="text-align: right;">
-                <span style="background: #222; padding: 4px 10px; border-radius: 20px; font-size: 11px;">3 Objetos</span>
-            </div>
+            <div id="display-id" class="badge-id">ID: ...</div>
+        </div>
+
+        <div class="selector-visual-box">
+            <label class="selector-label">Personalización de Interfaz</label>
+            <select id="selector-tema" onchange="cambiarApariencia(this.value)">
+                <option value="elegante">👑 Dorado J.A.D.I (Premium)</option>
+                <option value="azul">⚡ Azul Eléctrico</option>
+                <option value="tomate">🍅 Tomate</option>
+                <option value="verde">🔋 Verde Fosfo</option>
+                <option value="estandar">⚪ Estándar Clásico</option>
+            </select>
+        </div>
+
+        <div class="dashboard-stats">
+            <div class="stat-card"><i class="fas fa-bell color-new"></i><span id="count-nuevos">0</span><p>Nuevos</p></div>
+            <div class="stat-card"><i class="fas fa-hammer color-proc"></i><span id="count-proceso">0</span><p>Proceso</p></div>
+            <div class="stat-card"><i class="fas fa-check-circle color-ready"></i><span id="count-listos">0</span><p>Listos</p></div>
+        </div>
+
+        <div class="grid-container">
+            <a href="local.html" class="card-jadi">
+                <i class="fas fa-store"></i>
+                <h3>Mi Local</h3>
+            </a>
+            <a href="inventario.html" class="card-jadi">
+                <i class="fas fa-boxes-stacked"></i>
+                <h3>Inventarios</h3>
+            </a>
+            <a href="clientes.html" class="card-jadi">
+                <i class="fas fa-address-book"></i>
+                <h3>Clientes</h3>
+            </a>
+            <a href="trabajos.html" class="card-jadi">
+                <i class="fas fa-tools"></i>
+                <h3>Trabajos</h3>
+            </a>
+        </div>
+
+        <div class="system-badge">
+            <i class="fas fa-shield-halved" style="color: var(--gold);"></i> <strong>SISTEMA J.A.D.I ACTIVO</strong>
+            <div style="font-size: 11px; margin-top: 6px;">Monitoreo en tiempo real de <span id="local-footer" style="color: var(--text-main);">...</span></div>
+        </div>
+
+        <div style="text-align: center;">
+            <a href="#" id="logout-trigger" class="btn-logout">
+                <i class="fas fa-power-off"></i> Cerrar Sesión Maestra
+            </a>
         </div>
     </div>
-
-    <div id="modalSolicitud" class="modal">
-        <div class="modal-content">
-            <i class="fas fa-times close-modal" onclick="cerrarModal()"></i>
-            <h3 style="color: var(--gold); margin-top: 0;">Detalle de Solicitud</h3>
-            <hr style="border: 0; border-top: 1px solid #333; margin: 15px 0;">
-            <div id="detalleItems" style="font-size: 14px; line-height: 2;">
-                1, zapatilla, coser al ruedo<br>
-                1, mochila, cambio de cierre<br>
-                1, guante de box, coser
-            </div>
-            <button onclick="aceptarSolicitud()" style="width: 100%; background: var(--gold); border: none; padding: 12px; margin-top: 20px; border-radius: 8px; font-weight: bold; cursor: pointer;">ACEPTAR TRABAJO</button>
-        </div>
-    </div>
-
-    <a href="nueva_orden.html" class="btn-add">
-        <i class="fas fa-plus"></i>
-    </a>
 
     <script>
-        // Aplicar estilo visual guardado
+        const firebaseConfig = { databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com" };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
         window.onload = function() {
-            const tema = localStorage.getItem('jadi_tema_preferido') || 'elegante';
-            if(typeof JadiEstilo !== 'undefined') JadiEstilo.aplicar(tema);
+            // 1. CARGAR SESIÓN Y SEGURIDAD (Tu lógica corregida)
+            const session = JSON.parse(localStorage.getItem('session_jadi'));
+            
+            if (session && (session.rolCodigo === 'zapatero' || session.rolCodigo === 'ADM' || session.rol === 'zapatero' || session.rol === 'ADM')) {
+                
+                document.getElementById('display-nombre').innerText = (session.rolCodigo === 'ADM' ? "Admin " : "Maestro ") + (session.nombre || "Jadi");
+                document.getElementById('header-user-name').innerText = (session.nombre || "Usuario").split(' ')[0]; // Solo primer nombre
+                document.getElementById('display-id').innerText = "ID: " + (session.uid || "ZPT-PRO");
+                document.getElementById('display-local').innerText = session.empresaNombre || "Local Independiente";
+                document.getElementById('local-footer').innerText = session.empresaNombre || "Sucursal Principal";
+                
+                if(session.foto) document.getElementById('user-photo').src = session.foto;
+
+                actualizarEstadisticas(session.uid);
+            } else {
+                window.location.href = "/index.html";
+            }
+
+            // 2. APLICAR ESTILO VISUAL
+            const temaActual = localStorage.getItem('jadi_tema_preferido') || 'elegante';
+            document.getElementById('selector-tema').value = temaActual;
+            // Solo llamamos si el script externo cargó bien
+            if(typeof JadiEstilo !== 'undefined') JadiEstilo.aplicar(temaActual);
+        };
+
+        function cambiarApariencia(color) {
+            if(typeof JadiEstilo !== 'undefined') {
+                JadiEstilo.aplicar(color);
+                localStorage.setItem('jadi_tema_preferido', color);
+            }
         }
 
-        // Funciones del Modal
-        function abrirDetalleSolicitud() {
-            document.getElementById('modalSolicitud').style.display = 'flex';
+        function actualizarEstadisticas(uid) {
+            db.ref('trabajos').orderByChild('maestroId').equalTo(uid).on('value', snap => {
+                let n = 0, p = 0, l = 0;
+                snap.forEach(c => {
+                    const est = c.val().estado;
+                    if(est === 'Recibido' || est === 'Nuevo') n++;
+                    else if(est === 'En Proceso') p++;
+                    else if(est === 'Listo') l++;
+                });
+                document.getElementById('count-nuevos').innerText = n;
+                document.getElementById('count-proceso').innerText = p;
+                document.getElementById('count-listos').innerText = l;
+            });
         }
 
-        function cerrarModal() {
-            document.getElementById('modalSolicitud').style.display = 'none';
-        }
-
-        function aceptarSolicitud() {
-            alert("Solicitud aceptada. Se moverá a Trabajos Local.");
-            cerrarModal();
-        }
-
-        // Cierra el modal si se hace clic fuera de la caja
-        window.onclick = function(event) {
-            const modal = document.getElementById('modalSolicitud');
-            if (event.target == modal) cerrarModal();
-        }
+        document.getElementById('logout-trigger').onclick = function(e) {
+            e.preventDefault();
+            if(confirm("¿Cerrar sesión maestra?")) {
+                localStorage.removeItem('session_jadi');
+                window.location.href = "/index.html";
+            }
+        };
     </script>
-
 </body>
 </html>
