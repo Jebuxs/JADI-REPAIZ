@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Trabajos - J.A.D.I REPAIZ</title>
+
+    <script src="/js/estilo_visual.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <style>
+        :root { --gold: #fbc02d; --dark-card: #111; }
+        body { margin: 0; background: #000; color: white; font-family: 'Segoe UI', sans-serif; padding-bottom: 80px; }
+        
+        /* HEADER */
+        .header { 
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 15px; border-bottom: 1px solid var(--gold); background: #050505;
+            position: sticky; top: 0; z-index: 100;
+        }
+        .header i { font-size: 20px; color: var(--gold); cursor: pointer; }
+
+        /* PANEL BUSQUEDA */
+        .search-container { padding: 15px; background: #0a0a0a; }
+        .search-box { 
+            display: flex; gap: 10px; margin-bottom: 10px; 
+        }
+        .search-box input, .search-box data { 
+            flex: 1; padding: 10px; background: #1a1a1a; border: 1px solid #333; color: white; border-radius: 8px; font-size: 13px;
+        }
+
+        /* SECCIONES */
+        .section-title { 
+            padding: 10px 15px; font-size: 12px; color: var(--gold); 
+            text-transform: uppercase; letter-spacing: 2px; font-weight: bold; background: #0f0f0f;
+        }
+
+        /* TARJETAS DE TRABAJO LOCAL */
+        .card-trabajo {
+            background: var(--dark-card); margin: 10px 15px; padding: 15px; 
+            border-radius: 12px; border: 1px solid #222; position: relative;
+        }
+        .card-actions { position: absolute; top: 15px; right: 15px; display: flex; gap: 12px; }
+        .card-actions i { color: var(--gold); font-size: 16px; cursor: pointer; }
+        
+        .info-main { font-weight: bold; font-size: 15px; margin-bottom: 5px; }
+        .info-sub { font-size: 12px; color: #888; }
+        .info-money { display: flex; gap: 15px; margin-top: 10px; font-size: 13px; }
+        .total { color: #fff; }
+        .saldo { color: #ff4d4d; font-weight: bold; }
+
+        /* ESTADOS */
+        .status-container { display: flex; gap: 5px; margin-top: 12px; }
+        .status-btn { 
+            flex: 1; font-size: 9px; padding: 5px; border-radius: 5px; 
+            border: 1px solid #333; text-align: center; color: #555; cursor: pointer;
+        }
+        .status-btn.active { border-color: var(--gold); color: var(--gold); background: rgba(252, 192, 45, 0.1); }
+
+        /* SOLICITUDES CLIENTE */
+        .card-solicitud {
+            background: #111; border-left: 4px solid var(--gold);
+            margin: 10px 15px; padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;
+        }
+
+        /* VENTANA EMERGENTE */
+        .modal { 
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center; 
+        }
+        .modal-content { 
+            background: #1a1a1a; width: 85%; max-width: 400px; padding: 20px; border-radius: 15px; border: 1px solid var(--gold);
+        }
+        .close-modal { float: right; color: #666; font-size: 20px; cursor: pointer; }
+
+        /* BOTON FLOTANTE */
+        .btn-add {
+            position: fixed; bottom: 25px; right: 25px; 
+            background: var(--gold); width: 55px; height: 55px; 
+            border-radius: 50%; display: flex; justify-content: center; align-items: center;
+            box-shadow: 0 4px 15px rgba(251, 192, 45, 0.4); text-decoration: none;
+        }
+        .btn-add i { color: black; font-size: 24px; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <i class="fas fa-arrow-left" onclick="location.href='dashboard.html'"></i>
+        <span style="font-weight: bold; letter-spacing: 2px;">GESTIÓN DE TRABAJOS</span>
+        <i class="fas fa-sync-alt" onclick="location.reload()"></i>
+    </div>
+
+    <div class="search-container">
+        <div class="search-box">
+            <input type="text" id="inputBusqueda" placeholder="Buscar por CI, Celular o ID...">
+        </div>
+        <div class="search-box">
+            <input type="date" id="filterFecha">
+        </div>
+    </div>
+
+    <div class="section-title">Grupo Trabajos Local</div>
+    <div id="contenedorTrabajos">
+        <div class="card-trabajo">
+            <div class="card-actions">
+                <i class="fas fa-file-invoice" onclick="location.href='facturar.html'"></i>
+                <i class="fas fa-comment-dots" onclick="location.href='chat.html'"></i>
+                <i class="fas fa-edit" onclick="location.href='editar.html'"></i>
+            </div>
+            <div class="info-main">Juan Perez</div>
+            <div class="info-sub">ID: CLN000234 | Calzado</div>
+            <div class="info-money">
+                <span class="total">Total: $25.00</span>
+                <span class="saldo">Saldo: $10.00</span>
+            </div>
+            <div class="status-container">
+                <div class="status-btn active">RECIBIDO</div>
+                <div class="status-btn">EN PROCESO</div>
+                <div class="status-btn">FINALIZADO</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section-title">Solicitudes de Clientes</div>
+    <div id="contenedorSolicitudes">
+        <div class="card-solicitud" onclick="abrirDetalleSolicitud()">
+            <div>
+                <div style="font-weight: bold;">Maria Garcia</div>
+                <div style="font-size: 10px; color: #666;"><i class="fas fa-map-marker-alt"></i> a 1.2 km</div>
+            </div>
+            <div style="text-align: right;">
+                <span style="background: #222; padding: 4px 10px; border-radius: 20px; font-size: 11px;">3 Objetos</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalSolicitud" class="modal">
+        <div class="modal-content">
+            <i class="fas fa-times close-modal" onclick="cerrarModal()"></i>
+            <h3 style="color: var(--gold); margin-top: 0;">Detalle de Solicitud</h3>
+            <hr style="border: 0; border-top: 1px solid #333; margin: 15px 0;">
+            <div id="detalleItems" style="font-size: 14px; line-height: 2;">
+                1, zapatilla, coser al ruedo<br>
+                1, mochila, cambio de cierre<br>
+                1, guante de box, coser
+            </div>
+            <button onclick="aceptarSolicitud()" style="width: 100%; background: var(--gold); border: none; padding: 12px; margin-top: 20px; border-radius: 8px; font-weight: bold; cursor: pointer;">ACEPTAR TRABAJO</button>
+        </div>
+    </div>
+
+    <a href="nueva_orden.html" class="btn-add">
+        <i class="fas fa-plus"></i>
+    </a>
+
+    <script>
+        // Aplicar estilo visual guardado
+        window.onload = function() {
+            const tema = localStorage.getItem('jadi_tema_preferido') || 'elegante';
+            if(typeof JadiEstilo !== 'undefined') JadiEstilo.aplicar(tema);
+        }
+
+        // Funciones del Modal
+        function abrirDetalleSolicitud() {
+            document.getElementById('modalSolicitud').style.display = 'flex';
+        }
+
+        function cerrarModal() {
+            document.getElementById('modalSolicitud').style.display = 'none';
+        }
+
+        function aceptarSolicitud() {
+            alert("Solicitud aceptada. Se moverá a Trabajos Local.");
+            cerrarModal();
+        }
+
+        // Cierra el modal si se hace clic fuera de la caja
+        window.onclick = function(event) {
+            const modal = document.getElementById('modalSolicitud');
+            if (event.target == modal) cerrarModal();
+        }
+    </script>
+
+</body>
+</html>
