@@ -3,126 +3,156 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>J.A.D.I REPAIZ - Dashboard</title>
+    <title>Panel de Cliente - J.A.D.I REPAIZ</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <style>
-        :root { --gold: #fbc02d; --dark: #000; --card-bg: #111; }
+        :root { --gold: #fbc02d; --dark: #000; --card: #111; }
+        
+        /* I. Estructura Visual: Minimalista Premium */
         body { 
-            background: var(--dark); color: white; 
-            font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; 
-            display: flex; flex-direction: column; min-height: 100vh; 
+            background: var(--dark); 
+            color: white; 
+            font-family: 'Segoe UI', sans-serif; 
+            margin: 0; 
+            padding: 20px; 
+            text-align: center; 
         }
 
-        /* I. Cabecera de Bienvenida */
-        header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; }
-        .welcome-box p { margin: 0; font-size: 0.8rem; color: #888; }
-        #client-name { margin: 5px 0 0 0; color: var(--gold); font-size: 1.3rem; }
+        /* II. Cabecera de Bienvenida (Header) */
+        header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            border-bottom: 2px solid var(--gold); 
+            padding-bottom: 15px; 
+            margin-bottom: 40px; 
+            text-align: left; 
+        }
+        .user-meta p { margin: 0; font-size: 0.8rem; color: #666; }
+        .user-meta h2 { margin: 0; color: var(--gold); font-size: 1.2rem; } /* Identidad dinámica en Dorado */
 
         .avatar-btn { 
-            background: none; border: none; color: #555; font-size: 2rem; 
-            cursor: pointer; transition: 0.3s; 
+            background: none; 
+            border: none; 
+            cursor: pointer; 
+            padding: 0; 
+            color: #333; 
+            transition: 0.3s;
         }
         .avatar-btn:hover { color: var(--gold); }
 
-        /* II. Cuerpo Principal - Tarjetas Redondeadas 20px */
-        .menu-grid { 
-            display: flex; flex-direction: column; gap: 20px; 
-            max-width: 450px; margin: auto; width: 100%; 
+        /* III. Cuerpo Principal: Tarjetas con esquinas 20px */
+        .client-grid { 
+            display: grid; 
+            grid-template-columns: 1fr; 
+            gap: 20px; 
+            max-width: 400px; 
+            margin: 0 auto; 
         }
+        
         .menu-card { 
-            background: var(--card-bg); border-radius: 20px; padding: 40px 20px; 
-            text-align: center; cursor: pointer; transition: 0.3s; 
+            background: var(--card); 
             border: 1px solid #222; 
+            border-radius: 20px; 
+            padding: 35px 20px; 
+            cursor: pointer; 
+            transition: 0.3s; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            gap: 15px; 
         }
-        .menu-card i { font-size: 2.8rem; margin-bottom: 15px; }
-        .menu-card h3 { margin: 10px 0; letter-spacing: 2px; font-weight: 800; }
-        .menu-card p { margin: 0; font-size: 0.85rem; color: #666; }
+        .menu-card:hover { border-color: var(--gold); transform: translateY(-5px); background: #151515; }
+        
+        .menu-card i { font-size: 3rem; }
+        .menu-card h3 { margin: 0; font-size: 1.2rem; letter-spacing: 1px; }
+        .menu-card p { margin: 0; font-size: 0.85rem; color: #777; }
 
-        /* III. Pie de Página */
-        footer { padding: 30px 0; text-align: center; }
+        /* IV. Pie de Página */
         .btn-logout { 
-            background: none; border: 1px solid #333; color: #444; 
-            padding: 10px 25px; border-radius: 8px; cursor: pointer; 
+            margin-top: 50px; 
+            background: none; 
+            border: 1px solid #333; 
+            color: #555; 
+            padding: 10px 20px; 
+            border-radius: 8px; 
+            cursor: pointer; 
         }
     </style>
 </head>
 <body>
 
-    <header>
-        <div class="welcome-box">
-            <p>Bienvenido a JADI REPAIZ</p> [cite: 2]
-            <h2 id="client-name">Cargando...</h2> [cite: 3, 15]
-        </div>
-        <button class="avatar-btn" onclick="navegarPerfil()">
-            <i class="fas fa-user-circle"></i> [cite: 4]
-        </button>
-    </header>
+<header>
+    <div class="user-meta">
+        <p>Bienvenido a J.A.D.I REPAIZ</p> <h2 id="client-name">Cargando...</h2> </div>
+    <button class="avatar-btn" onclick="irAlPerfil()">
+        <i class="fas fa-user-circle fa-2x"></i>
+    </button>
+</header>
 
-    <main class="menu-grid">
-        <div class="menu-card" id="card-tiendas" onclick="navegar('tiendas.html')">
-            <i class="fas fa-store" id="icon-tiendas"></i>
-            <h3 id="title-tiendas">TIENDAS</h3> [cite: 7]
-            <p>Ver locales y comprar productos</p> [cite: 8]
-        </div>
+<div class="client-grid">
+    <div class="menu-card" id="card-tiendas" onclick="navegar('tiendas.html')">
+        <i class="fas fa-store" id="icon-tiendas" style="color: #e91e63;"></i>
+        <h3 id="title-tiendas">TIENDAS</h3>
+        <p>Ver locales y comprar productos</p> </div>
 
-        <div class="menu-card" id="card-reparaciones" onclick="navegar('reparar.html')">
-            <i class="fas fa-tools" id="icon-reparaciones"></i>
-            <h3 id="title-reparaciones">REPARACIONES</h3> [cite: 9]
-            <p>Solicitar nueva o ver seguimiento</p>
-        </div>
-    </main>
+    <div class="menu-card" id="card-reparaciones" onclick="navegar('reparar.html')">
+        <i class="fas fa-tools" id="icon-reparaciones" style="color: #2196f3;"></i>
+        <h3 id="title-reparaciones">REPARACIONES</h3>
+        <p>Solicitar nueva o ver seguimiento</p> </div>
+</div>
 
-    <footer>
-        <button class="btn-logout" id="btn-logout" onclick="cerrarSesion()">Cerrar Sesión</button> [cite: 10, 18]
-    </footer>
+<button class="btn-logout" id="btn-logout" onclick="cerrarSesion()">Cerrar Sesión</button> <script>
+    // V. Gestión de Sesión (Seguridad) [cite: 11, 12]
+    const session = JSON.parse(localStorage.getItem('session_jadi'));
 
-    <script>
-        // VI. Gestión de Sesión
-        const session = JSON.parse(localStorage.getItem('session_jadi')); [cite: 12]
-
-        function init() {
-            if (!session) {
-                window.location.href = "../../index.html"; [cite: 13]
-                return;
-            }
-
-            // Acceso solo para CLN y ADM
-            const rolesValidos = ['CLN', 'ADM']; [cite: 14]
-            if (!rolesValidos.includes(session.rolCodigo)) {
-                cerrarSesion();
-                return;
-            }
-
-            // VII. Personalización Dinámica
-            document.getElementById('client-name').innerText = session.nombre || "Usuario"; [cite: 15]
-            
-            // Cargar estilos visuales si la función existe en estilo_visual.js
-            if (typeof aplicarEstiloVisual === 'function') {
-                aplicarEstiloVisual();
-            }
+    function init() {
+        // Redirección si no hay sesión [cite: 13]
+        if(!session) { 
+            window.location.href = "index.html"; 
+            return; 
         }
 
-        // VII. Sistema de Navegación a carpetas public/clientes
-        function navegar(archivo) {
-            window.location.href = `../clientes/${archivo}`; [cite: 17, 18]
+        // Validación de Roles (ADM y CLN) 
+        const rolesPermitidos = ['CLN', 'ADM'];
+        if (!rolesPermitidos.includes(session.rolCodigo) && session.tipo !== "CLIENTE") {
+            cerrarSesion();
+            return;
         }
 
-        function navegarPerfil() {
-            window.location.href = "perfil.html"; [cite: 5]
+        // Inyectar nombre dinámico [cite: 3, 15]
+        document.getElementById('client-name').innerText = session.nombre;
+        
+        // Cargar estilos dinámicos [cite: 5]
+        if (typeof aplicarEstiloVisual === 'function') {
+            aplicarEstiloVisual();
         }
+    }
 
-        // VIII. Finalización de Sesión
-        function cerrarSesion() {
-            localStorage.removeItem('session_jadi'); [cite: 18]
-            window.location.href = "../../index.html"; [cite: 18]
-        }
+    // VI. Sistema de Navegación [cite: 16]
+    function navegar(pagina) {
+        // Ruta hacia public/clientes 
+        window.location.href = pagina; 
+    }
 
-        window.onload = init;
-    </script>
-    
-    <script src="../js/estilo_visual.js"></script> [cite: 5, 19]
+    function irAlPerfil() {
+        // Ruta hacia perfil.html en public/clientes [cite: 5]
+        window.location.href = "perfil.html"; 
+    }
+
+    // VII. Finalización de Sesión [cite: 18]
+    function cerrarSesion() {
+        localStorage.removeItem('session_jadi'); // Borrar datos [cite: 18]
+        window.location.href = "index.html"; // Redirigir al inicio [cite: 18]
+    }
+
+    // Ejecutar al cargar la página
+    window.onload = init;
+</script>
+
+<script src="../js/estilo_visual.js"></script>
 </body>
 </html>
