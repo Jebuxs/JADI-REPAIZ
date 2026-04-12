@@ -123,12 +123,12 @@
 
     <div class="section-title">Grupo Trabajos Local</div>
     <div class="scroll-area" id="listaTrabajos">
-        <p style="text-align: center; color: #333; padding: 20px;">Cargando trabajos...</p>
+        <p style="text-align: center; color: #333; padding: 20px;">Cargando inventario local...</p>
     </div>
 
     <div class="section-title">Solicitudes de Reparación</div>
     <div id="listaSolicitudes">
-        <p style="text-align: center; color: #333; padding: 20px;">Buscando solicitudes...</p>
+        <p style="text-align: center; color: #333; padding: 20px;">Buscando órdenes pendientes...</p>
     </div>
 
     <div id="modalDetalle" class="modal">
@@ -152,83 +152,97 @@
         window.onload = function() {
             const tema = localStorage.getItem('jadi_tema_preferido') || 'elegante';
             if(typeof JadiEstilo !== 'undefined') JadiEstilo.aplicar(tema);
-            escucharOrdenes();
+            
+            // CARGA DE LAS DOS CARPETAS DIFERENTES
+            escucharTrabajosLocal();
+            escucharOrdenesPendientes();
         };
 
-        function escucharOrdenes() {
-            db.ref('ordenes').on('value', snap => {
-                const contTrabajos = document.getElementById('listaTrabajos');
-                const contSolicitudes = document.getElementById('listaSolicitudes');
+        // 1. LÓGICA PARA CARPETA 'trabajos' (EL LOCAL)
+        function escucharTrabajosLocal() {
+            db.ref('trabajos').on('value', snap => {
+                const cont = document.getElementById('listaTrabajos');
+                cont.innerHTML = "";
                 
-                contTrabajos.innerHTML = "";
-                contSolicitudes.innerHTML = "";
-                
-                let haySolicitudes = false;
-
                 snap.forEach(child => {
                     const o = child.val();
                     const id = child.key;
-                    const fechaOrden = o.fecha || ""; 
-
-                    if(o.status !== 'Pendiente') {
-                        // SECCIÓN TRABAJOS LOCALES
-                        contTrabajos.innerHTML += `
-                            <div class="card-trabajo" data-search="${o.cliente.nombre} ${id} ${o.cliente.telefono} ${o.totales.cobrado}" data-fecha="${fechaOrden}">
-                                <div class="card-header">
-                                    <div class="client-info">
-                                        <h3>${o.cliente.nombre}</h3>
-                                        <span>ID: ${id}</span>
-                                    </div>
-                                    <div class="actions">
-                                        <i class="fas fa-file-invoice icon-bill" onclick="location.href='facturar.html?id=${id}'"></i>
-                                        <i class="fas fa-comment-dots icon-chat" onclick="location.href='chat.html?id=${o.cliente.uid}'"></i>
-                                        <i class="fas fa-edit icon-edit" onclick="location.href='editar.html?id=${id}'"></i>
-                                    </div>
+                    // Mantenemos tu estructura original de la carpeta 'trabajos'
+                    cont.innerHTML += `
+                        <div class="card-trabajo" data-search="${o.cliente} ${id} ${o.telefono} ${o.precioTotal}" data-fecha="${o.fecha || ''}">
+                            <div class="card-header">
+                                <div class="client-info">
+                                    <h3>${o.cliente}</h3>
+                                    <span>ID: ${id}</span>
                                 </div>
-                                <div class="money-box">
-                                    Total: <b>$${(o.totales.cobrado || 0).toFixed(2)}</b> | Saldo: <b style="color:#FF5252">$${(o.totales.saldo || 0).toFixed(2)}</b>
-                                </div>
-                                <div class="status-row">
-                                    <div class="status-btn ${o.status === 'Recibido' ? 'active' : ''}" onclick="updateEstado('${id}','Recibido')">Recibido</div>
-                                    <div class="status-btn ${o.status === 'En Proceso' ? 'active' : ''}" onclick="updateEstado('${id}','En Proceso')">En Proceso</div>
-                                    <div class="status-btn ${o.status === 'Terminado' ? 'active' : ''}" onclick="updateEstado('${id}','Terminado')">Finalizado</div>
+                                <div class="actions">
+                                    <i class="fas fa-file-invoice icon-bill" onclick="location.href='facturar.html?id=${id}'"></i>
+                                    <i class="fas fa-comment-dots icon-chat" onclick="location.href='chat.html?id=${o.clienteId}'"></i>
+                                    <i class="fas fa-edit icon-edit" onclick="location.href='editar.html?id=${id}'"></i>
                                 </div>
                             </div>
-                        `;
-                    } else {
-                        // SECCIÓN SOLICITUDES CLIENTE (PENDIENTES)
-                        haySolicitudes = true;
-                        const detalleResumen = o.trabajos ? o.trabajos.map(t => t.detalle).join(', ') : "Sin detalles";
-                        
-                        contSolicitudes.innerHTML += `
-                            <div class="card-solicitud" onclick="abrirModal('${detalleResumen}', '${id}')">
-                                <div>
-                                    <b style="font-size:14px;">${o.cliente.nombre}</b><br>
-                                    <small style="color:#666"><i class="fas fa-map-marker-alt"></i> a ${o.distancia || '0.5'} km</small>
-                                </div>
-                                <div style="text-align:right">
-                                    <span style="color:var(--gold); font-weight:800">${o.trabajos ? o.trabajos.length : 1} Items</span>
-                                </div>
+                            <div class="money-box">
+                                Total: <b>$${o.precioTotal}</b> | Saldo: <b style="color:#FF5252">$${o.saldo}</b>
                             </div>
-                        `;
-                    }
+                            <div class="status-row">
+                                <div class="status-btn ${o.estado === 'Recibido' ? 'active' : ''}" onclick="updateEstadoLocal('${id}','Recibido')">Recibido</div>
+                                <div class="status-btn ${o.estado === 'En Proceso' ? 'active' : ''}" onclick="updateEstadoLocal('${id}','En Proceso')">En Proceso</div>
+                                <div class="status-btn ${o.estado === 'Listo' || o.estado === 'Finalizado' ? 'active' : ''}" onclick="updateEstadoLocal('${id}','Listo')">Finalizado</div>
+                            </div>
+                        </div>
+                    `;
                 });
-
-                if(!haySolicitudes) contSolicitudes.innerHTML = "<p style='text-align: center; color: #333; padding: 20px;'>No hay solicitudes nuevas</p>";
             });
         }
 
-        function updateEstado(id, nuevo) {
-            db.ref('ordenes/' + id).update({ status: nuevo });
+        // 2. LÓGICA PARA CARPETA 'ordenes' (SOLICITUDES EXTERNAS)
+        function escucharOrdenesPendientes() {
+            // Filtramos solo las que tienen status 'Pendiente' en la carpeta 'ordenes'
+            db.ref('ordenes').orderByChild('status').equalTo('Pendiente').on('value', snap => {
+                const cont = document.getElementById('listaSolicitudes');
+                cont.innerHTML = "";
+                
+                let hayPendientes = false;
+                snap.forEach(child => {
+                    hayPendientes = true;
+                    const o = child.val();
+                    const id = child.key;
+                    // Estructura de 'ordenes' según tus capturas (cliente.nombre)
+                    const nombre = (o.cliente && o.cliente.nombre) ? o.cliente.nombre : "Sin nombre";
+                    const detalle = (o.trabajos && o.trabajos[0]) ? o.trabajos[0].detalle : "Sin detalle";
+
+                    cont.innerHTML += `
+                        <div class="card-solicitud" onclick="abrirModalSolicitud('${detalle}', '${id}')">
+                            <div>
+                                <b style="font-size:14px;">${nombre}</b><br>
+                                <small style="color:#666"><i class="fas fa-map-marker-alt"></i> a ${o.distancia || '0.5'} km</small>
+                            </div>
+                            <div style="text-align:right">
+                                <span style="color:var(--gold); font-weight:800">${o.trabajos ? o.trabajos.length : 1} Items</span>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                if(!hayPendientes) {
+                    cont.innerHTML = "<p style='text-align: center; color: #333; padding: 20px; font-size: 11px;'>No hay órdenes pendientes en este momento</p>";
+                }
+            });
         }
 
-        function abrirModal(detalle, id) {
+        function updateEstadoLocal(id, nuevo) {
+            db.ref('trabajos/' + id).update({ estado: nuevo });
+        }
+
+        function abrirModalSolicitud(detalle, id) {
             document.getElementById('contenidoDetalle').innerText = detalle;
             document.getElementById('modalDetalle').style.display = 'flex';
             
+            // Si aceptas la orden, puedes decidir si moverla a 'trabajos' o solo cambiar status en 'ordenes'
             document.getElementById('btnAceptar').onclick = function() {
-                updateEstado(id, 'Recibido');
+                db.ref('ordenes/' + id).update({ status: 'Aceptado' });
                 cerrarModal();
+                alert("Orden Aceptada");
             };
         }
 
@@ -236,21 +250,19 @@
 
         function filtrarTodo() {
             const txt = document.getElementById('globalSearch').value.toLowerCase();
-            const fechaFiltro = document.getElementById('filterFecha').value; // Formato YYYY-MM-DD
+            const fechaFiltro = document.getElementById('filterFecha').value;
             const cards = document.querySelectorAll('.card-trabajo');
 
             cards.forEach(c => {
                 const infoBusqueda = c.getAttribute('data-search').toLowerCase();
-                const fechaCard = c.getAttribute('data-fecha'); // Esperado "D/M/YYYY" según captura
+                const fechaCard = c.getAttribute('data-fecha'); 
                 
                 let coincideFecha = true;
                 if(fechaFiltro) {
-                    // Convertimos fechaFiltro (2026-04-12) a formato (12/4/2026) para comparar
                     const partes = fechaFiltro.split('-');
-                    const fechaFormateada = `${parseInt(partes[2])}/${parseInt(partes[1])}/${partes[0]}`;
-                    coincideFecha = (fechaCard === fechaFormateada);
+                    const fComp = `${parseInt(partes[2])}/${parseInt(partes[1])}/${partes[0]}`;
+                    coincideFecha = (fechaCard === fComp);
                 }
-
                 const coincideTxt = infoBusqueda.includes(txt);
                 c.style.display = (coincideTxt && coincideFecha) ? "block" : "none";
             });
