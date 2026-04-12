@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perfil de Usuario - J.A.D.I REPAIZ</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        :root { --gold: #fbc02d; --dark: #000; --card-bg: #111; --input-bg: #1a1a1a; }
+        body { 
+            background: var(--dark); color: white; 
+            font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; 
+            display: flex; flex-direction: column; align-items: center; min-height: 100vh;
+        }
+
+        /* Header Estilo Facebook */
+        .profile-header { width: 100%; height: 150px; background: linear-gradient(to bottom, #222, #000); position: relative; border-bottom: 2px solid var(--gold); }
+        .avatar-container { position: absolute; bottom: -50px; left: 50%; transform: translateX(-50%); }
+        .avatar-container i { font-size: 100px; color: #444; background: var(--dark); border-radius: 50%; border: 4px solid var(--gold); }
+
+        /* Contenido del Perfil */
+        .profile-content { margin-top: 70px; width: 90%; max-width: 450px; text-align: center; }
+        .user-id-badge { font-size: 0.7rem; color: var(--gold); background: #332b00; padding: 5px 12px; border-radius: 20px; display: inline-block; margin-bottom: 20px; border: 1px solid var(--gold); }
+
+        .form-group { text-align: left; margin-bottom: 20px; }
+        .form-group label { display: block; font-size: 0.8rem; color: #888; margin-bottom: 8px; margin-left: 10px; }
+        .form-group input { 
+            width: 100%; background: var(--input-bg); border: 1px solid #333; 
+            padding: 15px; border-radius: 15px; color: white; font-size: 1rem; box-sizing: border-box;
+        }
+        .form-group input:focus { border-color: var(--gold); outline: none; }
+
+        /* Botones */
+        .btn-save { 
+            width: 100%; background: var(--gold); color: black; border: none; 
+            padding: 15px; border-radius: 15px; font-weight: bold; cursor: pointer; 
+            margin-top: 20px; transition: 0.3s; font-size: 1rem;
+        }
+        .btn-save:hover { transform: scale(1.02); background: #ffd600; }
+        
+        .btn-back { background: none; border: 1px solid #333; color: #666; padding: 10px; width: 100%; border-radius: 15px; margin-top: 15px; cursor: pointer; }
+
+        #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 1000; }
+    </style>
+</head>
+<body>
+
+    <div id="loader">
+        <i class="fas fa-spinner fa-spin fa-3x" style="color: var(--gold);"></i>
+    </div>
+
+    <div class="profile-header"></div>
+
+    <div class="avatar-container">
+        <i class="fas fa-user-circle"></i>
+    </div>
+
+    <div class="profile-content">
+        <span class="user-id-badge" id="p-uid">ID: CARGANDO...</span>
+        <h3 id="p-rol-texto" style="margin: 0; color: #888; font-size: 0.9rem; text-transform: uppercase;">ROL</h3>
+
+        <div class="form-group">
+            <label>NOMBRE COMPLETO</label>
+            <input type="text" id="p-nombre" placeholder="Tu nombre">
+        </div>
+
+        <div class="form-group">
+            <label>TELÉFONO / WHATSAPP</label>
+            <input type="text" id="p-telefono" placeholder="Ej: 0987654321">
+        </div>
+
+        <div class="form-group">
+            <label>CORREO ELECTRÓNICO (No editable)</label>
+            <input type="email" id="p-email" readonly style="color: #555; border-color: #222;">
+        </div>
+
+        <div id="seccion-empresa" style="display: none;">
+            <div class="form-group">
+                <label>NOMBRE DEL LOCAL / EMPRESA</label>
+                <input type="text" id="p-empresa">
+            </div>
+        </div>
+
+        <button class="btn-save" onclick="guardarCambios()">GUARDAR CAMBIOS</button>
+        <button class="btn-back" onclick="window.history.back()">VOLVER</button>
+    </div>
+
+    <script src="../js/perfil.js"></script>
+
+</body>
+</html>
