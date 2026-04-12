@@ -11,7 +11,6 @@
     <style>
         :root { --gold: #fbc02d; --dark: #000; --card: #111; }
         
-        /* I. Estructura Visual: Minimalista Premium */
         body { 
             background: var(--dark); 
             color: white; 
@@ -21,7 +20,7 @@
             text-align: center; 
         }
 
-        /* II. Cabecera de Bienvenida (Header) */
+        /* I. Cabecera con Selector de Estilos */
         header { 
             display: flex; 
             justify-content: space-between; 
@@ -31,8 +30,20 @@
             margin-bottom: 40px; 
             text-align: left; 
         }
+        .user-meta h2 { margin: 0; color: var(--gold); font-size: 1.2rem; }
         .user-meta p { margin: 0; font-size: 0.8rem; color: #666; }
-        .user-meta h2 { margin: 0; color: var(--gold); font-size: 1.2rem; } /* Identidad dinámica en Dorado */
+
+        /* II. Selector de Estilo Visual */
+        .style-selector {
+            background: #1a1a1a;
+            color: var(--gold);
+            border: 1px solid #333;
+            padding: 5px 10px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            outline: none;
+        }
 
         .avatar-btn { 
             background: none; 
@@ -44,7 +55,7 @@
         }
         .avatar-btn:hover { color: var(--gold); }
 
-        /* III. Cuerpo Principal: Tarjetas con esquinas 20px */
+        /* III. Cuerpo Principal */
         .client-grid { 
             display: grid; 
             grid-template-columns: 1fr; 
@@ -66,12 +77,10 @@
             gap: 15px; 
         }
         .menu-card:hover { border-color: var(--gold); transform: translateY(-5px); background: #151515; }
-        
         .menu-card i { font-size: 3rem; }
         .menu-card h3 { margin: 0; font-size: 1.2rem; letter-spacing: 1px; }
         .menu-card p { margin: 0; font-size: 0.85rem; color: #777; }
 
-        /* IV. Pie de Página */
         .btn-logout { 
             margin-top: 50px; 
             background: none; 
@@ -87,7 +96,17 @@
 
 <header>
     <div class="user-meta">
-        <p>Bienvenido a J.A.D.I REPAIZ</p> <h2 id="client-name">Cargando...</h2> </div>
+        <p>Bienvenido a J.A.D.I REPAIZ</p>
+        <h2 id="client-name">Cargando...</h2>
+    </div>
+
+    <select class="style-selector" id="theme-selector" onchange="cambiarTemaManual(this.value)">
+        <option value="default">Estilo Dorado (Default)</option>
+        <option value="ocean">Estilo Azul Océano</option>
+        <option value="rose">Estilo Rosa Neón</option>
+        <option value="emerald">Estilo Esmeralda</option>
+    </select>
+
     <button class="avatar-btn" onclick="irAlPerfil()">
         <i class="fas fa-user-circle fa-2x"></i>
     </button>
@@ -97,59 +116,65 @@
     <div class="menu-card" id="card-tiendas" onclick="navegar('tiendas.html')">
         <i class="fas fa-store" id="icon-tiendas" style="color: #e91e63;"></i>
         <h3 id="title-tiendas">TIENDAS</h3>
-        <p>Ver locales y comprar productos</p> </div>
+        <p>Ver locales y comprar productos</p>
+    </div>
 
     <div class="menu-card" id="card-reparaciones" onclick="navegar('reparar.html')">
         <i class="fas fa-tools" id="icon-reparaciones" style="color: #2196f3;"></i>
         <h3 id="title-reparaciones">REPARACIONES</h3>
-        <p>Solicitar nueva o ver seguimiento</p> </div>
+        <p>Solicitar nueva o ver seguimiento</p>
+    </div>
 </div>
 
-<button class="btn-logout" id="btn-logout" onclick="cerrarSesion()">Cerrar Sesión</button> <script>
-    // V. Gestión de Sesión (Seguridad) [cite: 11, 12]
+<button class="btn-logout" id="btn-logout" onclick="cerrarSesion()">Cerrar Sesión</button>
+
+<script>
     const session = JSON.parse(localStorage.getItem('session_jadi'));
 
     function init() {
-        // Redirección si no hay sesión [cite: 13]
         if(!session) { 
             window.location.href = "index.html"; 
             return; 
         }
 
-        // Validación de Roles (ADM y CLN) 
         const rolesPermitidos = ['CLN', 'ADM'];
         if (!rolesPermitidos.includes(session.rolCodigo) && session.tipo !== "CLIENTE") {
             cerrarSesion();
             return;
         }
 
-        // Inyectar nombre dinámico [cite: 3, 15]
         document.getElementById('client-name').innerText = session.nombre;
         
-        // Cargar estilos dinámicos [cite: 5]
+        // Carga inicial del estilo guardado o por defecto
         if (typeof aplicarEstiloVisual === 'function') {
             aplicarEstiloVisual();
         }
     }
 
-    // VI. Sistema de Navegación [cite: 16]
+    // Función para manejar el cambio desde el selector
+    function cambiarTemaManual(tema) {
+        // Guardamos la preferencia en el local storage
+        localStorage.setItem('jadi_theme_preference', tema);
+        
+        // Si tu estilo_visual.js tiene la lógica de aplicación, la llamamos
+        if (typeof aplicarEstiloVisual === 'function') {
+            aplicarEstiloVisual(tema);
+        }
+    }
+
     function navegar(pagina) {
-        // Ruta hacia public/clientes 
         window.location.href = pagina; 
     }
 
     function irAlPerfil() {
-        // Ruta hacia perfil.html en public/clientes [cite: 5]
         window.location.href = "perfil.html"; 
     }
 
-    // VII. Finalización de Sesión [cite: 18]
     function cerrarSesion() {
-        localStorage.removeItem('session_jadi'); // Borrar datos [cite: 18]
-        window.location.href = "index.html"; // Redirigir al inicio [cite: 18]
+        localStorage.removeItem('session_jadi');
+        window.location.href = "index.html"; 
     }
 
-    // Ejecutar al cargar la página
     window.onload = init;
 </script>
 
