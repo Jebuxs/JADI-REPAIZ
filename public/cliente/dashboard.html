@@ -9,110 +9,121 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <style>
-        :root { --gold: #fbc02d; --dark: #000; --card: #111; }
+        /* Estilos base que no cambian con el tema */
+        :root { --gold: #fbc02d; }
+        body { font-family: 'Segoe UI', sans-serif; text-align: center; transition: background 0.3s; }
         
-        /* I. Estructura Visual: Minimalista Premium */
-        body { 
-            background: var(--dark); 
-            color: white; 
-            font-family: 'Segoe UI', sans-serif; 
-            margin: 0; 
-            padding: 20px; 
-            text-align: center; 
-        }
-
-        /* II. Cabecera de Bienvenida (Header) */
         header { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            border-bottom: 2px solid var(--gold); 
-            padding-bottom: 15px; 
-            margin-bottom: 40px; 
-            text-align: left; 
+            display: flex; justify-content: space-between; align-items: center; 
+            border-bottom: 2px solid var(--gold); padding-bottom: 15px; margin-bottom: 40px; text-align: left; 
         }
-        .user-meta p { margin: 0; font-size: 0.8rem; color: #666; } /* */
-        .user-meta h2 { margin: 0; color: var(--gold); font-size: 1.2rem; } /* Identidad dinámica */
+        .user-meta p { margin: 0; font-size: 0.8rem; opacity: 0.7; }
+        .user-meta h2 { margin: 0; font-size: 1.2rem; }
 
-        /* Listado de estilos (Visualización) */
+        /* Selector de Estilo */
         .style-selector {
-            background: #1a1a1a;
-            color: var(--gold);
-            border: 1px solid #333;
-            padding: 5px;
-            border-radius: 8px;
-            font-size: 0.75rem;
-            outline: none;
-            cursor: pointer;
+            background: #222; color: #fff; border: 1px solid var(--gold);
+            padding: 8px; border-radius: 8px; cursor: pointer; outline: none;
         }
 
-        .avatar-btn { 
-            background: none; border: none; cursor: pointer; 
-            padding: 0; color: #333; transition: 0.3s;
-        } /* */
-        .avatar-btn:hover { color: var(--gold); }
+        .avatar-btn { background: none; border: none; cursor: pointer; color: #444; transition: 0.3s; }
+        .avatar-btn:hover { transform: scale(1.1); }
 
-        /* III. Cuerpo Principal: Tarjetas con esquinas 20px */
-        .client-grid { 
-            display: grid; 
-            grid-template-columns: 1fr; 
-            gap: 20px; 
-            max-width: 400px; 
-            margin: 0 auto; 
-        }
+        /* Contenedor de Tarjetas */
+        .client-grid { display: grid; grid-template-columns: 1fr; gap: 20px; max-width: 400px; margin: 0 auto; }
         
+        /* Clase .card-jadi usada en tu JS */
         .menu-card { 
-            background: var(--card); 
-            border: 1px solid #222; 
-            border-radius: 20px; 
-            padding: 35px 20px; 
-            cursor: pointer; 
-            transition: 0.3s; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            gap: 15px; 
-        } /* */
-        .menu-card:hover { border-color: var(--gold); transform: translateY(-5px); background: #151515; }
-        
+            cursor: pointer; transition: 0.3s; 
+            display: flex; flex-direction: column; align-items: center; gap: 15px; 
+        }
         .menu-card i { font-size: 3rem; }
         .menu-card h3 { margin: 0; font-size: 1.2rem; letter-spacing: 1px; }
-        .menu-card p { margin: 0; font-size: 0.85rem; color: #777; }
 
-        /* IV. Pie de Página */
-        .btn-logout { 
-            margin-top: 50px; 
-            background: none; 
-            border: 1px solid #333; 
-            color: #555; 
-            padding: 10px 20px; 
-            border-radius: 8px; 
-            cursor: pointer; 
-        }
+        .btn-logout { margin-top: 50px; background: none; border: 1px solid #444; color: #777; padding: 10px 20px; border-radius: 8px; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <header>
     <div class="user-meta">
-        <p>Bienvenido a J.A.D.I REPAIZ</p> <h2 id="client-name">Cargando...</h2> </div>
+        <p>Bienvenido a J.A.D.I REPAIZ</p>
+        <h2 id="client-name">Cargando...</h2>
+    </div>
 
-    <select class="style-selector" id="view-style" onchange="cambiarEstilo(this.value)">
-        <option value="default">Estilo Dorado</option>
-        <option value="classic">Estilo Clásico</option>
-        <option value="modern">Estilo Moderno</option>
+    <select class="style-selector" id="theme-selector" onchange="cambiarTema(this.value)">
+        <option value="elegante">Dorado Elegante</option>
+        <option value="azul">Azul Eléctrico</option>
+        <option value="tomate">Tomate</option>
+        <option value="verde">Verde Fosfo</option>
+        <option value="estandar">Estándar</option>
     </select>
 
     <button class="avatar-btn" onclick="irAlPerfil()">
-        <i class="fas fa-user-circle fa-2x"></i> </button>
+        <i class="fas fa-user-circle fa-2x"></i>
+    </button>
 </header>
 
 <div class="client-grid">
-    <div class="menu-card" id="card-tiendas" onclick="navegar('tiendas.html')">
-        <i class="fas fa-store" id="icon-tiendas" style="color: #e91e63;"></i>
-        <h3 id="title-tiendas">TIENDAS</h3>
-        <p>Ver locales y comprar productos</p> </div>
+    <div class="menu-card card-jadi" onclick="navegar('tiendas.html')">
+        <i class="fas fa-store"></i>
+        <h3>TIENDAS</h3>
+        <p>Ver locales y comprar productos</p>
+    </div>
 
-    <div class="menu-card" id="card-reparaciones" onclick="navegar('reparar.html')">
-        <i class="fas fa-tools" id="icon-reparaciones" style="color: #2196f3;"></i>
-        <h3 id="title-reparaciones">REPAR
+    <div class="menu-card card-jadi" onclick="navegar('reparar.html')">
+        <i class="fas fa-tools"></i>
+        <h3>REPARACIONES</h3>
+        <p>Solicitar nueva o ver seguimiento</p>
+    </div>
+</div>
+
+<button class="btn-logout" onclick="cerrarSesion()">Cerrar Sesión</button>
+
+<script>
+    const session = JSON.parse(localStorage.getItem('session_jadi'));
+
+    function init() {
+        if(!session) { window.location.href = "index.html"; return; }
+        
+        // Seguridad por roles
+        const rolesPermitidos = ['CLN', 'ADM'];
+        if (!rolesPermitidos.includes(session.rolCodigo) && session.tipo !== "CLIENTE") {
+            cerrarSesion(); return;
+        }
+
+        document.getElementById('client-name').innerText = session.nombre;
+        
+        // Aplicar el tema guardado al iniciar
+        const temaGuardado = localStorage.getItem('jadi_theme_pref') || 'elegante';
+        document.getElementById('theme-selector').value = temaGuardado;
+        aplicarTemaJadi(temaGuardado);
+    }
+
+    // Función puente entre el Dashboard y tu objeto JadiEstilo
+    function cambiarTema(nombreTema) {
+        localStorage.setItem('jadi_theme_pref', nombreTema);
+        aplicarTemaJadi(nombreTema);
+    }
+
+    function aplicarTemaJadi(nombreTema) {
+        // Verificamos que el objeto JadiEstilo exista (cargado desde el .js)
+        if (typeof JadiEstilo !== 'undefined') {
+            JadiEstilo.aplicar(nombreTema);
+        }
+    }
+
+    function navegar(pagina) { window.location.href = pagina; }
+    function irAlPerfil() { window.location.href = "perfil.html"; }
+    
+    function cerrarSesion() {
+        localStorage.removeItem('session_jadi');
+        window.location.href = "index.html";
+    }
+
+    window.onload = init;
+</script>
+
+<script src="../js/estilo_visual.js"></script>
+</body>
+</html>
