@@ -3,116 +3,175 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Cliente - JADI REPAIZ</title>
+    <title>J.A.D.I REPAIZ - Dashboard Cliente</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
-    <style id="estilo-dinamico">
-        :root { --gold: #fbc02d; --dark: #000; --card: #111; --border-style: 1px solid #222; }
-        body { background: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; display: flex; flex-direction: column; min-height: 90vh; }
-        
-        /* I. Cabecera de Bienvenida [cite: 2] */
-        header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--gold); padding-bottom: 15px; margin-bottom: 40px; text-align: left; }
-        .user-meta p { margin: 0; font-size: 0.75rem; color: #888; text-transform: uppercase; }
-        .user-meta h2 { margin: 0; color: var(--gold); font-size: 1.2rem; } /* [cite: 3] */
-        
-        .avatar-btn { background: none; border: none; cursor: pointer; color: #555; transition: 0.3s; } /* [cite: 4] */
-        .avatar-btn:hover { color: var(--gold); transform: scale(1.1); }
-
-        /* II. Cuerpo Principal - Menú de Selección [cite: 6] */
-        .client-grid { display: flex; flex-direction: column; gap: 20px; max-width: 400px; margin: 0 auto; width: 100%; flex-grow: 1; }
-        
-        .menu-card { 
-            background: var(--card); 
-            border: var(--border-style); 
-            border-radius: 20px; 
-            padding: 40px 20px; 
-            cursor: pointer; 
-            transition: 0.3s; 
+    <style>
+        :root { --gold: #fbc02d; --dark: #000; --card-bg: #111; }
+        body { 
+            background: var(--dark); 
+            color: white; 
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif; 
+            margin: 0; 
             display: flex; 
             flex-direction: column; 
-            align-items: center; 
-            gap: 15px; 
-            text-decoration: none;
+            min-height: 100vh; 
+            padding: 20px;
+            box-sizing: border-box;
         }
-        .menu-card:hover { border-color: var(--gold); transform: translateY(-5px); background: #151515; }
-        .menu-card i { font-size: 2.5rem; }
-        .menu-card h3 { margin: 0; font-size: 1.3rem; letter-spacing: 2px; color: var(--gold); font-weight: 800; }
-        .menu-card p { margin: 0; font-size: 0.85rem; color: #777; }
+
+        /* I. Cabecera de Bienvenida [cite: 2] */
+        header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: flex-start; 
+            margin-bottom: 50px; 
+        }
+        .welcome-text { text-align: left; }
+        .welcome-text p { margin: 0; font-size: 0.8rem; color: #888; }
+        #client-name { 
+            margin: 5px 0 0 0; 
+            color: var(--gold); 
+            font-size: 1.4rem; 
+            font-weight: bold; 
+        } /*  */
+
+        .avatar-btn { 
+            background: none; 
+            border: none; 
+            color: #555; 
+            font-size: 1.8rem; 
+            cursor: pointer; 
+            padding: 0;
+        } /* [cite: 4] */
+
+        /* II. Cuerpo Principal [cite: 6] */
+        .menu-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            flex-grow: 1;
+            justify-content: center;
+            max-width: 450px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .menu-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 35px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.2s;
+            border: 1px solid transparent; /* [cite: 7] */
+        }
+
+        .menu-card i { font-size: 2.5rem; margin-bottom: 15px; }
+        .menu-card h3 { 
+            margin: 10px 0; 
+            font-size: 1.2rem; 
+            letter-spacing: 2px; 
+            font-weight: 900; 
+        }
+        .menu-card p { margin: 0; font-size: 0.85rem; color: #777; } /* [cite: 8, 9] */
 
         /* III. Pie de Página [cite: 10] */
-        footer { margin-top: auto; padding: 20px 0; }
-        .btn-logout { background: none; border: var(--border-style); color: #666; padding: 8px 25px; border-radius: 8px; cursor: pointer; transition: 0.3s; font-size: 0.9rem; }
-        .btn-logout:hover { border-color: #ff4444; color: #ff4444; }
+        footer {
+            padding: 30px 0;
+            display: flex;
+            justify-content: center;
+        }
+        .btn-logout {
+            background: none;
+            border: 1px solid #333;
+            color: #555;
+            padding: 10px 30px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
 
-<header>
-    <div class="user-meta">
-        <p>Bienvenido a JADI REPAIZ</p> <h2 id="client-name">Cargando...</h2> </div>
-    <button class="avatar-btn" onclick="window.location.href='perfil.html'">
-        <i class="fas fa-user-circle fa-2x"></i>
-    </button>
-</header>
+    <header>
+        <div class="welcome-text">
+            <p>Bienvenido a JADI REPAIZ</p> <h2 id="client-name">Cargando...</h2> </div>
+        <button class="avatar-btn" onclick="navegarPerfil()">
+            <i class="fas fa-user-circle"></i> </button>
+    </header>
 
-<main class="client-grid">
-    <div class="menu-card" id="card-tiendas" onclick="window.location.href='tiendas.html'">
-        <i class="fas fa-store" id="icon-tiendas" style="color: #e91e63;"></i>
-        <h3>TIENDAS</h3>
-        <p>Ver locales y comprar productos</p> </div>
+    <main class="menu-container">
+        <div class="menu-card" id="btn-tiendas" onclick="navegar('tiendas.html')">
+            <i class="fas fa-store" id="icon-tiendas"></i>
+            <h3 id="title-tiendas">TIENDAS</h3>
+            <p>Ver locales y comprar productos</p> </div>
 
-    <div class="menu-card" id="card-reparar" onclick="window.location.href='reparar.html'">
-        <i class="fas fa-tools" id="icon-reparar" style="color: #2196f3;"></i>
-        <h3>REPARACIONES</h3>
-        <p>Solicitar nueva o ver seguimiento</p>
-    </div>
-</main>
+        <div class="menu-card" id="btn-reparaciones" onclick="navegar('reparar.html')">
+            <i class="fas fa-tools" id="icon-reparaciones"></i>
+            <h3 id="title-reparaciones">REPARACIONES</h3>
+            <p>Solicitar nueva o ver seguimiento</p> </div>
+    </main>
 
-<footer>
-    <button class="btn-logout" onclick="cerrarSesion()">Cerrar Sesión</button> </footer>
+    <footer>
+        <button class="btn-logout" id="btn-logout" onclick="cerrarSesion()">Cerrar Sesión</button> </footer>
 
-<script>
-    // Configuración de Sesión 
-    const session = JSON.parse(localStorage.getItem('session_jadi'));
+    <script>
+        // VI. Gestión de Sesión (Seguridad) [cite: 12]
+        function checkAuth() {
+            const session = JSON.parse(localStorage.getItem('session_jadi')); // [cite: 12]
 
-    function init() {
-        // VI. Gestión de Sesión y Seguridad [cite: 13, 14]
-        if (!session) {
-            window.location.href = "index.html";
-            return;
+            if (!session) {
+                window.location.href = "../../index.html"; // [cite: 13]
+                return null;
+            }
+
+            //  Acceso solo para CLN o ADM
+            if (session.rolCodigo !== 'CLN' && session.rolCodigo !== 'ADM') {
+                alert("Acceso no autorizado");
+                cerrarSesion();
+                return null;
+            }
+            return session;
         }
 
-        // Restricción por roles: Solo ADM y CLN 
-        const rolesPermitidos = ['ADM', 'CLN'];
-        if (!rolesPermitidos.includes(session.rolCodigo)) {
-            alert("Acceso no autorizado para su rol.");
-            cerrarSesion();
-            return;
+        // VII. Personalización Dinámica [cite: 15]
+        function init() {
+            const userData = checkAuth();
+            if (userData) {
+                document.getElementById('client-name').innerText = userData.nombre; // [cite: 15]
+                aplicarEstilosDesdeScript();
+            }
         }
 
-        // VII. Personalización Dinámica 
-        document.getElementById('client-name').innerText = session.nombre || "Usuario";
-        
-        // Aplicar estilos desde estilo_visual.js si existe la función
-        if (typeof aplicarEstilosPersonalizados === 'function') {
-            aplicarEstilosPersonalizados();
+        // VII. Sistema de Navegación [cite: 16, 17]
+        function navegar(destino) {
+            // Ubicaciones según el doc: public/clientes/ 
+            window.location.href = destino; 
         }
-    }
 
-    // VIII. Finalización de Sesión [cite: 18]
-    function cerrarSesion() {
-        localStorage.removeItem('session_jadi'); // [cite: 18]
-        window.location.href = "index.html"; // [cite: 18]
-    }
+        function navegarPerfil() {
+            window.location.href = "perfil.js"; // [cite: 5]
+        }
 
-    // Ejecutar al cargar
-    window.onload = init;
-</script>
+        // VIII. Finalización de Sesión 
+        function cerrarSesion() {
+            localStorage.removeItem('session_jadi'); // 
+            window.location.href = "../../index.html"; // 
+        }
 
-<script src="estilo_visual.js"></script>
-<script src="perfil.js"></script>
+        // Simulación de carga de estilos externos [cite: 5]
+        function aplicarEstilosDesdeScript() {
+            // Aquí se conectarían las variables de estilo_visual.js
+            console.log("Aplicando estilos visuales...");
+        }
 
+        window.onload = init;
+    </script>
+    
+    <script src="estilo_visual.js"></script> 
 </body>
 </html>
