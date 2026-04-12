@@ -7,6 +7,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
     <style>
         :root { --gold: #fbc02d; --dark: #000; --card: #111; --success: #00cc66; --danger: #ff4444; }
         body { background: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 15px; padding-bottom: 80px; }
@@ -14,9 +15,9 @@
         header { display: flex; align-items: center; gap: 15px; padding: 10px 0; border-bottom: 1px solid #222; margin-bottom: 20px; }
         .back-btn { color: var(--gold); text-decoration: none; font-size: 1.2rem; }
 
-        .repa-box { background: var(--card); border-radius: 15px; padding: 20px; border: 1px dotted #444; margin-bottom: 20px; position: relative; }
+        .repa-box { background: var(--card); border-radius: 15px; padding: 20px; border: 1px dotted #444; margin-bottom: 20px; position: relative; cursor: pointer; transition: 0.3s; }
+        .repa-box:active { transform: scale(0.98); }
         
-        /* NUEVA GRID PARA COINCIDIR CON TRABAJOS */
         .item-row-main { display: flex; gap: 10px; margin-bottom: 10px; }
         .col-cant { flex: 0.5; }
         .col-tipo { flex: 1.5; }
@@ -40,16 +41,20 @@
         .tab { flex: 1; padding: 12px; text-align: center; border-radius: 8px; background: #111; color: #666; cursor: pointer; font-size: 0.8rem; font-weight: bold; }
         .tab.active { background: var(--gold); color: black; }
 
-        .negoc-box { background: #1a1500; border: 1px solid var(--gold); padding: 12px; border-radius: 10px; margin-top: 10px; text-align: center; }
-        .btn-negoc { border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; flex: 1; font-size: 0.8rem; }
-        
         .hidden { display: none; }
+
+        /* Estilo para el contenedor del modal inyectado */
+        #modal-trabajos-container {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95); display: none; justify-content: center; 
+            align-items: center; z-index: 9999; backdrop-filter: blur(8px);
+        }
     </style>
 </head>
 <body>
 
 <header>
-    <a href="cliente.html" class="back-btn"><i class="fas fa-arrow-left"></i></a>
+    <a href="dashboard.html" class="back-btn"><i class="fas fa-arrow-left"></i></a>
     <h2 style="margin:0; font-size: 1.1rem;">Gestión de Reparaciones</h2>
 </header>
 
@@ -59,12 +64,12 @@
 </div>
 
 <div id="sec-nueva" class="content-sec">
-    <div class="repa-box">
+    <div class="repa-box" style="cursor: default;">
         <h3 style="color: var(--gold); margin-top:0; font-size: 0.9rem; margin-bottom: 15px;"><i class="fas fa-plus-circle"></i> Agregar Ítem de Reparación</h3>
         
         <div class="item-row-main">
             <div class="col-cant">
-                <input type="number" id="cant" value="1" placeholder="Cant">
+                <input type="number" id="cant" value="1" min="1">
             </div>
             <div class="col-tipo">
                 <select id="tipo">
@@ -77,7 +82,7 @@
             </div>
         </div>
         
-        <textarea id="detalle" placeholder="Detalle: (Ej: Color negro, cambio de suela, costura lateral...)" rows="3"></textarea>
+        <textarea id="detalle" placeholder="¿Qué necesita el calzado? (Ej: Cambio de suelas, costura...)" rows="3"></textarea>
         
         <div class="btn-add-circle" onclick="agregarAlCarrito()"><i class="fas fa-plus"></i></div>
     </div>
@@ -90,12 +95,17 @@
     <div id="lista-seguimiento"></div>
 </div>
 
+<div id="modal-trabajos-container"></div>
+
 <script>
+    // Configuración Base
     const firebaseConfig = { databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com" };
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
     const session = JSON.parse(localStorage.getItem('session_jadi'));
+    if(!session) window.location.href = "index.html";
+
     let carritoReparaciones = [];
 
     function switchTab(t) {
@@ -111,20 +121,18 @@
         }
     }
 
-    // --- AQUÍ ESTÁ LA MAGIA: COINCIDE CON TRABAJOS.HTML ---
     function agregarAlCarrito() {
         const cant = document.getElementById('cant').value;
         const tipo = document.getElementById('tipo').value;
         const desc = document.getElementById('detalle').value;
 
-        if(!desc) return alert("Por favor escribe el detalle del trabajo");
+        if(!desc) return alert("Escribe el detalle del trabajo");
 
-        // Estructura idéntica a la que el zapatero usa en el mostrador
+        // Estructura compatible con el modal_trabajos.js
         const item = { 
-            cant: cant, 
-            tipo: tipo, 
-            desc: desc, 
-            precio: 0 // El zapatero lo llenará en su proforma
+            cant: parseInt(cant), 
+            detalle: `${tipo.toUpperCase()}: ${desc}`, 
+            precio: 0 
         };
         
         carritoReparaciones.push(item);
@@ -135,26 +143,34 @@
                 <i class="fas fa-check-circle" style="color:var(--gold)"></i>
             </div>`;
         
-        // Limpiamos campos
-        document.getElementById('cant').value = "1";
         document.getElementById('detalle').value = "";
         document.getElementById('btn-finalizar').classList.remove('hidden');
     }
 
     function enviarSolicitud() {
         if(carritoReparaciones.length === 0) return;
-        const solicitudId = db.ref('solicitudes_reparacion').push().key;
         
-        db.ref('solicitudes_reparacion/' + solicitudId).set({
-            clienteId: session.uid,
-            clienteNombre: session.nombre,
-            clienteTelefono: session.telefono || "09xxxxxxx",
-            items: carritoReparaciones, // Aquí va el array con cant, tipo y desc
-            estado: 'PENDIENTE',
-            fecha: new Date().toISOString(),
-            totalOfertado: 0
-        }).then(() => {
-            alert("¡Pedido enviado! Los zapateros cercanos recibirán tu solicitud.");
+        const ordenId = db.ref('ordenes').push().key;
+        
+        // Guardamos directamente como una 'orden' inicial para que el zapatero la gestione
+        const nuevaOrden = {
+            id: ordenId,
+            fecha: new Date().toLocaleDateString(),
+            status: 'Pendiente',
+            cliente: {
+                uid: session.uid,
+                nombre: session.nombre,
+                telefono: session.telefono || "Sin registrar"
+            },
+            trabajos: carritoReparaciones,
+            totales: { cobrado: 0, abono: 0, saldo: 0 }
+        };
+
+        db.ref('ordenes/' + ordenId).set(nuevaOrden).then(() => {
+            // También indexamos en el perfil del usuario para búsqueda rápida
+            db.ref(`usuarios/${session.uid}/mis_ordenes/${ordenId}`).set(true);
+            
+            alert("¡Pedido enviado con éxito!");
             carritoReparaciones = [];
             document.getElementById('lista-previa').innerHTML = "";
             switchTab('seguimiento');
@@ -162,58 +178,54 @@
     }
 
     function cargarSeguimiento() {
-        db.ref('solicitudes_reparacion').orderByChild('clienteId').equalTo(session.uid).on('value', snap => {
+        // Buscamos órdenes donde el UID del cliente coincida
+        db.ref('ordenes').orderByChild('cliente/uid').equalTo(session.uid).on('value', snap => {
             const container = document.getElementById('lista-seguimiento');
             container.innerHTML = "";
-            if(!snap.exists()) container.innerHTML = "<p style='text-align:center; color:#444;'>No tienes solicitudes activas.</p>";
+            
+            if(!snap.exists()) {
+                container.innerHTML = "<p style='text-align:center; color:#444; margin-top:50px;'>No tienes órdenes registradas.</p>";
+                return;
+            }
 
             snap.forEach(child => {
                 const s = child.val();
                 const id = child.key;
-                let negocHtml = "";
-
-                if(s.estado === 'PENDIENTE') {
-                    negocHtml = `<p style="font-size:11px; color:#555; text-align:center;">Esperando proformas...</p>`;
-                } else if(s.estado === 'NEGOCIACION') {
-                    negocHtml = `
-                        <div class="negoc-box">
-                            <span style="font-size:11px; color:var(--gold)">PROPUESTA DE: ${s.zapateroNombre}</span>
-                            <h2 style="margin:5px 0;">$${parseFloat(s.totalOfertado).toFixed(2)}</h2>
-                            <div style="display:flex; gap:8px;">
-                                <button class="btn-negoc" style="background:var(--success);" onclick="responder('${id}','ACEPTADO')">ACEPTAR</button>
-                                <button class="btn-negoc" style="background:var(--danger); color:white;" onclick="responder('${id}','REBAJA_SOLICITADA')">REBAJA</button>
-                            </div>
-                            <button onclick="responder('${id}','PENDIENTE')" style="background:transparent; color:#555; border:none; font-size:10px; margin-top:8px;">BUSCAR OTRO ZAPATERO</button>
-                        </div>`;
-                } else if(s.estado === 'ACEPTADO') {
-                    negocHtml = `<button class="btn-send" style="margin-top:10px;" onclick="location.href='chat.html'">CHATEAR CON ZAPATERO</button>`;
-                }
+                
+                // Estilos por estado
+                let borderCol = "var(--gold)";
+                if(s.status === 'En Proceso') borderCol = "#2196F3";
+                if(s.status === 'Terminado') borderCol = "var(--success)";
 
                 container.innerHTML += `
-                    <div class="repa-box" style="border-style:solid; border-left:5px solid var(--gold);">
+                    <div class="repa-box" style="border-style:solid; border-left:6px solid ${borderCol};" onclick="verOrdenPremium('${id}')">
                         <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <b>${s.items[0].tipo}</b>
-                            <span style="font-size:10px; background:#222; padding:3px 7px; border-radius:5px; text-transform:uppercase;">${s.estado}</span>
+                            <b style="font-size:0.8rem;">ORDEN #${id.substring(1, 6).toUpperCase()}</b>
+                            <span style="font-size:9px; background:#222; padding:4px 8px; border-radius:5px; color:${borderCol}; border: 1px solid ${borderCol}">${s.status}</span>
                         </div>
-                        <p style="font-size:12px; color:#888;">${s.items[0].cant} unidad(es) - ${s.items[0].desc}</p>
-                        ${negocHtml}
+                        <p style="font-size:12px; color:#aaa; margin: 12px 0;">${s.trabajos[0].detalle.substring(0, 40)}...</p>
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span style="font-size:10px; color:#555;"><i class="far fa-calendar-alt"></i> ${s.fecha}</span>
+                            <b style="color:var(--gold);">$${s.totales.cobrado.toFixed(2)}</b>
+                        </div>
                     </div>`;
             });
         });
     }
 
-    async function responder(id, estado) {
-        let update = { estado: estado };
-        if(estado === 'PENDIENTE') { 
-            update.zapateroId = null; 
-            update.totalOfertado = 0; 
-            update.zapateroNombre = null;
-        }
-        await db.ref('solicitudes_reparacion/' + id).update(update);
-        alert("Respuesta enviada correctamente.");
+    // --- CONEXIÓN CON MODAL_TRABAJOS.JS ---
+    function verOrdenPremium(id) {
+        db.ref(`ordenes/${id}`).once('value', snap => {
+            if(snap.exists()) {
+                // Esta función vive en modal_trabajos.js
+                abrirModalOrden('editar', snap.val());
+            }
+        });
     }
 
-    if(!session) window.location.href = "index.html";
 </script>
+
+<script src="../js/modal_trabajos.js"></script>
+
 </body>
 </html>
