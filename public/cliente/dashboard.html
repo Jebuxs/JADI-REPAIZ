@@ -12,116 +12,117 @@
         :root { --gold: #fbc02d; --dark: #000; --card-bg: #111; }
         body { 
             background: var(--dark); color: white; 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-            margin: 0; padding: 20px; display: flex; flex-direction: column; min-height: 100vh; 
+            font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; 
+            display: flex; flex-direction: column; min-height: 100vh; 
         }
 
         /* I. Cabecera de Bienvenida */
         header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; }
-        .welcome-box p { margin: 0; font-size: 0.8rem; color: #666; font-weight: bold; }
-        #client-name { margin: 5px 0 0 0; color: var(--gold); font-size: 1.35rem; font-weight: 900; }
-        
-        .avatar-btn { 
-            background: none; border: none; color: #333; font-size: 2.2rem; 
-            cursor: pointer; transition: 0.3s; padding: 0;
-        }
-        .avatar-btn:hover { color: var(--gold); transform: scale(1.1); }
+        .welcome-box p { margin: 0; font-size: 0.8rem; color: #888; }
+        #client-name { margin: 5px 0 0 0; color: var(--gold); font-size: 1.3rem; }
 
-        /* II. Cuerpo Principal */
+        .avatar-btn { 
+            background: none; border: none; color: #555; font-size: 2rem; 
+            cursor: pointer; transition: 0.3s; 
+        }
+        .avatar-btn:hover { color: var(--gold); }
+
+        /* II. Cuerpo Principal - Tarjetas Redondeadas 20px */
         .menu-grid { 
             display: flex; flex-direction: column; gap: 20px; 
             max-width: 450px; margin: auto; width: 100%; 
         }
         .menu-card { 
-            background: var(--card-bg); border-radius: 20px; padding: 45px 20px; 
-            text-align: center; cursor: pointer; transition: 0.3s; border: 1px solid #1a1a1a; 
+            background: var(--card-bg); border-radius: 20px; padding: 40px 20px; 
+            text-align: center; cursor: pointer; transition: 0.3s; 
+            border: 1px solid #222; 
         }
-        .menu-card:hover { border-color: var(--gold); background: #151515; transform: translateY(-3px); }
-        .menu-card i { font-size: 3rem; margin-bottom: 15px; }
-        .menu-card h3 { margin: 10px 0; letter-spacing: 3px; font-weight: 900; font-size: 1.2rem; }
-        .menu-card p { margin: 0; font-size: 0.85rem; color: #555; font-weight: 500; }
+        .menu-card i { font-size: 2.8rem; margin-bottom: 15px; }
+        .menu-card h3 { margin: 10px 0; letter-spacing: 2px; font-weight: 800; }
+        .menu-card p { margin: 0; font-size: 0.85rem; color: #666; }
 
         /* III. Pie de Página */
         footer { padding: 30px 0; text-align: center; }
         .btn-logout { 
-            background: none; border: 1px solid #222; color: #444; 
-            padding: 10px 30px; border-radius: 12px; cursor: pointer; font-weight: bold;
+            background: none; border: 1px solid #333; color: #444; 
+            padding: 10px 25px; border-radius: 8px; cursor: pointer; 
         }
-        .btn-logout:hover { border-color: #f44336; color: #f44336; }
     </style>
 </head>
 <body>
 
     <header>
         <div class="welcome-box">
-            <p>Bienvenido a JADI REPAIZ</p>
-            <h2 id="client-name">Cargando...</h2>
+            <p>Bienvenido a JADI REPAIZ</p> [cite: 2]
+            <h2 id="client-name">Cargando...</h2> [cite: 3, 15]
         </div>
-        <button class="avatar-btn" onclick="irAPerfil()">
-            <i class="fas fa-user-circle"></i>
+        <button class="avatar-btn" onclick="navegarPerfil()">
+            <i class="fas fa-user-circle"></i> [cite: 4]
         </button>
     </header>
 
     <main class="menu-grid">
         <div class="menu-card" id="card-tiendas" onclick="navegar('tiendas.html')">
-            <i class="fas fa-store" id="icon-tiendas" style="color: #e91e63;"></i>
-            <h3>TIENDAS</h3>
-            <p>Ver locales y comprar productos</p>
+            <i class="fas fa-store" id="icon-tiendas"></i>
+            <h3 id="title-tiendas">TIENDAS</h3> [cite: 7]
+            <p>Ver locales y comprar productos</p> [cite: 8]
         </div>
 
         <div class="menu-card" id="card-reparaciones" onclick="navegar('reparar.html')">
-            <i class="fas fa-tools" id="icon-reparaciones" style="color: #2196f3;"></i>
-            <h3>REPARACIONES</h3>
+            <i class="fas fa-tools" id="icon-reparaciones"></i>
+            <h3 id="title-reparaciones">REPARACIONES</h3> [cite: 9]
             <p>Solicitar nueva o ver seguimiento</p>
         </div>
     </main>
 
     <footer>
-        <button class="btn-logout" onclick="cerrarSesion()">Cerrar Sesión</button>
+        <button class="btn-logout" id="btn-logout" onclick="cerrarSesion()">Cerrar Sesión</button> [cite: 10, 18]
     </footer>
 
     <script>
-        // Lógica de Sesión y Seguridad
-        const session = JSON.parse(localStorage.getItem('session_jadi'));
+        // VI. Gestión de Sesión
+        const session = JSON.parse(localStorage.getItem('session_jadi')); [cite: 12]
 
         function init() {
-            // Verificar si hay sesión activa
             if (!session) {
-                window.location.href = "../../index.html"; 
+                window.location.href = "../../index.html"; [cite: 13]
                 return;
             }
 
-            // Seguridad: Solo Clientes (CLN) y Admins (ADM)
-            const rolesPermitidos = ['CLN', 'ADM'];
-            if (!rolesPermitidos.includes(session.rolCodigo)) {
-                alert("Acceso restringido");
+            // Acceso solo para CLN y ADM
+            const rolesValidos = ['CLN', 'ADM']; [cite: 14]
+            if (!rolesValidos.includes(session.rolCodigo)) {
                 cerrarSesion();
                 return;
             }
 
-            // Inyectar nombre del usuario
-            document.getElementById('client-name').innerText = session.nombre || "Usuario";
+            // VII. Personalización Dinámica
+            document.getElementById('client-name').innerText = session.nombre || "Usuario"; [cite: 15]
+            
+            // Cargar estilos visuales si la función existe en estilo_visual.js
+            if (typeof aplicarEstiloVisual === 'function') {
+                aplicarEstiloVisual();
+            }
         }
 
-        // Navegación de tarjetas (Hacia public/clientes/)
-        function navegar(url) {
-            window.location.href = url; 
+        // VII. Sistema de Navegación a carpetas public/clientes
+        function navegar(archivo) {
+            window.location.href = `../clientes/${archivo}`; [cite: 17, 18]
         }
 
-        // Navegación del Avatar (Hacia public/js/perfil.js)
-        function irAPerfil() {
-            window.location.href = "../js/perfil.js"; 
+        function navegarPerfil() {
+            window.location.href = "perfil.html"; [cite: 5]
         }
 
-        // Finalización de sesión
+        // VIII. Finalización de Sesión
         function cerrarSesion() {
-            localStorage.removeItem('session_jadi');
-            window.location.href = "../../index.html";
+            localStorage.removeItem('session_jadi'); [cite: 18]
+            window.location.href = "../../index.html"; [cite: 18]
         }
 
         window.onload = init;
     </script>
     
-    <script src="../js/estilo_visual.js"></script>
+    <script src="../js/estilo_visual.js"></script> [cite: 5, 19]
 </body>
 </html>
