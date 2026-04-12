@@ -32,13 +32,15 @@
         .header i { color: var(--gold); cursor: pointer; font-size: 20px; }
 
         .search-container { padding: 15px; background: #050505; }
+        .search-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
         .search-bar { 
-            background: #111; border: 1px solid #333; 
+            grid-column: span 2; background: #111; border: 1px solid #333; 
             padding: 12px; border-radius: 10px; display: flex; align-items: center;
         }
-        .search-bar input {
+        .search-bar input, .search-grid input {
             background: transparent; border: none; color: white; width: 100%; outline: none;
         }
+        .search-grid input { background: #111; border: 1px solid #333; padding: 10px; border-radius: 8px; }
 
         .section-title {
             padding: 15px 20px 5px; font-size: 12px; color: var(--gold);
@@ -111,7 +113,11 @@
     <div class="search-container">
         <div class="search-bar">
             <i class="fas fa-search" style="color: #444; margin-right: 10px;"></i>
-            <input type="text" id="globalSearch" onkeyup="filtrarTodo()" placeholder="Nombre, ID, Celular o Precio...">
+            <input type="text" id="globalSearch" onkeyup="filtrarTodo()" placeholder="Nombre, ID, Celular, CI o Precio...">
+        </div>
+        <div class="search-grid" style="margin-top: 10px;">
+            <input type="date" id="filterFecha" onchange="filtrarTodo()">
+            <div style="color: #444; font-size: 11px; align-self: center; text-align: right;">FILTRO POR FECHA</div>
         </div>
     </div>
 
@@ -143,10 +149,10 @@
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        let idSeleccionado = null;
-
         window.onload = function() {
-            escucharOrdenes(); // Una sola escucha para ambas secciones
+            const tema = localStorage.getItem('jadi_tema_preferido') || 'elegante';
+            if(typeof JadiEstilo !== 'undefined') JadiEstilo.aplicar(tema);
+            escucharOrdenes();
         };
 
         function escucharOrdenes() {
@@ -162,11 +168,12 @@
                 snap.forEach(child => {
                     const o = child.val();
                     const id = child.key;
+                    const fechaOrden = o.fecha || ""; 
 
-                    // SECCIÓN 1: TRABAJOS LOCALES (Los que ya NO son pendientes)
                     if(o.status !== 'Pendiente') {
+                        // SECCIÓN TRABAJOS LOCALES
                         contTrabajos.innerHTML += `
-                            <div class="card-trabajo" data-search="${o.cliente.nombre} ${id} ${o.cliente.telefono} ${o.totales.cobrado}">
+                            <div class="card-trabajo" data-search="${o.cliente.nombre} ${id} ${o.cliente.telefono} ${o.totales.cobrado}" data-fecha="${fechaOrden}">
                                 <div class="card-header">
                                     <div class="client-info">
                                         <h3>${o.cliente.nombre}</h3>
@@ -188,30 +195,26 @@
                                 </div>
                             </div>
                         `;
-                    } 
-                    // SECCIÓN 2: SOLICITUDES (Los que están como Pendiente)
-                    else {
+                    } else {
+                        // SECCIÓN SOLICITUDES CLIENTE (PENDIENTES)
                         haySolicitudes = true;
-                        const primerDetalle = o.trabajos && o.trabajos[0] ? o.trabajos[0].detalle : "Sin detalle";
+                        const detalleResumen = o.trabajos ? o.trabajos.map(t => t.detalle).join(', ') : "Sin detalles";
                         
                         contSolicitudes.innerHTML += `
-                            <div class="card-solicitud" onclick="abrirModal('${primerDetalle}', '${id}')">
+                            <div class="card-solicitud" onclick="abrirModal('${detalleResumen}', '${id}')">
                                 <div>
-                                    <b style="font-size:14px; color:white;">${o.cliente.nombre}</b><br>
-                                    <small style="color:var(--gold)">Folio: ${id}</small>
+                                    <b style="font-size:14px;">${o.cliente.nombre}</b><br>
+                                    <small style="color:#666"><i class="fas fa-map-marker-alt"></i> a ${o.distancia || '0.5'} km</small>
                                 </div>
                                 <div style="text-align:right">
                                     <span style="color:var(--gold); font-weight:800">${o.trabajos ? o.trabajos.length : 1} Items</span>
-                                    <br><small style="color:#555">CLICK PARA VER</small>
                                 </div>
                             </div>
                         `;
                     }
                 });
 
-                if(!haySolicitudes) {
-                    contSolicitudes.innerHTML = "<p style='text-align: center; color: #333; padding: 20px; font-size:12px;'>No hay pedidos pendientes</p>";
-                }
+                if(!haySolicitudes) contSolicitudes.innerHTML = "<p style='text-align: center; color: #333; padding: 20px;'>No hay solicitudes nuevas</p>";
             });
         }
 
@@ -220,31 +223,36 @@
         }
 
         function abrirModal(detalle, id) {
-            idSeleccionado = id;
-            document.getElementById('contenidoDetalle').innerHTML = `
-                <b style="color:var(--gold)">ORDEN:</b> ${id}<br><br>
-                <b style="color:var(--gold)">TRABAJO:</b><br>${detalle}
-            `;
+            document.getElementById('contenidoDetalle').innerText = detalle;
             document.getElementById('modalDetalle').style.display = 'flex';
             
-            // Configurar el botón de aceptar
             document.getElementById('btnAceptar').onclick = function() {
                 updateEstado(id, 'Recibido');
                 cerrarModal();
-                alert("Trabajo aceptado y movido a la lista local.");
             };
         }
 
-        function cerrarModal() { 
-            document.getElementById('modalDetalle').style.display = 'none'; 
-        }
+        function cerrarModal() { document.getElementById('modalDetalle').style.display = 'none'; }
 
         function filtrarTodo() {
             const txt = document.getElementById('globalSearch').value.toLowerCase();
+            const fechaFiltro = document.getElementById('filterFecha').value; // Formato YYYY-MM-DD
             const cards = document.querySelectorAll('.card-trabajo');
+
             cards.forEach(c => {
-                const matchTxt = c.getAttribute('data-search').toLowerCase().includes(txt);
-                c.style.display = matchTxt ? "block" : "none";
+                const infoBusqueda = c.getAttribute('data-search').toLowerCase();
+                const fechaCard = c.getAttribute('data-fecha'); // Esperado "D/M/YYYY" según captura
+                
+                let coincideFecha = true;
+                if(fechaFiltro) {
+                    // Convertimos fechaFiltro (2026-04-12) a formato (12/4/2026) para comparar
+                    const partes = fechaFiltro.split('-');
+                    const fechaFormateada = `${parseInt(partes[2])}/${parseInt(partes[1])}/${partes[0]}`;
+                    coincideFecha = (fechaCard === fechaFormateada);
+                }
+
+                const coincideTxt = infoBusqueda.includes(txt);
+                c.style.display = (coincideTxt && coincideFecha) ? "block" : "none";
             });
         }
     </script>
