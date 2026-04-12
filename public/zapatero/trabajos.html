@@ -24,7 +24,6 @@
             font-family: 'Segoe UI', Roboto, sans-serif;
         }
 
-        /* 2 & 3: HEADER */
         .header {
             display: flex; justify-content: space-between; align-items: center; 
             padding: 15px 20px; background: #000; border-bottom: 1px solid var(--gold);
@@ -32,24 +31,20 @@
         }
         .header i { color: var(--gold); cursor: pointer; font-size: 20px; }
 
-        /* 4: PANEL DE BÚSQUEDA */
         .search-container { padding: 15px; background: #050505; }
-        .search-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
         .search-bar { 
-            grid-column: span 2; background: #111; border: 1px solid #333; 
+            background: #111; border: 1px solid #333; 
             padding: 12px; border-radius: 10px; display: flex; align-items: center;
         }
-        .search-bar input, .search-grid input {
+        .search-bar input {
             background: transparent; border: none; color: white; width: 100%; outline: none;
         }
-        .search-grid input { background: #111; border: 1px solid #333; padding: 10px; border-radius: 8px; }
 
         .section-title {
             padding: 15px 20px 5px; font-size: 12px; color: var(--gold);
             text-transform: uppercase; letter-spacing: 2px; font-weight: bold;
         }
 
-        /* 5: GRUPO TRABAJOS LOCAL */
         .scroll-area { max-height: 45vh; overflow-y: auto; padding: 10px 0; }
         .scroll-area::-webkit-scrollbar { width: 4px; }
         .scroll-area::-webkit-scrollbar-thumb { background: var(--gold); }
@@ -63,7 +58,6 @@
         .client-info h3 { margin: 0; font-size: 16px; color: #fff; }
         .client-info span { font-size: 10px; color: var(--text-gray); }
 
-        /* 5.1: ICONOS ACCIÓN */
         .actions { display: flex; gap: 18px; }
         .actions i { font-size: 18px; cursor: pointer; transition: 0.3s; }
         .icon-bill { color: var(--gold); }
@@ -73,7 +67,6 @@
         .money-box { margin: 12px 0; font-size: 13px; }
         .money-box b { color: var(--gold); }
 
-        /* 5: ESTADOS h, i, j */
         .status-row { display: flex; gap: 5px; margin-top: 10px; }
         .status-btn {
             flex: 1; font-size: 9px; padding: 8px; border-radius: 6px;
@@ -82,14 +75,13 @@
         }
         .status-btn.active { border-color: var(--gold); color: var(--gold); background: rgba(212,175,55,0.1); }
 
-        /* 6: SOLICITUDES CLIENTE */
         .card-solicitud {
             background: #0d0d0d; border-left: 3px solid var(--gold);
             margin: 0 15px 10px; padding: 15px; border-radius: 8px;
             display: flex; justify-content: space-between; align-items: center;
+            cursor: pointer;
         }
 
-        /* 6.b: MODAL FLOTANTE */
         .modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.9); z-index: 2000; align-items: center; justify-content: center;
@@ -98,9 +90,8 @@
             background: #111; width: 85%; max-width: 350px; padding: 25px;
             border-radius: 20px; border: 1px solid #333; position: relative;
         }
-        .close-modal { position: absolute; right: 20px; top: 20px; color: #666; font-size: 20px; }
+        .close-modal { position: absolute; right: 20px; top: 20px; color: #666; font-size: 20px; cursor: pointer; }
 
-        /* 7: BOTÓN FLOTANTE NUEVA ORDEN */
         .fab {
             position: fixed; bottom: 25px; right: 25px;
             background: var(--gold); width: 60px; height: 60px;
@@ -120,11 +111,7 @@
     <div class="search-container">
         <div class="search-bar">
             <i class="fas fa-search" style="color: #444; margin-right: 10px;"></i>
-            <input type="text" id="globalSearch" onkeyup="filtrarTodo()" placeholder="Nombre, ID, Celular, CI o Precio...">
-        </div>
-        <div class="search-grid" style="margin-top: 10px;">
-            <input type="date" id="filterFecha" onchange="filtrarTodo()">
-            <div style="color: #444; font-size: 11px; align-self: center; text-align: right;">FILTRO POR FECHA</div>
+            <input type="text" id="globalSearch" onkeyup="filtrarTodo()" placeholder="Nombre, ID, Celular o Precio...">
         </div>
     </div>
 
@@ -135,14 +122,15 @@
 
     <div class="section-title">Solicitudes de Reparación</div>
     <div id="listaSolicitudes">
-        </div>
+        <p style="text-align: center; color: #333; padding: 20px;">Buscando solicitudes...</p>
+    </div>
 
     <div id="modalDetalle" class="modal">
         <div class="modal-content">
             <i class="fas fa-times close-modal" onclick="cerrarModal()"></i>
             <h3 style="color: var(--gold); margin-top: 0;">Detalle de Solicitud</h3>
             <div id="contenidoDetalle" style="font-size: 13px; line-height: 1.8; color: #ccc; margin: 20px 0;"></div>
-            <button onclick="aceptarSolicitud()" style="width: 100%; padding: 15px; background: var(--gold); border: none; border-radius: 10px; font-weight: bold; cursor: pointer;">ACEPTAR TRABAJO</button>
+            <button id="btnAceptar" style="width: 100%; padding: 15px; background: var(--gold); border: none; border-radius: 10px; font-weight: bold; cursor: pointer;">ACEPTAR TRABAJO</button>
         </div>
     </div>
 
@@ -151,102 +139,114 @@
     </a>
 
     <script>
-        // 1. CONFIGURACIÓN FIREBASE & ESTILO
         const firebaseConfig = { databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com" };
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        window.onload = function() {
-            // Aplicar estilo escogido en dashboard
-            const tema = localStorage.getItem('jadi_tema_preferido') || 'elegante';
-            if(typeof JadiEstilo !== 'undefined') JadiEstilo.aplicar(tema);
+        let idSeleccionado = null;
 
-            escucharTrabajos();
-            escucharSolicitudes();
+        window.onload = function() {
+            escucharOrdenes(); // Una sola escucha para ambas secciones
         };
 
-        // 8 & 9: LÓGICA TRABAJOS (TIEMPO REAL)
-        function escucharTrabajos() {
-            db.ref('trabajos').on('value', snap => {
-                const cont = document.getElementById('listaTrabajos');
-                cont.innerHTML = "";
+        function escucharOrdenes() {
+            db.ref('ordenes').on('value', snap => {
+                const contTrabajos = document.getElementById('listaTrabajos');
+                const contSolicitudes = document.getElementById('listaSolicitudes');
                 
+                contTrabajos.innerHTML = "";
+                contSolicitudes.innerHTML = "";
+                
+                let haySolicitudes = false;
+
                 snap.forEach(child => {
                     const o = child.val();
                     const id = child.key;
 
-                    cont.innerHTML += `
-                        <div class="card-trabajo" data-search="${o.cliente} ${id} ${o.telefono} ${o.ci || ''} ${o.precioTotal}">
-                            <div class="card-header">
-                                <div class="client-info">
-                                    <h3>${o.cliente}</h3>
-                                    <span>ID: ${id}</span>
+                    // SECCIÓN 1: TRABAJOS LOCALES (Los que ya NO son pendientes)
+                    if(o.status !== 'Pendiente') {
+                        contTrabajos.innerHTML += `
+                            <div class="card-trabajo" data-search="${o.cliente.nombre} ${id} ${o.cliente.telefono} ${o.totales.cobrado}">
+                                <div class="card-header">
+                                    <div class="client-info">
+                                        <h3>${o.cliente.nombre}</h3>
+                                        <span>ID: ${id}</span>
+                                    </div>
+                                    <div class="actions">
+                                        <i class="fas fa-file-invoice icon-bill" onclick="location.href='facturar.html?id=${id}'"></i>
+                                        <i class="fas fa-comment-dots icon-chat" onclick="location.href='chat.html?id=${o.cliente.uid}'"></i>
+                                        <i class="fas fa-edit icon-edit" onclick="location.href='editar.html?id=${id}'"></i>
+                                    </div>
                                 </div>
-                                <div class="actions">
-                                    <i class="fas fa-file-invoice icon-bill" onclick="location.href='facturar.html?id=${id}'"></i>
-                                    <i class="fas fa-comment-dots icon-chat" onclick="location.href='chat.html?id=${o.clienteId}'"></i>
-                                    <i class="fas fa-edit icon-edit" onclick="location.href='editar.html?id=${id}'"></i>
+                                <div class="money-box">
+                                    Total: <b>$${(o.totales.cobrado || 0).toFixed(2)}</b> | Saldo: <b style="color:#FF5252">$${(o.totales.saldo || 0).toFixed(2)}</b>
+                                </div>
+                                <div class="status-row">
+                                    <div class="status-btn ${o.status === 'Recibido' ? 'active' : ''}" onclick="updateEstado('${id}','Recibido')">Recibido</div>
+                                    <div class="status-btn ${o.status === 'En Proceso' ? 'active' : ''}" onclick="updateEstado('${id}','En Proceso')">En Proceso</div>
+                                    <div class="status-btn ${o.status === 'Terminado' ? 'active' : ''}" onclick="updateEstado('${id}','Terminado')">Finalizado</div>
                                 </div>
                             </div>
-                            <div class="money-box">
-                                Total: <b>$${o.precioTotal}</b> | Saldo: <b style="color:#FF5252">$${o.saldo}</b>
+                        `;
+                    } 
+                    // SECCIÓN 2: SOLICITUDES (Los que están como Pendiente)
+                    else {
+                        haySolicitudes = true;
+                        const primerDetalle = o.trabajos && o.trabajos[0] ? o.trabajos[0].detalle : "Sin detalle";
+                        
+                        contSolicitudes.innerHTML += `
+                            <div class="card-solicitud" onclick="abrirModal('${primerDetalle}', '${id}')">
+                                <div>
+                                    <b style="font-size:14px; color:white;">${o.cliente.nombre}</b><br>
+                                    <small style="color:var(--gold)">Folio: ${id}</small>
+                                </div>
+                                <div style="text-align:right">
+                                    <span style="color:var(--gold); font-weight:800">${o.trabajos ? o.trabajos.length : 1} Items</span>
+                                    <br><small style="color:#555">CLICK PARA VER</small>
+                                </div>
                             </div>
-                            <div class="status-row">
-                                <div class="status-btn ${o.estado === 'Recibido' ? 'active' : ''}" onclick="updateEstado('${id}','Recibido')">Recibido</div>
-                                <div class="status-btn ${o.estado === 'En Proceso' ? 'active' : ''}" onclick="updateEstado('${id}','En Proceso')">En Proceso</div>
-                                <div class="status-btn ${o.estado === 'Listo' || o.estado === 'Finalizado' ? 'active' : ''}" onclick="updateEstado('${id}','Listo')">Finalizado</div>
-                            </div>
-                        </div>
-                    `;
+                        `;
+                    }
                 });
-            });
-        }
 
-        // 6: SOLICITUDES DE CLIENTES
-        function escucharSolicitudes() {
-            db.ref('solicitudes_externas').orderByChild('timestamp').on('value', snap => {
-                const cont = document.getElementById('listaSolicitudes');
-                cont.innerHTML = "";
-                snap.forEach(child => {
-                    const s = child.val();
-                    cont.innerHTML += `
-                        <div class="card-solicitud" onclick="abrirModal('${s.detalle}')">
-                            <div>
-                                <b style="font-size:14px;">${s.clienteNombre}</b><br>
-                                <small style="color:#666"><i class="fas fa-map-marker-alt"></i> a ${s.distancia || '0.5'} km</small>
-                            </div>
-                            <div style="text-align:right">
-                                <span style="color:var(--gold); font-weight:800">${s.cantidadItems || 1} Items</span>
-                            </div>
-                        </div>
-                    `;
-                });
-            });
-        }
-
-        // 10: BÚSQUEDA GLOBAL
-        function filtrarTodo() {
-            const txt = document.getElementById('globalSearch').value.toLowerCase();
-            const fecha = document.getElementById('filterFecha').value;
-            const cards = document.querySelectorAll('.card-trabajo');
-
-            cards.forEach(c => {
-                const matchTxt = c.getAttribute('data-search').toLowerCase().includes(txt);
-                // Aquí podrías añadir lógica de fecha si guardas la fecha en un atributo data-fecha
-                c.style.display = matchTxt ? "block" : "none";
+                if(!haySolicitudes) {
+                    contSolicitudes.innerHTML = "<p style='text-align: center; color: #333; padding: 20px; font-size:12px;'>No hay pedidos pendientes</p>";
+                }
             });
         }
 
         function updateEstado(id, nuevo) {
-            db.ref('trabajos/' + id).update({ estado: nuevo });
+            db.ref('ordenes/' + id).update({ status: nuevo });
         }
 
-        function abrirModal(detalle) {
-            document.getElementById('contenidoDetalle').innerText = detalle;
+        function abrirModal(detalle, id) {
+            idSeleccionado = id;
+            document.getElementById('contenidoDetalle').innerHTML = `
+                <b style="color:var(--gold)">ORDEN:</b> ${id}<br><br>
+                <b style="color:var(--gold)">TRABAJO:</b><br>${detalle}
+            `;
             document.getElementById('modalDetalle').style.display = 'flex';
+            
+            // Configurar el botón de aceptar
+            document.getElementById('btnAceptar').onclick = function() {
+                updateEstado(id, 'Recibido');
+                cerrarModal();
+                alert("Trabajo aceptado y movido a la lista local.");
+            };
         }
 
-        function cerrarModal() { document.getElementById('modalDetalle').style.display = 'none'; }
+        function cerrarModal() { 
+            document.getElementById('modalDetalle').style.display = 'none'; 
+        }
+
+        function filtrarTodo() {
+            const txt = document.getElementById('globalSearch').value.toLowerCase();
+            const cards = document.querySelectorAll('.card-trabajo');
+            cards.forEach(c => {
+                const matchTxt = c.getAttribute('data-search').toLowerCase().includes(txt);
+                c.style.display = matchTxt ? "block" : "none";
+            });
+        }
     </script>
 </body>
 </html>
