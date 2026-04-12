@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>J.A.D.I REPAIZ - Dashboard Cliente</title>
+    <title>J.A.D.I REPAIZ - Dashboard</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -11,167 +11,117 @@
     <style>
         :root { --gold: #fbc02d; --dark: #000; --card-bg: #111; }
         body { 
-            background: var(--dark); 
-            color: white; 
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif; 
-            margin: 0; 
-            display: flex; 
-            flex-direction: column; 
-            min-height: 100vh; 
-            padding: 20px;
-            box-sizing: border-box;
+            background: var(--dark); color: white; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            margin: 0; padding: 20px; display: flex; flex-direction: column; min-height: 100vh; 
         }
 
-        /* I. Cabecera de Bienvenida [cite: 2] */
-        header { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: flex-start; 
-            margin-bottom: 50px; 
-        }
-        .welcome-text { text-align: left; }
-        .welcome-text p { margin: 0; font-size: 0.8rem; color: #888; }
-        #client-name { 
-            margin: 5px 0 0 0; 
-            color: var(--gold); 
-            font-size: 1.4rem; 
-            font-weight: bold; 
-        } /*  */
-
+        /* I. Cabecera de Bienvenida */
+        header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; }
+        .welcome-box p { margin: 0; font-size: 0.8rem; color: #666; font-weight: bold; }
+        #client-name { margin: 5px 0 0 0; color: var(--gold); font-size: 1.35rem; font-weight: 900; }
+        
         .avatar-btn { 
-            background: none; 
-            border: none; 
-            color: #555; 
-            font-size: 1.8rem; 
-            cursor: pointer; 
-            padding: 0;
-        } /* [cite: 4] */
+            background: none; border: none; color: #333; font-size: 2.2rem; 
+            cursor: pointer; transition: 0.3s; padding: 0;
+        }
+        .avatar-btn:hover { color: var(--gold); transform: scale(1.1); }
 
-        /* II. Cuerpo Principal [cite: 6] */
-        .menu-container {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            flex-grow: 1;
-            justify-content: center;
-            max-width: 450px;
-            margin: 0 auto;
-            width: 100%;
+        /* II. Cuerpo Principal */
+        .menu-grid { 
+            display: flex; flex-direction: column; gap: 20px; 
+            max-width: 450px; margin: auto; width: 100%; 
         }
+        .menu-card { 
+            background: var(--card-bg); border-radius: 20px; padding: 45px 20px; 
+            text-align: center; cursor: pointer; transition: 0.3s; border: 1px solid #1a1a1a; 
+        }
+        .menu-card:hover { border-color: var(--gold); background: #151515; transform: translateY(-3px); }
+        .menu-card i { font-size: 3rem; margin-bottom: 15px; }
+        .menu-card h3 { margin: 10px 0; letter-spacing: 3px; font-weight: 900; font-size: 1.2rem; }
+        .menu-card p { margin: 0; font-size: 0.85rem; color: #555; font-weight: 500; }
 
-        .menu-card {
-            background: var(--card-bg);
-            border-radius: 20px;
-            padding: 35px 20px;
-            text-align: center;
-            cursor: pointer;
-            transition: transform 0.2s, background 0.2s;
-            border: 1px solid transparent; /* [cite: 7] */
+        /* III. Pie de Página */
+        footer { padding: 30px 0; text-align: center; }
+        .btn-logout { 
+            background: none; border: 1px solid #222; color: #444; 
+            padding: 10px 30px; border-radius: 12px; cursor: pointer; font-weight: bold;
         }
-
-        .menu-card i { font-size: 2.5rem; margin-bottom: 15px; }
-        .menu-card h3 { 
-            margin: 10px 0; 
-            font-size: 1.2rem; 
-            letter-spacing: 2px; 
-            font-weight: 900; 
-        }
-        .menu-card p { margin: 0; font-size: 0.85rem; color: #777; } /* [cite: 8, 9] */
-
-        /* III. Pie de Página [cite: 10] */
-        footer {
-            padding: 30px 0;
-            display: flex;
-            justify-content: center;
-        }
-        .btn-logout {
-            background: none;
-            border: 1px solid #333;
-            color: #555;
-            padding: 10px 30px;
-            border-radius: 10px;
-            font-size: 0.9rem;
-            cursor: pointer;
-        }
+        .btn-logout:hover { border-color: #f44336; color: #f44336; }
     </style>
 </head>
 <body>
 
     <header>
-        <div class="welcome-text">
-            <p>Bienvenido a JADI REPAIZ</p> <h2 id="client-name">Cargando...</h2> </div>
-        <button class="avatar-btn" onclick="navegarPerfil()">
-            <i class="fas fa-user-circle"></i> </button>
+        <div class="welcome-box">
+            <p>Bienvenido a JADI REPAIZ</p>
+            <h2 id="client-name">Cargando...</h2>
+        </div>
+        <button class="avatar-btn" onclick="irAPerfil()">
+            <i class="fas fa-user-circle"></i>
+        </button>
     </header>
 
-    <main class="menu-container">
-        <div class="menu-card" id="btn-tiendas" onclick="navegar('tiendas.html')">
-            <i class="fas fa-store" id="icon-tiendas"></i>
-            <h3 id="title-tiendas">TIENDAS</h3>
-            <p>Ver locales y comprar productos</p> </div>
+    <main class="menu-grid">
+        <div class="menu-card" id="card-tiendas" onclick="navegar('tiendas.html')">
+            <i class="fas fa-store" id="icon-tiendas" style="color: #e91e63;"></i>
+            <h3>TIENDAS</h3>
+            <p>Ver locales y comprar productos</p>
+        </div>
 
-        <div class="menu-card" id="btn-reparaciones" onclick="navegar('reparar.html')">
-            <i class="fas fa-tools" id="icon-reparaciones"></i>
-            <h3 id="title-reparaciones">REPARACIONES</h3>
-            <p>Solicitar nueva o ver seguimiento</p> </div>
+        <div class="menu-card" id="card-reparaciones" onclick="navegar('reparar.html')">
+            <i class="fas fa-tools" id="icon-reparaciones" style="color: #2196f3;"></i>
+            <h3>REPARACIONES</h3>
+            <p>Solicitar nueva o ver seguimiento</p>
+        </div>
     </main>
 
     <footer>
-        <button class="btn-logout" id="btn-logout" onclick="cerrarSesion()">Cerrar Sesión</button> </footer>
+        <button class="btn-logout" onclick="cerrarSesion()">Cerrar Sesión</button>
+    </footer>
 
     <script>
-        // VI. Gestión de Sesión (Seguridad) [cite: 12]
-        function checkAuth() {
-            const session = JSON.parse(localStorage.getItem('session_jadi')); // [cite: 12]
+        // Lógica de Sesión y Seguridad
+        const session = JSON.parse(localStorage.getItem('session_jadi'));
 
-            if (!session) {
-                window.location.href = "../../index.html"; // [cite: 13]
-                return null;
-            }
-
-            //  Acceso solo para CLN o ADM
-            if (session.rolCodigo !== 'CLN' && session.rolCodigo !== 'ADM') {
-                alert("Acceso no autorizado");
-                cerrarSesion();
-                return null;
-            }
-            return session;
-        }
-
-        // VII. Personalización Dinámica [cite: 15]
         function init() {
-            const userData = checkAuth();
-            if (userData) {
-                document.getElementById('client-name').innerText = userData.nombre; // [cite: 15]
-                aplicarEstilosDesdeScript();
+            // Verificar si hay sesión activa
+            if (!session) {
+                window.location.href = "../../index.html"; 
+                return;
             }
+
+            // Seguridad: Solo Clientes (CLN) y Admins (ADM)
+            const rolesPermitidos = ['CLN', 'ADM'];
+            if (!rolesPermitidos.includes(session.rolCodigo)) {
+                alert("Acceso restringido");
+                cerrarSesion();
+                return;
+            }
+
+            // Inyectar nombre del usuario
+            document.getElementById('client-name').innerText = session.nombre || "Usuario";
         }
 
-        // VII. Sistema de Navegación [cite: 16, 17]
-        function navegar(destino) {
-            // Ubicaciones según el doc: public/clientes/ 
-            window.location.href = destino; 
+        // Navegación de tarjetas (Hacia public/clientes/)
+        function navegar(url) {
+            window.location.href = url; 
         }
 
-        function navegarPerfil() {
-            window.location.href = "perfil.js"; // [cite: 5]
+        // Navegación del Avatar (Hacia public/js/perfil.js)
+        function irAPerfil() {
+            window.location.href = "../js/perfil.js"; 
         }
 
-        // VIII. Finalización de Sesión 
+        // Finalización de sesión
         function cerrarSesion() {
-            localStorage.removeItem('session_jadi'); // 
-            window.location.href = "../../index.html"; // 
-        }
-
-        // Simulación de carga de estilos externos [cite: 5]
-        function aplicarEstilosDesdeScript() {
-            // Aquí se conectarían las variables de estilo_visual.js
-            console.log("Aplicando estilos visuales...");
+            localStorage.removeItem('session_jadi');
+            window.location.href = "../../index.html";
         }
 
         window.onload = init;
     </script>
     
-    <script src="estilo_visual.js"></script> 
+    <script src="../js/estilo_visual.js"></script>
 </body>
 </html>
