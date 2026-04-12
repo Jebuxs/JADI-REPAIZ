@@ -97,7 +97,6 @@
 <div id="modal-trabajos-container"></div>
 
 <script>
-    // Configuración Base
     const firebaseConfig = { databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com" };
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
@@ -124,7 +123,6 @@
         const cant = document.getElementById('cant').value;
         const tipo = document.getElementById('tipo').value;
         const desc = document.getElementById('detalle').value;
-
         if(!desc) return alert("Escribe el detalle del trabajo");
 
         const item = { 
@@ -132,7 +130,6 @@
             detalle: `${tipo.toUpperCase()}: ${desc}`, 
             precio: 0 
         };
-        
         carritoReparaciones.push(item);
 
         document.getElementById('lista-previa').innerHTML += `
@@ -140,21 +137,20 @@
                 <span><b>${cant}</b> | ${tipo} - <small>${desc}</small></span>
                 <i class="fas fa-check-circle" style="color:var(--gold)"></i>
             </div>`;
-        
         document.getElementById('detalle').value = "";
         document.getElementById('btn-finalizar').classList.remove('hidden');
     }
 
-    // --- CORRECCIÓN CRÍTICA: LÓGICA DE ENVÍO CON ID PERSONALIZADO ---
+    // --- ENVIAR SOLICITUD SIN CEROS A LA IZQUIERDA ---
     async function enviarSolicitud() {
         if(carritoReparaciones.length === 0) return;
         
         try {
-            // 1. Contamos las órdenes del usuario para generar el correlativo
             const snapshot = await db.ref(`usuarios/${session.uid}/mis_ordenes`).once('value');
-            const numOrden = (snapshot.numChildren() || 0) + 1;
+            // Usamos parseInt para asegurar que el número sea entero y sin ceros
+            const numOrden = parseInt(snapshot.numChildren() || 0) + 1;
             
-            // 2. Formular el ID JADI (Ejemplo: CLN321-1)
+            // Generamos el ID limpio
             const ordenId = `${session.uid}-${numOrden}`;
             
             const nuevaOrden = {
@@ -171,13 +167,12 @@
             };
 
             const updates = {};
-            // 3. Forzamos la escritura en la ruta fija con nuestro ID
             updates['/ordenes/' + ordenId] = nuevaOrden;
             updates[`/usuarios/${session.uid}/mis_ordenes/${ordenId}`] = true;
 
             await db.ref().update(updates);
             
-            alert(`¡Pedido ${ordenId} enviado con éxito!`);
+            alert(`¡Pedido ${ordenId} enviado!`);
             carritoReparaciones = [];
             document.getElementById('lista-previa').innerHTML = "";
             document.getElementById('btn-finalizar').classList.add('hidden');
@@ -185,7 +180,7 @@
 
         } catch (error) {
             console.error(error);
-            alert("Error al conectar con la base de datos.");
+            alert("Error al conectar con la red J.A.D.I");
         }
     }
 
@@ -201,7 +196,7 @@
 
             snap.forEach(child => {
                 const s = child.val();
-                const idReal = s.id; // Usamos el ID guardado internamente
+                const idReal = s.id;
                 
                 let borderCol = "var(--gold)";
                 if(s.status === 'En Proceso') borderCol = "#2196F3";
@@ -216,7 +211,7 @@
                         <p style="font-size:12px; color:#aaa; margin: 12px 0;">${s.trabajos[0].detalle.substring(0, 40)}...</p>
                         <div style="display:flex; justify-content:space-between; align-items:center;">
                             <span style="font-size:10px; color:#555;"><i class="far fa-calendar-alt"></i> ${s.fecha}</span>
-                            <b style="color:var(--gold);">$${s.totales.cobrado.toFixed(2)}</b>
+                            <b style="color:var(--gold);">$${(s.totales.cobrado || 0).toFixed(2)}</b>
                         </div>
                     </div>`;
             });
@@ -228,8 +223,6 @@
             if(snap.exists()) {
                 if (typeof abrirModalOrden === 'function') {
                     abrirModalOrden('editar', snap.val());
-                } else {
-                    console.error("modal_trabajos.js no ha cargado correctamente.");
                 }
             }
         });
