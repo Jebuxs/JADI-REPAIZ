@@ -11,20 +11,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <style>
-        :root {
-            --gold: #D4AF37;
-            --bg-dark: #000000;
-            --card-bg: #0a0a0a;
-            --text-gray: #888;
-            --border: #1a1a1a;
-        }
+        :root { --gold: #D4AF37; --bg-dark: #000000; --card-bg: #0a0a0a; --text-gray: #888; --border: #1a1a1a; }
+        body { margin: 0; background-color: var(--bg-dark); color: white; font-family: 'Segoe UI', Roboto, sans-serif; }
 
-        body {
-            margin: 0; background-color: var(--bg-dark); color: white;
-            font-family: 'Segoe UI', Roboto, sans-serif;
-        }
-
-        /* HEADER Y NAVEGACIÓN */
         .header {
             display: flex; justify-content: space-between; align-items: center; 
             padding: 15px 20px; background: #000; border-bottom: 1px solid var(--gold);
@@ -32,33 +21,23 @@
         }
         .header i { color: var(--gold); cursor: pointer; font-size: 20px; }
 
-        /* PANEL DE BÚSQUEDA */
         .search-container { padding: 15px; background: #050505; }
         .search-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
         .search-bar { 
             grid-column: span 2; background: #111; border: 1px solid #333; 
             padding: 12px; border-radius: 10px; display: flex; align-items: center;
         }
-        .search-bar input, .search-grid input {
-            background: transparent; border: none; color: white; width: 100%; outline: none;
-        }
+        .search-bar input, .search-grid input { background: transparent; border: none; color: white; width: 100%; outline: none; }
         .search-grid input { background: #111; border: 1px solid #333; padding: 10px; border-radius: 8px; }
 
-        .section-title {
-            padding: 15px 20px 5px; font-size: 12px; color: var(--gold);
-            text-transform: uppercase; letter-spacing: 2px; font-weight: bold;
-        }
+        .section-title { padding: 15px 20px 5px; font-size: 12px; color: var(--gold); text-transform: uppercase; letter-spacing: 2px; font-weight: bold; }
 
-        /* ÁREAS DE SCROLL */
-        .scroll-area { max-height: 45vh; overflow-y: auto; padding: 10px 0; }
+        /* Doble Scroll 45vh */
+        .scroll-area { max-height: 45vh; overflow-y: auto; padding: 10px 0; border-bottom: 1px solid #111; }
         .scroll-area::-webkit-scrollbar { width: 4px; }
         .scroll-area::-webkit-scrollbar-thumb { background: var(--gold); }
 
-        /* TARJETAS LOCALES */
-        .card-trabajo {
-            background: var(--card-bg); margin: 0 15px 12px; padding: 15px;
-            border-radius: 12px; border: 1px solid var(--border); position: relative;
-        }
+        .card-trabajo { background: var(--card-bg); margin: 0 15px 12px; padding: 15px; border-radius: 12px; border: 1px solid var(--border); position: relative; }
         .card-header { display: flex; justify-content: space-between; align-items: flex-start; }
         .client-info h3 { margin: 0; font-size: 16px; color: #fff; }
         .client-info span { font-size: 10px; color: var(--text-gray); }
@@ -72,41 +51,17 @@
         .money-box { margin: 12px 0; font-size: 13px; }
         .money-box b { color: var(--gold); }
 
-        /* ESTADOS */
         .status-row { display: flex; gap: 5px; margin-top: 10px; }
-        .status-btn {
-            flex: 1; font-size: 9px; padding: 8px; border-radius: 6px;
-            border: 1px solid #222; background: #000; color: #444;
-            text-align: center; font-weight: 800; cursor: pointer;
-        }
+        .status-btn { flex: 1; font-size: 9px; padding: 8px; border-radius: 6px; border: 1px solid #222; background: #000; color: #444; text-align: center; font-weight: 800; cursor: pointer; }
         .status-btn.active { border-color: var(--gold); color: var(--gold); background: rgba(212,175,55,0.1); }
 
-        /* TARJETAS SOLICITUD */
-        .card-solicitud {
-            background: #0d0d0d; border-left: 3px solid var(--gold);
-            margin: 0 15px 10px; padding: 15px; border-radius: 8px;
-            display: flex; justify-content: space-between; align-items: center;
-            cursor: pointer;
-        }
+        .card-solicitud { background: #0d0d0d; border-left: 3px solid var(--gold); margin: 0 15px 10px; padding: 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
 
-        /* MODAL */
-        .modal {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9); z-index: 2000; align-items: center; justify-content: center;
-        }
-        .modal-content {
-            background: #111; width: 85%; max-width: 350px; padding: 25px;
-            border-radius: 20px; border: 1px solid #333; position: relative;
-        }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; align-items: center; justify-content: center; }
+        .modal-content { background: #111; width: 85%; max-width: 350px; padding: 25px; border-radius: 20px; border: 1px solid #333; position: relative; }
         .close-modal { position: absolute; right: 20px; top: 20px; color: #666; font-size: 20px; cursor: pointer; }
 
-        /* BOTÓN FLOTANTE */
-        .fab {
-            position: fixed; bottom: 25px; right: 25px;
-            background: var(--gold); width: 60px; height: 60px;
-            border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 5px 20px rgba(212, 175, 55, 0.4); text-decoration: none;
-        }
+        .fab { position: fixed; bottom: 25px; right: 25px; background: var(--gold); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 5px 20px rgba(212, 175, 55, 0.4); text-decoration: none; }
     </style>
 </head>
 <body>
@@ -125,18 +80,13 @@
     </div>
 
     <div class="section-title">Grupo Trabajos Local</div>
-    <div class="scroll-area" id="listaTrabajos"> <p style="text-align: center; color: #333; padding: 20px;">Cargando inventario local...</p>
-    </div>
-
-    <div class="section-title">Solicitudes de Reparación</div>
-    <div class="scroll-area" id="listaSolicitudes"> <p style="text-align: center; color: #333; padding: 20px;">Buscando órdenes pendientes...</p>
-    </div>
-
-    <div id="modalDetalle" class="modal">
+    <div class="scroll-area" id="listaTrabajos"></div> <div class="section-title">Solicitudes de Reparación</div>
+    <div class="scroll-area" id="listaSolicitudes"></div> <div id="modalDetalle" class="modal">
         <div class="modal-content">
             <i class="fas fa-times close-modal" onclick="cerrarModal()"></i>
             <h3 style="color: var(--gold); margin-top: 0;">Detalle de Solicitud</h3>
-            <div id="contenidoDetalle" style="font-size: 13px; line-height: 1.8; color: #ccc; margin: 20px 0;"></div> <button id="btnAceptar" style="width: 100%; padding: 15px; background: var(--gold); border: none; border-radius: 10px; font-weight: bold; cursor: pointer;">ACEPTAR TRABAJO</button> </div>
+            <div id="contenidoDetalle" style="font-size: 13px; line-height: 1.8; color: #ccc; margin: 20px 0;"></div> <button id="btnAceptar" style="width: 100%; padding: 15px; background: var(--gold); border: none; border-radius: 10px; font-weight: bold; cursor: pointer;">ACEPTAR TRABAJO</button>
+        </div>
     </div>
 
     <a href="nueva_orden.html" class="fab"> <i class="fas fa-plus" style="color: #000; font-size: 24px;"></i>
@@ -148,124 +98,106 @@
         const db = firebase.database();
 
         window.onload = function() {
-            const tema = localStorage.getItem('jadi_tema_preferido') || 'elegante';
-            if(typeof JadiEstilo !== 'undefined') JadiEstilo.aplicar(tema); // [cite: 1]
-            
-            escucharTrabajosLocal(); // [cite: 5]
-            escucharOrdenesPendientes(); // 
+            const tema = localStorage.getItem('jadi_tema_preferido') || 'elegante'; // [cite: 1]
+            if(typeof JadiEstilo !== 'undefined') JadiEstilo.aplicar(tema);
+            escucharUnificado();
+            escucharSolicitudesPendientes();
         };
 
-        // 1. CARPETA 'trabajos' (EL LOCAL)
-        function escucharTrabajosLocal() {
-            db.ref('trabajos').on('value', snap => {
-                const cont = document.getElementById('listaTrabajos');
-                cont.innerHTML = "";
-                
-                snap.forEach(child => {
-                    const o = child.val();
-                    const id = child.key;
-                    cont.innerHTML += `
-                        <div class="card-trabajo" data-search="${o.cliente} ${id} ${o.telefono} ${o.precioTotal}" data-fecha="${o.fecha || ''}">
-                            <div class="card-header">
-                                <div class="client-info">
-                                    <h3>${o.cliente}</h3> <span>ID: ${id}</span>
-                                </div>
-                                <div class="actions">
-                                    <i class="fas fa-file-invoice icon-bill" onclick="location.href='facturar.html?id=${id}'"></i> <i class="fas fa-comment-dots icon-chat" onclick="location.href='chat.html?id=${o.clienteId}'"></i>
-                                    <i class="fas fa-edit icon-edit" onclick="location.href='editar.html?id=${id}'"></i>
-                                </div>
-                            </div>
-                            <div class="money-box">
-                                Total: <b>$${o.precioTotal}</b> | Saldo: <b style="color:#FF5252">$${o.saldo}</b> </div>
-                            <div class="status-row">
-                                <div class="status-btn ${o.estado === 'Recibido' ? 'active' : ''}" onclick="updateEstadoLocal('${id}','Recibido')">Recibido</div> <div class="status-btn ${o.estado === 'En Proceso' ? 'active' : ''}" onclick="updateEstadoLocal('${id}','En Proceso')">En Proceso</div>
-                                <div class="status-btn ${o.estado === 'Listo' ? 'active' : ''}" onclick="updateEstadoLocal('${id}','Listo')">Listo</div>
-                            </div>
+        // Función para renderizar tarjetas en el grupo local
+        function crearHtmlTarjeta(o, id, esExterno) {
+            const nombre = esExterno ? o.cliente.nombre : o.cliente;
+            const precio = o.precioTotal || 0;
+            const saldo = o.saldo || 0;
+            const estadoActual = o.estado || (esExterno ? 'Recibido' : 'Recibido');
+
+            return `
+                <div class="card-trabajo" data-search="${nombre} ${id} ${o.telefono || ''} ${precio}" data-fecha="${o.fecha || ''}">
+                    <div class="card-header">
+                        <div class="client-info">
+                            <h3>${nombre} ${esExterno ? '<i class="fas fa-cloud" style="font-size:10px; color:var(--gold)"></i>' : ''}</h3> <span>ID: ${id}</span>
                         </div>
-                    `;
+                        <div class="actions">
+                            <i class="fas fa-file-invoice icon-bill" onclick="location.href='facturar.html?id=${id}'"></i> <i class="fas fa-comment-dots icon-chat" onclick="location.href='chat.html?id=${o.clienteId || id}'"></i>
+                            <i class="fas fa-edit icon-edit" onclick="location.href='editar.html?id=${id}'"></i>
+                        </div>
+                    </div>
+                    <div class="money-box">Total: <b>$${precio}</b> | Saldo: <b style="color:#FF5252">$${saldo}</b></div> <div class="status-row">
+                        <div class="status-btn ${estadoActual === 'Recibido' ? 'active' : ''}" onclick="cambiarEstado('${id}','Recibido',${esExterno})">Recibido</div> <div class="status-btn ${estadoActual === 'En Proceso' ? 'active' : ''}" onclick="cambiarEstado('${id}','En Proceso',${esExterno})">En Proceso</div>
+                        <div class="status-btn ${estadoActual === 'Listo' ? 'active' : ''}" onclick="cambiarEstado('${id}','Listo',${esExterno})">Listo</div>
+                    </div>
+                </div>`;
+        }
+
+        // Lógica Unificada: /trabajos + /ordenes(Aceptado)
+        function escucharUnificado() {
+            const cont = document.getElementById('listaTrabajos');
+            db.ref('trabajos').on('value', snapT => { // 
+                db.ref('ordenes').orderByChild('status').equalTo('Aceptado').on('value', snapO => { // 
+                    cont.innerHTML = "";
+                    snapT.forEach(c => cont.innerHTML += crearHtmlTarjeta(c.val(), c.key, false));
+                    snapO.forEach(c => cont.innerHTML += crearHtmlTarjeta(c.val(), c.key, true));
                 });
             });
         }
 
-        // 2. CARPETA 'ordenes' (SOLICITUDES EXTERNAS)
-        function escucharOrdenesPendientes() {
-            db.ref('ordenes').orderByChild('status').equalTo('Pendiente').on('value', snap => {
+        function escucharSolicitudesPendientes() {
+            db.ref('ordenes').orderByChild('status').equalTo('Pendiente').on('value', snap => { // [cite: 10]
                 const cont = document.getElementById('listaSolicitudes');
                 cont.innerHTML = "";
-                
-                let hayPendientes = false;
                 snap.forEach(child => {
-                    hayPendientes = true;
                     const o = child.val();
                     const id = child.key;
-                    const nombre = (o.cliente && o.cliente.nombre) ? o.cliente.nombre : "Sin nombre"; // [cite: 10]
-                    
-                    // Construir listado de detalles para el modal [cite: 10]
-                    let listaDetalles = "";
-                    if(o.trabajos) {
-                        o.trabajos.forEach((t, i) => {
-                            listaDetalles += `${i+1}. ${t.tipo || 'Ítem'}, ${t.detalle || 'Sin detalle'}<br>`;
-                        });
-                    }
+                    // Generar lista de trabajos para el modal
+                    let lista = "";
+                    if(o.trabajos) o.trabajos.forEach((t, i) => { lista += `${i+1}, ${t.tipo || 'item'}, ${t.detalle || ''}<br>`; }); // [cite: 12]
 
                     cont.innerHTML += `
-                        <div class="card-solicitud" onclick="abrirModalSolicitud('${listaDetalles}', '${id}')">
+                        <div class="card-solicitud" onclick="abrirModal('${lista}', '${id}')">
                             <div>
-                                <b style="font-size:14px;">${nombre}</b><br>
-                                <small style="color:#666"><i class="fas fa-map-marker-alt"></i> a ${o.distancia || '0.5'} km</small> </div>
-                            <div style="display:flex; align-items:center; gap:15px;">
-                                <span style="color:var(--gold); font-weight:800">${o.trabajos ? o.trabajos.length : 1} Items</span> <i class="fas fa-trash" style="color:#444" onclick="eliminarVisualizacion('${id}', event)"></i> </div>
-                        </div>
-                    `;
+                                <b style="font-size:14px;">${o.cliente.nombre}</b><br> <small style="color:#666"><i class="fas fa-map-marker-alt"></i> a ${o.distancia || '0.5'} km</small>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:10px">
+                                <span style="color:var(--gold); font-weight:800">${o.trabajos ? o.trabajos.length : 1} Items</span>
+                                <i class="fas fa-trash-alt" style="color:#444" onclick="eliminarVista('${id}', event)"></i> </div>
+                        </div>`;
                 });
-
-                if(!hayPendientes) {
-                    cont.innerHTML = "<p style='text-align: center; color: #333; padding: 20px; font-size: 11px;'>No hay órdenes pendientes</p>";
-                }
             });
         }
 
-        function updateEstadoLocal(id, nuevo) {
-            db.ref('trabajos/' + id).update({ estado: nuevo }); // [cite: 8]
-        }
-
-        function abrirModalSolicitud(detalleHTML, id) {
-            document.getElementById('contenidoDetalle').innerHTML = detalleHTML; // [cite: 10]
+        function abrirModal(html, id) {
+            document.getElementById('contenidoDetalle').innerHTML = html;
             document.getElementById('modalDetalle').style.display = 'flex';
-            
-            document.getElementById('btnAceptar').onclick = function() {
-                db.ref('ordenes/' + id).update({ status: 'Aceptado' }); // 
+            document.getElementById('btnAceptar').onclick = () => {
+                db.ref('ordenes/' + id).update({ status: 'Aceptado' }); // [cite: 12]
                 cerrarModal();
-                alert("Orden aceptada y movida al listado local.");
             };
         }
 
-        function eliminarVisualizacion(id, e) {
-            e.stopPropagation(); // Evita abrir el modal al hacer clic en borrar [cite: 10]
-            if(confirm("¿Ocultar esta solicitud?")) {
-                db.ref('ordenes/' + id).update({ status: 'Oculto' });
-            }
+        function eliminarVista(id, e) {
+            e.stopPropagation();
+            if(confirm("¿Eliminar visualización de esta solicitud?")) db.ref('ordenes/' + id).update({ status: 'Eliminado' }); // 
+        }
+
+        function cambiarEstado(id, nuevo, esExterno) {
+            const ruta = esExterno ? 'ordenes/' : 'trabajos/';
+            db.ref(ruta + id).update({ estado: nuevo }); // [cite: 9]
         }
 
         function cerrarModal() { document.getElementById('modalDetalle').style.display = 'none'; }
 
         function filtrarTodo() {
             const txt = document.getElementById('globalSearch').value.toLowerCase(); // [cite: 3]
-            const fechaFiltro = document.getElementById('filterFecha').value;
-            const cards = document.querySelectorAll('.card-trabajo');
-
-            cards.forEach(c => {
-                const infoBusqueda = c.getAttribute('data-search').toLowerCase();
-                const fechaCard = c.getAttribute('data-fecha'); 
-                
-                let coincideFecha = true;
-                if(fechaFiltro) { // [cite: 4]
-                    const partes = fechaFiltro.split('-');
-                    const fComp = `${parseInt(partes[2])}/${parseInt(partes[1])}/${partes[0]}`;
-                    coincideFecha = (fechaCard === fComp);
+            const fechaFiltro = document.getElementById('filterFecha').value; // [cite: 4]
+            document.querySelectorAll('.card-trabajo').forEach(c => {
+                const searchData = c.getAttribute('data-search').toLowerCase();
+                const fechaCard = c.getAttribute('data-fecha');
+                let matchFecha = true;
+                if(fechaFiltro) {
+                    const p = fechaFiltro.split('-');
+                    matchFecha = (fechaCard === `${parseInt(p[2])}/${parseInt(p[1])}/${p[0]}`);
                 }
-                const coincideTxt = infoBusqueda.includes(txt);
-                c.style.display = (coincideTxt && coincideFecha) ? "block" : "none";
+                c.style.display = (searchData.includes(txt) && matchFecha) ? "block" : "none";
             });
         }
     </script>
