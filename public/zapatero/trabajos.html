@@ -74,7 +74,7 @@
     <div class="search-container">
         <div class="search-bar">
             <i class="fas fa-search" style="color: #444; margin-right: 10px;"></i>
-            <input type="text" id="globalSearch" oninput="filtrarTodo()" placeholder="Nombre, ID, Celular o Precio..."> 
+            <input type="text" id="globalSearch" oninput="filtrarTodo()" placeholder="Buscar cliente, ID o precio..."> 
         </div>
         <div class="search-grid" style="margin-top: 10px;">
             <input type="date" id="filterFecha" onchange="filtrarTodo()"> 
@@ -104,19 +104,56 @@
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
+        // Variables para guardar los datos temporalmente y poder unificarlos bien
+        let datosTrabajos = {};
+        let datosOrdenesAceptadas = {};
+
         window.onload = function() {
             const tema = localStorage.getItem('jadi_tema_preferido') || 'elegante'; 
             if(typeof JadiEstilo !== 'undefined') JadiEstilo.aplicar(tema);
-            escucharUnificado();
+            
+            cargarDatosUnificados();
             escucharSolicitudesPendientes();
         };
+
+        function cargarDatosUnificados() {
+            // Escuchar carpeta /trabajos (Manuales)
+            db.ref('trabajos').on('value', snap => {
+                datosTrabajos = snap.val() || {};
+                renderizarTodoLocal();
+            });
+
+            // Escuchar carpeta /ordenes (Solo las Aceptadas)
+            db.ref('ordenes').orderByChild('status').equalTo('Aceptado').on('value', snap => {
+                datosOrdenesAceptadas = snap.val() || {};
+                renderizarTodoLocal();
+            });
+        }
+
+        function renderizarTodoLocal() {
+            const cont = document.getElementById('listaTrabajos');
+            let htmlFinal = "";
+
+            // Renderizar los de la carpeta /trabajos
+            Object.keys(datosTrabajos).forEach(id => {
+                htmlFinal += crearHtmlTarjeta(datosTrabajos[id], id, false);
+            });
+
+            // Renderizar los aceptados de /ordenes
+            Object.keys(datosOrdenesAceptadas).forEach(id => {
+                htmlFinal += crearHtmlTarjeta(datosOrdenesAceptadas[id], id, true);
+            });
+
+            cont.innerHTML = htmlFinal || "<p style='text-align:center; color:#333; font-size:12px;'>No hay trabajos locales.</p>";
+            filtrarTodo(); // Aplicar filtro si el usuario está escribiendo
+        }
 
         function crearHtmlTarjeta(o, id, esExterno) {
             const nombre = esExterno ? (o.cliente?.nombre || "Sin nombre") : (o.cliente || "Sin nombre");
             const precio = o.precioTotal || 0;
             const saldo = o.saldo || 0;
             const estadoActual = o.estado || "Recibido";
-            const clienteId = esExterno ? (o.cliente?.uid || id) : (o.clienteId || id);
+            const cId = esExterno ? (o.cliente?.uid || id) : (o.clienteId || id);
 
             return `
                 <div class="card-trabajo" data-search="${nombre} ${id} ${o.telefono || ''} ${precio}" data-fecha="${o.fecha || ''}">
@@ -127,7 +164,7 @@
                         </div>
                         <div class="actions">
                             <i class="fas fa-file-invoice icon-bill" onclick="location.href='facturar.html?id=${id}'"></i> 
-                            <i class="fas fa-comment-dots icon-chat" onclick="location.href='chat.html?id=${clienteId}'"></i>
+                            <i class="fas fa-comment-dots icon-chat" onclick="location.href='chat.html?id=${cId}'"></i>
                             <i class="fas fa-edit icon-edit" onclick="location.href='editar.html?id=${id}'"></i>
                         </div>
                     </div>
@@ -140,29 +177,17 @@
                 </div>`;
         }
 
-        function escucharUnificado() {
-            const cont = document.getElementById('listaTrabajos');
-            db.ref('trabajos').on('value', snapT => {
-                db.ref('ordenes').orderByChild('status').equalTo('Aceptado').on('value', snapO => {
-                    cont.innerHTML = "";
-                    [span_3](start_span)// Muestra TODOS los de la carpeta trabajos[span_3](end_span)
-                    snapT.forEach(c => cont.innerHTML += crearHtmlTarjeta(c.val(), c.key, false));
-                    [span_4](start_span)// Muestra los aceptados de la carpeta ordenes[span_4](end_span)
-                    snapO.forEach(c => cont.innerHTML += crearHtmlTarjeta(c.val(), c.key, true));
-                    filtrarTodo(); // Mantiene el filtro si el usuario estaba buscando algo
-                });
-            });
-        }
-
         function escucharSolicitudesPendientes() {
-            [span_5](start_span)[span_6](start_span)db.ref('ordenes').orderByChild('status').equalTo('Pendiente').on('value', snap => {[span_5](end_span)[span_6](end_span)
+            db.ref('ordenes').orderByChild('status').equalTo('Pendiente').on('value', snap => {
                 const cont = document.getElementById('listaSolicitudes');
                 cont.innerHTML = "";
+                let hay = false;
                 snap.forEach(child => {
+                    hay = true;
                     const o = child.val();
                     const id = child.key;
                     let lista = "";
-                    [span_7](start_span)if(o.trabajos) o.trabajos.forEach((t, i) => { lista += `${i+1}, ${t.tipo || 'item'}, ${t.detalle || ''}<br>`; });[span_7](end_span)
+                    if(o.trabajos) o.trabajos.forEach((t, i) => { lista += `${i+1}. ${t.tipo || 'item'} - ${t.detalle || ''}<br>`; });
 
                     cont.innerHTML += `
                         <div class="card-solicitud" onclick="abrirModal('${lista}', '${id}')">
@@ -176,6 +201,7 @@
                             </div>
                         </div>`;
                 });
+                if(!hay) cont.innerHTML = "<p style='text-align:center; color:#333; font-size:12px;'>No hay solicitudes pendientes.</p>";
             });
         }
 
@@ -183,35 +209,43 @@
             document.getElementById('contenidoDetalle').innerHTML = html;
             document.getElementById('modalDetalle').style.display = 'flex';
             document.getElementById('btnAceptar').onclick = () => {
-                [span_8](start_span)db.ref('ordenes/' + id).update({ status: 'Aceptado', estado: 'Recibido' });[span_8](end_span)
+                db.ref('ordenes/' + id).update({ status: 'Aceptado', estado: 'Recibido' });
                 cerrarModal();
             };
         }
 
         function eliminarVista(id, e) {
             e.stopPropagation();
-            if(confirm("¿Eliminar visualización de esta solicitud?")) db.ref('ordenes/' + id).update({ status: 'Eliminado' }); 
+            if(confirm("¿Ocultar esta solicitud?")) db.ref('ordenes/' + id).update({ status: 'Oculto' }); 
         }
 
         function cambiarEstado(id, nuevo, esExterno) {
             const ruta = esExterno ? 'ordenes/' : 'trabajos/';
-            [span_9](start_span)db.ref(ruta + id).update({ estado: nuevo });[span_9](end_span)
+            db.ref(ruta + id).update({ estado: nuevo });
         }
 
         function cerrarModal() { document.getElementById('modalDetalle').style.display = 'none'; }
 
         function filtrarTodo() {
-            [span_10](start_span)[span_11](start_span)const txt = document.getElementById('globalSearch').value.toLowerCase();[span_10](end_span)[span_11](end_span)
-            [span_12](start_span)[span_13](start_span)const fechaFiltro = document.getElementById('filterFecha').value;[span_12](end_span)[span_13](end_span)
+            const txt = document.getElementById('globalSearch').value.toLowerCase();
+            const fechaFiltro = document.getElementById('filterFecha').value;
+            
             document.querySelectorAll('.card-trabajo').forEach(c => {
                 const searchData = c.getAttribute('data-search').toLowerCase();
                 const fechaCard = c.getAttribute('data-fecha');
                 let matchFecha = true;
+
                 if(fechaFiltro) {
                     const p = fechaFiltro.split('-');
-                    matchFecha = (fechaCard === `${parseInt(p[2])}/${parseInt(p[1])}/${p[0]}`);
+                    const formatInput = `${parseInt(p[2])}/${parseInt(p[1])}/${p[0]}`;
+                    matchFecha = (fechaCard === formatInput);
                 }
-                c.style.display = (searchData.includes(txt) && matchFecha) ? "block" : "none";
+
+                if (searchData.includes(txt) && matchFecha) {
+                    c.style.display = "block";
+                } else {
+                    c.style.display = "none";
+                }
             });
         }
     </script>
