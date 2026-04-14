@@ -32,7 +32,6 @@
 
         .section-title { padding: 15px 20px 5px; font-size: 12px; color: var(--gold); text-transform: uppercase; letter-spacing: 2px; font-weight: bold; }
 
-        /* Doble Scroll 45vh */
         .scroll-area { max-height: 45vh; overflow-y: auto; padding: 10px 0; border-bottom: 1px solid #111; }
         .scroll-area::-webkit-scrollbar { width: 4px; }
         .scroll-area::-webkit-scrollbar-thumb { background: var(--gold); }
@@ -67,30 +66,38 @@
 <body>
 
     <div class="header">
-        <i class="fas fa-arrow-left" onclick="window.location.href='dashboard.html'"></i> <div style="font-weight: 800; font-size: 14px; letter-spacing: 2px;">JADI REPAIZ</div>
-        <i class="fas fa-sync-alt" onclick="location.reload()"></i> </div>
+        <i class="fas fa-arrow-left" onclick="window.location.href='dashboard.html'"></i> 
+        <div style="font-weight: 800; font-size: 14px; letter-spacing: 2px;">JADI REPAIZ</div>
+        <i class="fas fa-sync-alt" onclick="location.reload()"></i> 
+    </div>
 
     <div class="search-container">
         <div class="search-bar">
             <i class="fas fa-search" style="color: #444; margin-right: 10px;"></i>
-            <input type="text" id="globalSearch" onkeyup="filtrarTodo()" placeholder="Nombre, ID, Celular o Precio..."> </div>
+            <input type="text" id="globalSearch" oninput="filtrarTodo()" placeholder="Nombre, ID, Celular o Precio..."> 
+        </div>
         <div class="search-grid" style="margin-top: 10px;">
-            <input type="date" id="filterFecha" onchange="filtrarTodo()"> <div style="color: #444; font-size: 11px; align-self: center; text-align: right;">FILTRO POR FECHA</div>
+            <input type="date" id="filterFecha" onchange="filtrarTodo()"> 
+            <div style="color: #444; font-size: 11px; align-self: center; text-align: right;">FILTRO POR FECHA</div>
         </div>
     </div>
 
     <div class="section-title">Grupo Trabajos Local</div>
-    <div class="scroll-area" id="listaTrabajos"></div> <div class="section-title">Solicitudes de Reparación</div>
-    <div class="scroll-area" id="listaSolicitudes"></div> <div id="modalDetalle" class="modal">
+    <div class="scroll-area" id="listaTrabajos"></div> 
+
+    <div class="section-title">Solicitudes de Reparación</div>
+    <div class="scroll-area" id="listaSolicitudes"></div> 
+
+    <div id="modalDetalle" class="modal">
         <div class="modal-content">
             <i class="fas fa-times close-modal" onclick="cerrarModal()"></i>
             <h3 style="color: var(--gold); margin-top: 0;">Detalle de Solicitud</h3>
-            <div id="contenidoDetalle" style="font-size: 13px; line-height: 1.8; color: #ccc; margin: 20px 0;"></div> <button id="btnAceptar" style="width: 100%; padding: 15px; background: var(--gold); border: none; border-radius: 10px; font-weight: bold; cursor: pointer;">ACEPTAR TRABAJO</button>
+            <div id="contenidoDetalle" style="font-size: 13px; line-height: 1.8; color: #ccc; margin: 20px 0;"></div> 
+            <button id="btnAceptar" style="width: 100%; padding: 15px; background: var(--gold); border: none; border-radius: 10px; font-weight: bold; cursor: pointer;">ACEPTAR TRABAJO</button>
         </div>
     </div>
 
-    <a href="nueva_orden.html" class="fab"> <i class="fas fa-plus" style="color: #000; font-size: 24px;"></i>
-    </a>
+    <a href="nueva_orden.html" class="fab"> <i class="fas fa-plus" style="color: #000; font-size: 24px;"></i></a>
 
     <script>
         const firebaseConfig = { databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com" };
@@ -98,68 +105,75 @@
         const db = firebase.database();
 
         window.onload = function() {
-            const tema = localStorage.getItem('jadi_tema_preferido') || 'elegante'; // [cite: 1]
+            const tema = localStorage.getItem('jadi_tema_preferido') || 'elegante'; 
             if(typeof JadiEstilo !== 'undefined') JadiEstilo.aplicar(tema);
             escucharUnificado();
             escucharSolicitudesPendientes();
         };
 
-        // Función para renderizar tarjetas en el grupo local
         function crearHtmlTarjeta(o, id, esExterno) {
-            const nombre = esExterno ? o.cliente.nombre : o.cliente;
+            const nombre = esExterno ? (o.cliente?.nombre || "Sin nombre") : (o.cliente || "Sin nombre");
             const precio = o.precioTotal || 0;
             const saldo = o.saldo || 0;
-            const estadoActual = o.estado || (esExterno ? 'Recibido' : 'Recibido');
+            const estadoActual = o.estado || "Recibido";
+            const clienteId = esExterno ? (o.cliente?.uid || id) : (o.clienteId || id);
 
             return `
                 <div class="card-trabajo" data-search="${nombre} ${id} ${o.telefono || ''} ${precio}" data-fecha="${o.fecha || ''}">
                     <div class="card-header">
                         <div class="client-info">
-                            <h3>${nombre} ${esExterno ? '<i class="fas fa-cloud" style="font-size:10px; color:var(--gold)"></i>' : ''}</h3> <span>ID: ${id}</span>
+                            <h3>${nombre} ${esExterno ? '<i class="fas fa-cloud" style="font-size:10px; color:var(--gold)"></i>' : ''}</h3> 
+                            <span>ID: ${id}</span>
                         </div>
                         <div class="actions">
-                            <i class="fas fa-file-invoice icon-bill" onclick="location.href='facturar.html?id=${id}'"></i> <i class="fas fa-comment-dots icon-chat" onclick="location.href='chat.html?id=${o.clienteId || id}'"></i>
+                            <i class="fas fa-file-invoice icon-bill" onclick="location.href='facturar.html?id=${id}'"></i> 
+                            <i class="fas fa-comment-dots icon-chat" onclick="location.href='chat.html?id=${clienteId}'"></i>
                             <i class="fas fa-edit icon-edit" onclick="location.href='editar.html?id=${id}'"></i>
                         </div>
                     </div>
-                    <div class="money-box">Total: <b>$${precio}</b> | Saldo: <b style="color:#FF5252">$${saldo}</b></div> <div class="status-row">
-                        <div class="status-btn ${estadoActual === 'Recibido' ? 'active' : ''}" onclick="cambiarEstado('${id}','Recibido',${esExterno})">Recibido</div> <div class="status-btn ${estadoActual === 'En Proceso' ? 'active' : ''}" onclick="cambiarEstado('${id}','En Proceso',${esExterno})">En Proceso</div>
+                    <div class="money-box">Total: <b>$${precio}</b> | Saldo: <b style="color:#FF5252">$${saldo}</b></div> 
+                    <div class="status-row">
+                        <div class="status-btn ${estadoActual === 'Recibido' ? 'active' : ''}" onclick="cambiarEstado('${id}','Recibido',${esExterno})">Recibido</div> 
+                        <div class="status-btn ${estadoActual === 'En Proceso' ? 'active' : ''}" onclick="cambiarEstado('${id}','En Proceso',${esExterno})">En Proceso</div>
                         <div class="status-btn ${estadoActual === 'Listo' ? 'active' : ''}" onclick="cambiarEstado('${id}','Listo',${esExterno})">Listo</div>
                     </div>
                 </div>`;
         }
 
-        // Lógica Unificada: /trabajos + /ordenes(Aceptado)
         function escucharUnificado() {
             const cont = document.getElementById('listaTrabajos');
-            db.ref('trabajos').on('value', snapT => { // 
-                db.ref('ordenes').orderByChild('status').equalTo('Aceptado').on('value', snapO => { // 
+            db.ref('trabajos').on('value', snapT => {
+                db.ref('ordenes').orderByChild('status').equalTo('Aceptado').on('value', snapO => {
                     cont.innerHTML = "";
+                    [span_3](start_span)// Muestra TODOS los de la carpeta trabajos[span_3](end_span)
                     snapT.forEach(c => cont.innerHTML += crearHtmlTarjeta(c.val(), c.key, false));
+                    [span_4](start_span)// Muestra los aceptados de la carpeta ordenes[span_4](end_span)
                     snapO.forEach(c => cont.innerHTML += crearHtmlTarjeta(c.val(), c.key, true));
+                    filtrarTodo(); // Mantiene el filtro si el usuario estaba buscando algo
                 });
             });
         }
 
         function escucharSolicitudesPendientes() {
-            db.ref('ordenes').orderByChild('status').equalTo('Pendiente').on('value', snap => { // [cite: 10]
+            [span_5](start_span)[span_6](start_span)db.ref('ordenes').orderByChild('status').equalTo('Pendiente').on('value', snap => {[span_5](end_span)[span_6](end_span)
                 const cont = document.getElementById('listaSolicitudes');
                 cont.innerHTML = "";
                 snap.forEach(child => {
                     const o = child.val();
                     const id = child.key;
-                    // Generar lista de trabajos para el modal
                     let lista = "";
-                    if(o.trabajos) o.trabajos.forEach((t, i) => { lista += `${i+1}, ${t.tipo || 'item'}, ${t.detalle || ''}<br>`; }); // [cite: 12]
+                    [span_7](start_span)if(o.trabajos) o.trabajos.forEach((t, i) => { lista += `${i+1}, ${t.tipo || 'item'}, ${t.detalle || ''}<br>`; });[span_7](end_span)
 
                     cont.innerHTML += `
                         <div class="card-solicitud" onclick="abrirModal('${lista}', '${id}')">
                             <div>
-                                <b style="font-size:14px;">${o.cliente.nombre}</b><br> <small style="color:#666"><i class="fas fa-map-marker-alt"></i> a ${o.distancia || '0.5'} km</small>
+                                <b style="font-size:14px;">${o.cliente?.nombre || "Sin nombre"}</b><br> 
+                                <small style="color:#666"><i class="fas fa-map-marker-alt"></i> a ${o.distancia || '0.5'} km</small>
                             </div>
                             <div style="display:flex; align-items:center; gap:10px">
                                 <span style="color:var(--gold); font-weight:800">${o.trabajos ? o.trabajos.length : 1} Items</span>
-                                <i class="fas fa-trash-alt" style="color:#444" onclick="eliminarVista('${id}', event)"></i> </div>
+                                <i class="fas fa-trash-alt" style="color:#444" onclick="eliminarVista('${id}', event)"></i> 
+                            </div>
                         </div>`;
                 });
             });
@@ -169,26 +183,26 @@
             document.getElementById('contenidoDetalle').innerHTML = html;
             document.getElementById('modalDetalle').style.display = 'flex';
             document.getElementById('btnAceptar').onclick = () => {
-                db.ref('ordenes/' + id).update({ status: 'Aceptado' }); // [cite: 12]
+                [span_8](start_span)db.ref('ordenes/' + id).update({ status: 'Aceptado', estado: 'Recibido' });[span_8](end_span)
                 cerrarModal();
             };
         }
 
         function eliminarVista(id, e) {
             e.stopPropagation();
-            if(confirm("¿Eliminar visualización de esta solicitud?")) db.ref('ordenes/' + id).update({ status: 'Eliminado' }); // 
+            if(confirm("¿Eliminar visualización de esta solicitud?")) db.ref('ordenes/' + id).update({ status: 'Eliminado' }); 
         }
 
         function cambiarEstado(id, nuevo, esExterno) {
             const ruta = esExterno ? 'ordenes/' : 'trabajos/';
-            db.ref(ruta + id).update({ estado: nuevo }); // [cite: 9]
+            [span_9](start_span)db.ref(ruta + id).update({ estado: nuevo });[span_9](end_span)
         }
 
         function cerrarModal() { document.getElementById('modalDetalle').style.display = 'none'; }
 
         function filtrarTodo() {
-            const txt = document.getElementById('globalSearch').value.toLowerCase(); // [cite: 3]
-            const fechaFiltro = document.getElementById('filterFecha').value; // [cite: 4]
+            [span_10](start_span)[span_11](start_span)const txt = document.getElementById('globalSearch').value.toLowerCase();[span_10](end_span)[span_11](end_span)
+            [span_12](start_span)[span_13](start_span)const fechaFiltro = document.getElementById('filterFecha').value;[span_12](end_span)[span_13](end_span)
             document.querySelectorAll('.card-trabajo').forEach(c => {
                 const searchData = c.getAttribute('data-search').toLowerCase();
                 const fechaCard = c.getAttribute('data-fecha');
