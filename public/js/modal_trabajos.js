@@ -1,208 +1,166 @@
 /**
- * JADI REPAIZ - MOTOR UNIVERSAL DE ÓRDENES (Versión Corregida)
- * FIX: Eliminación de IDs aleatorios y forzado de Folio Personalizado.
+ * JADI REPAIZ - MOTOR MAESTRO DE TRABAJOS (v2.0)
+ * ------------------------------------------------
+ * Secciones: Solicitud, Edición, Gestión Zapatero y Orden Local.
+ * Sistema de IDs: Categoría-Subcategoría-Índice.
  */
 
 const db = firebase.database();
+const storage = firebase.storage().ref();
 let ordenActual = {};
 let modoModal = 'crear'; 
 
-/**
- * 1. ABRE EL MODAL Y CONSTRUYE EL ID
- */
+// ==========================================
+// 1. DICCIONARIO DE CATEGORÍAS E IDs (PARA IA)
+// ==========================================
+const MAPA_CATEGORIAS = {
+    "Zapatos": { code: "ZP", subs: { "Casual Hombre": "CH", "Casual Mujer": "CM", "Tacon": "TC" } },
+    "Botas": { code: "BT", subs: { "Botas Hombre": "BH", "Botas Mujer": "BM" } },
+    "Deportivos": { code: "DP", subs: { "Running": "RN", "Futbol": "FT" } },
+    "Maletas": { code: "ML", subs: { "Mochila": "MC", "Viaje": "VJ" } }
+};
+
+// ==========================================
+// 2. FUNCIÓN GENERADORA DE IDs INTELIGENTES
+// ==========================================
+function generarIdInteligente(cat, sub, index = 1) {
+    const pCat = MAPA_CATEGORIAS[cat] ? MAPA_CATEGORIAS[cat].code : "OTR";
+    const pSub = (MAPA_CATEGORIAS[cat] && MAPA_CATEGORIAS[cat].subs[sub]) ? MAPA_CATEGORIAS[cat].subs[sub] : "GEN";
+    return `${pCat}-${pSub}-${index}`;
+}
+
+// ==========================================
+// 3. SECCIÓN: SOLICITUD Y GESTIÓN (ABRIR MODAL)
+// ==========================================
 async function abrirModalOrden(modo = 'crear', data = null) {
     const session = JSON.parse(localStorage.getItem('session_jadi'));
     if (!session) return alert("Sesión no encontrada");
 
-    const rol = session.rolCodigo; 
+    const rol = session.rolCodigo; // 'zapatero' o 'cliente'
     modoModal = modo;
 
+    // Configuración inicial del objeto de orden
     if (modo === 'crear') {
-        try {
-            // Consulta cuántas órdenes tiene el usuario para el correlativo
-            const snapshot = await db.ref(`usuarios/${session.uid}/mis_ordenes`).once('value');
-            const numOrden = (snapshot.numChildren() || 0) + 1;
-            
-            // EL ID se construye como: CLN321-1
-            const customID = `${session.uid}-${numOrden}`;
-
-            ordenActual = {
-                id: customID,
-                fecha: new Date().toLocaleDateString(),
-                status: 'Pendiente',
-                cliente: { 
-                    uid: session.uid, 
-                    nombre: session.nombre, 
-                    telefono: session.telefono || '' 
-                },
-                trabajos: [],
-                totales: { cobrado: 0, abono: 0, saldo: 0 }
-            };
-        } catch (e) {
-            console.error("Error al generar ID:", e);
-        }
+        const snapshot = await db.ref(`usuarios/${session.uid}/mis_ordenes`).once('value');
+        const numOrden = (snapshot.numChildren() || 0) + 1;
+        
+        ordenActual = {
+            id: `${session.uid}-${numOrden}`,
+            fecha: new Date().toLocaleDateString(),
+            status: 'Pendiente',
+            cliente: { uid: session.uid, nombre: session.nombre, telefono: session.telefono || '' },
+            trabajos: [],
+            totales: { cobrado: 0, abono: 0, saldo: 0 }
+        };
     } else {
-        ordenActual = data; 
+        ordenActual = data;
     }
 
-    renderizarInterfazModal(rol);
-    document.getElementById('modal-trabajos-container').style.display = 'flex';
+    renderizarModalHTML(rol);
+    if (typeof JadiEstilo !== 'undefined') JadiEstilo.aplicar();
 }
 
-/**
- * 2. RENDERIZADO (Estética Premium Dark)
- */
-function renderizarInterfazModal(rol) {
-    const esPersonal = (rol === 'ZPT' || rol === 'ADM');
-    const container = document.getElementById('modal-trabajos-container');
-
-    container.innerHTML = `
-    <div class="card-jadi modal-content" style="background: #111; border: 2px solid #fbc02d; border-radius: 20px; padding: 25px; color: white; max-width: 500px; margin: auto;">
-        <h2 style="color: #fbc02d; margin-bottom: 5px; text-align:center;">${modoModal.toUpperCase()} ORDEN</h2>
-        <p style="font-size: 0.8rem; color: #fbc02d; text-align:center; margin-bottom: 20px; font-weight: bold;">FOLIO: ${ordenActual.id}</p>
-
-        <div class="form-group" style="text-align: left;">
-            <label style="color: #fbc02d; font-size: 0.7rem; font-weight: bold;">CLIENTE</label>
-            <input type="text" id="m-nombre" value="${ordenActual.cliente.nombre}" 
-                ${!esPersonal ? 'readonly style="background:transparent; border:none; color:#bbb; width:100%;"' : 'style="width:100%; background:#222; border:1px solid #333; color:white; padding:8px; border-radius:8px;"'}>
-            
-            <label style="color: #fbc02d; font-size: 0.7rem; font-weight: bold; margin-top:10px; display:block;">TELÉFONO</label>
-            <input type="text" id="m-telefono" value="${ordenActual.cliente.telefono}" 
-                ${!esPersonal ? 'readonly style="background:transparent; border:none; color:#bbb; width:100%;"' : 'style="width:100%; background:#222; border:1px solid #333; color:white; padding:8px; border-radius:8px;"'}>
-        </div>
-
-        <hr style="border: 0.5px solid #333; margin: 25px 0;">
-
-        <div id="lista-items"></div>
-
-        ${esPersonal ? `
-            <button onclick="anyadirLineaTrabajo()" style="background: transparent; color: #fbc02d; border: 1px dashed #fbc02d; width: 100%; padding: 10px; cursor: pointer; border-radius: 10px; margin-top: 10px; font-weight:bold;">
-                + AÑADIR TRABAJO
-            </button>` : ''}
-
-        <div class="seccion-totales" style="background: #0a0a0a; border-radius: 15px; padding: 15px; margin-top: 20px; border: 1px solid #222;">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                <span>TOTAL:</span>
-                <input type="number" id="m-total" value="${ordenActual.totales.cobrado}" onchange="calcularSaldos()" 
-                    ${!esPersonal ? 'readonly style="background:transparent; border:none; color:white; text-align:right;"' : 'style="width: 80px; text-align: right; background: #222; color: white; border:1px solid #333;"'}>
-            </div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                <span>ABONO:</span>
-                <input type="number" id="m-abono" value="${ordenActual.totales.abono}" onchange="calcularSaldos()" 
-                    ${!esPersonal ? 'readonly style="background:transparent; border:none; color:white; text-align:right;"' : 'style="width: 80px; text-align: right; background: #222; color: white; border:1px solid #333;"'}>
-            </div>
-            <div style="display: flex; justify-content: space-between; border-top: 1px solid #333; padding-top: 10px; margin-top: 10px;">
-                <span style="font-weight: bold;">SALDO A PAGAR:</span>
-                <span id="m-saldo" style="color: #00e676; font-weight: bold; font-size: 1.3rem;">$${ordenActual.totales.saldo.toFixed(2)}</span>
-            </div>
-        </div>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 30px;">
-            <button onclick="cerrarModal()" style="background: #333; color: white; border: none; padding: 12px; border-radius: 10px; cursor: pointer; font-weight:bold;">CANCELAR</button>
-            <button onclick="guardarOrdenBD()" style="background: #fbc02d; color: black; border: none; padding: 12px; border-radius: 10px; cursor: pointer; font-weight: bold;">GUARDAR EN J.A.D.I</button>
-        </div>
-    </div>`;
-
-    if (ordenActual.trabajos && ordenActual.trabajos.length > 0) {
-        ordenActual.trabajos.forEach((t, i) => inyectarFilaHTML(t, i, esPersonal));
-    } else if (esPersonal) {
-        anyadirLineaTrabajo();
-    }
-}
-
-/**
- * 3. LÓGICA DE FILAS DINÁMICAS
- */
-function inyectarFilaHTML(t, i, esPersonal) {
-    const html = `
-    <div class="fila-trabajo" id="fila-${i}" style="display: flex; gap: 8px; margin-bottom: 10px; align-items: center;">
-        <input type="number" id="cant-${i}" value="${t.cant}" onchange="sumarTodo()" 
-            style="width: 45px; background: #222; border: 1px solid #333; color: white; padding: 5px; border-radius: 5px;" ${!esPersonal ? 'readonly' : ''}>
-        <input type="text" id="det-${i}" value="${t.detalle}" placeholder="Reparación..." 
-            style="flex: 1; background: #222; border: 1px solid #333; color: white; padding: 5px; border-radius: 5px;" ${!esPersonal ? 'readonly' : ''}>
-        ${esPersonal ? `
-            <input type="number" id="pre-${i}" value="${t.precio}" onchange="sumarTodo()" placeholder="$" 
-                style="width: 65px; background: #222; border: 1px solid #333; color: #fbc02d; padding: 5px; border-radius: 5px; text-align: right;">
-        ` : ''}
-    </div>`;
-    document.getElementById('lista-items').insertAdjacentHTML('beforeend', html);
-}
-
-function anyadirLineaTrabajo() {
-    const i = document.querySelectorAll('.fila-trabajo').length;
-    inyectarFilaHTML({ cant: 1, detalle: '', precio: 0 }, i, true);
-}
-
-function sumarTodo() {
-    let subtotal = 0;
-    document.querySelectorAll('.fila-trabajo').forEach((_, i) => {
-        const c = parseInt(document.getElementById(`cant-${i}`).value) || 0;
-        const p = parseFloat(document.getElementById(`pre-${i}`)?.value || 0);
-        subtotal += (c * p);
-    });
-    if (modoModal === 'crear') {
-        document.getElementById('m-total').value = subtotal.toFixed(2);
-    }
-    calcularSaldos();
-}
-
-function calcularSaldos() {
-    const total = parseFloat(document.getElementById('m-total').value) || 0;
-    const abono = parseFloat(document.getElementById('m-abono').value) || 0;
-    const saldo = total - abono;
-    document.getElementById('m-saldo').innerText = `$${saldo.toFixed(2)}`;
-}
-
-/**
- * 4. PERSISTENCIA SIN CLAVES ALEATORIAS (BLOQUEO DE RUTA)
- */
-async function guardarOrdenBD() {
-    const session = JSON.parse(localStorage.getItem('session_jadi'));
+// ==========================================
+// 4. SECCIÓN: RENDERIZADO VISUAL DINÁMICO
+// ==========================================
+function renderizarModalHTML(rol) {
+    const modal = document.getElementById('modal-trabajo'); // Asegúrate de tener este ID en tu HTML
     
-    // USAMOS EL ID GENERADO AL ABRIR EL MODAL
-    const idFinal = ordenActual.id; 
+    let html = `
+        <div class="modal-content">
+            <h2 style="color:var(--gold)">${modoModal.toUpperCase()}: ${ordenActual.id}</h2>
+            
+            <label>Cliente:</label>
+            <input type="text" id="m-nombre" value="${ordenActual.cliente.nombre}" ${rol !== 'zapatero' ? 'disabled' : ''}>
+            
+            <div id="lista-trabajos-container">
+                </div>
 
-    const trabajos = [];
-    document.querySelectorAll('.fila-trabajo').forEach((_, i) => {
-        trabajos.push({
-            cant: parseInt(document.getElementById(`cant-${i}`).value) || 0,
-            detalle: document.getElementById(`det-${i}`).value,
-            precio: parseFloat(document.getElementById(`pre-${i}`)?.value || 0)
-        });
-    });
+            <div style="text-align:center; margin-top:20px;">
+                <button onclick="agregarItemForm()" style="width:auto; padding:10px 20px;">
+                    <i class="fas fa-plus"></i> Añadir Artículo
+                </button>
+            </div>
 
-    const total = parseFloat(document.getElementById('m-total').value);
-    const abono = parseFloat(document.getElementById('m-abono').value);
+            <div id="seccion-zapatero" style="display: ${rol === 'zapatero' ? 'block' : 'none'}">
+                <label>Total $:</label>
+                <input type="number" id="m-total" value="${ordenActual.totales.cobrado}" oninput="calcularSaldo()">
+                <label>Abono $:</label>
+                <input type="number" id="m-abono" value="${ordenActual.totales.abono}" oninput="calcularSaldo()">
+                <h3 id="display-saldo">Saldo: $${ordenActual.totales.saldo}</h3>
+            </div>
 
-    const objetoOrden = {
-        id: idFinal,
-        fecha: ordenActual.fecha,
-        status: ordenActual.status || 'Pendiente',
-        cliente: {
-            uid: ordenActual.cliente.uid,
-            nombre: document.getElementById('m-nombre').value,
-            telefono: document.getElementById('m-telefono').value
-        },
-        trabajos: trabajos,
-        totales: {
-            cobrado: total,
-            abono: abono,
-            saldo: total - abono
-        }
+            <button onclick="guardarOrdenMaestra()" class="btn-guardar">GUARDAR ORDEN</button>
+            <button onclick="cerrarModal()" style="background:#444">CANCELAR</button>
+        </div>
+    `;
+    
+    modal.innerHTML = html;
+    modal.style.display = 'flex';
+    actualizarListaItems();
+}
+
+// ==========================================
+// 5. SECCIÓN: CÁMARA Y ARCHIVOS (ANTES/DESPUÉS)
+// ==========================================
+async function capturarFoto(index, tipo = 'ANT') {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.capture = 'environment';
+    
+    input.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Nombre inteligente para la IA
+        const item = ordenActual.trabajos[index];
+        const idArticulo = generarIdInteligente(item.categoria, item.subcategoria, index + 1);
+        const fileName = `${ordenActual.cliente.uid}_${idArticulo}_${tipo}.jpg`;
+
+        // Subida a Firebase Storage
+        const ref = storage.child(`reparaciones/${fileName}`);
+        await ref.put(file);
+        const url = await ref.getDownloadURL();
+        
+        ordenActual.trabajos[index][`foto_${tipo.toLowerCase()}`] = url;
+        alert("Foto guardada con ID: " + idArticulo);
+        actualizarListaItems();
     };
+    input.click();
+}
 
+// ==========================================
+// 6. SECCIÓN: GUARDADO FINAL EN DATABASE
+// ==========================================
+async function guardarOrdenMaestra() {
     try {
+        const idFinal = ordenActual.id;
         const updates = {};
         
-        // CORRECCIÓN CRÍTICA: Definimos la ruta usando el ID del folio.
-        // Esto evita que Firebase genere una clave aleatoria.
-        updates[`/ordenes/${idFinal}`] = objetoOrden;
+        // Actualizamos totales antes de guardar
+        ordenActual.totales.cobrado = parseFloat(document.getElementById('m-total').value) || 0;
+        ordenActual.totales.abono = parseFloat(document.getElementById('m-abono').value) || 0;
+        ordenActual.totales.saldo = ordenActual.totales.cobrado - ordenActual.totales.abono;
+
+        updates[`/ordenes/${idFinal}`] = ordenActual;
         updates[`/usuarios/${ordenActual.cliente.uid}/mis_ordenes/${idFinal}`] = true;
 
-        // Se usa update() sobre la raíz para que las rutas fijas manden.
         await db.ref().update(updates);
-        
-        alert(`¡Orden ${idFinal} guardada correctamente!`);
+        alert(`¡Éxito! Orden ${idFinal} procesada.`);
         cerrarModal();
-        
-        if (typeof cargarSeguimiento === 'function') cargar
+        if (typeof cargarTrabajos === 'function') cargarTrabajos();
+    } catch (error) {
+        console.error("Error al guardar:", error);
+    }
+}
+
+function calcularSaldo() {
+    const t = parseFloat(document.getElementById('m-total').value) || 0;
+    const a = parseFloat(document.getElementById('m-abono').value) || 0;
+    document.getElementById('display-saldo').innerText = `Saldo: $${(t - a).toFixed(2)}`;
+}
+
+function cerrarModal() {
+    document.getElementById('modal-trabajo').style.display = 'none';
+}
