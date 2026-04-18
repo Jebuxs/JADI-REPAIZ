@@ -1,86 +1,81 @@
-// ==========================================
-// MODAL-TRABAJOS.JS - EL CEREBRO DE JADI REPAIZ
-// ==========================================
+// ========================================================
+// ARCHIVO: modal_trabajos.js
+// DESCRIPCIÓN: Gestión de solicitudes, órdenes y fotos.
+// ========================================================
 
-// --- BLOQUE 1: VARIABLES GLOBALES Y CONFIGURACIÓN ---
-let usuarioActual = { rol: 'cliente', id: 'CLN123' }; // Esto vendrá de tu Auth
-let fotoCapturada = null;
-let modoModal = 'solicitar'; // 'solicitar', 'editar', 'nueva-orden', 'diagnostico'
+// --- BLOQUE 1: VARIABLES GLOBALES ---
+let fotoProcesada = null; // Aquí guardaremos la imagen comprimida
+let datosUsuario = { rol: '', id: '' }; // Se llena al iniciar sesión
 
-// --- BLOQUE 2: EL CEREBRO DE LOS IDs (IA READY) ---
+// --- BLOQUE 2: INTELIGENCIA DE NOMENCLATURA (IA READY) ---
+// Esta función es la que genera los IDs que hablamos
+const generarIdConsonantes = (texto) => {
+    if (!texto) return "OBJ";
+    return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                .replace(/[aeiou\s]/gi, '').toUpperCase().substring(0, 4);
+};
 
-// Función que extrae consonantes para el ID del archivo
-function generarCodigoArticulo(nombreSubcategoria) {
-    // Quita vocales, espacios y toma las primeras 3-4 consonantes
-    return nombreSubcategoria
-        .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Quita tildes
-        .replace(/[aeiou\s]/gi, '')
-        .toUpperCase()
-        .substring(0, 4);
-}
+// --- BLOQUE 3: GESTIÓN DE CÁMARA Y COMPRESIÓN ---
+async function procesarFoto(archivo) {
+    // Aquí usamos un Canvas para achicar la imagen antes de subirla
+    const reader = new FileReader();
+    reader.readAsDataURL(archivo);
+    reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target.result;
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const MAX_WIDTH = 800; // Tamaño ideal para web/móvil
+            const scaleSize = MAX_WIDTH / img.width;
+            canvas.width = MAX_WIDTH;
+            canvas.height = img.height * scaleSize;
 
-// Generador de nombre de archivo inteligente
-function prepararNombreArchivo(subcategoria, indice = 0) {
-    const cod = generarCodigoArticulo(subcategoria);
-    const sufijo = (modoModal === 'finalizar') ? 'DESPUES' : 'ANTES';
-    return `${usuarioActual.id}_${cod}_${indice}_${sufijo}.jpg`;
-}
-
-// --- BLOQUE 3: SECCIÓN CÁMARA (UNIVERSAL) ---
-
-function abrirCamara() {
-    console.log("Iniciando cámara...");
-    // Aquí disparamos el input type="file" capture="camera"
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.capture = 'camera';
-    
-    input.onchange = (e) => {
-        const file = e.target.files[0];
-        // Aquí meteríamos la compresión antes de subir
-        fotoCapturada = file;
-        mostrarPrevisualizacion(file);
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            
+            // Convertimos a blob para subir a Firebase
+            canvas.toBlob((blob) => {
+                fotoProcesada = blob;
+                console.log("Imagen comprimida lista");
+                document.getElementById('preview-foto').src = URL.createObjectURL(blob);
+            }, 'image/jpeg', 0.7); // Calidad al 70%
+        };
     };
-    input.click();
 }
 
-// --- BLOQUE 4: LÓGICA DE SECCIONES (JUAN Y JOHN) ---
+// --- BLOQUE 4: SECCIONES DEL MODAL (ENUNCIADOS) ---
 
-// SECCIÓN A: SOLICITAR ORDEN (CLIENTE)
+// [SECCIÓN: SOLICITAR REPARACIÓN - CLIENTE]
 function vistaSolicitarCliente() {
-    console.log("Cargando interfaz para Juanito...");
-    // Ocultar precios, mostrar descripción y botón cámara "Antes"
+    // Lógica para mostrar solo: Categoría, Descripción, Foto Daño.
 }
 
-// SECCIÓN B: NUEVA ORDEN LOCAL (ZAPATERO)
+// [SECCIÓN: EDITAR SOLICITUD - CLIENTE]
+function vistaEditarCliente(idPedido) {
+    // Permite al cliente añadir otro objeto o corregir descripción.
+}
+
+// [SECCIÓN: NUEVA ORDEN LOCAL - ZAPATERO]
 function vistaNuevaOrdenZapatero() {
-    console.log("Cargando interfaz para John (Venta Local)...");
-    // Mostrar selector de cliente y campos de cobro inmediato
+    // Lo que vimos en tu captura: Ingreso directo de clientes al local.
 }
 
-// SECCIÓN C: EDITAR Y DIAGNÓSTICO (COMPARTIDO)
-function vistaEditarTrabajo(datosOrden) {
-    if (usuarioActual.rol === 'zapatero') {
-        // Habilitar campos de Materiales, Precio y Foto "Después"
-    } else {
-        // Solo permitir editar descripción si la orden está 'pendiente'
-    }
+// [SECCIÓN: GESTIÓN DE REPARACIÓN - ZAPATERO]
+function vistaGestionZapatero(idOrden) {
+    // Aquí el zapatero edita con PRECIOS, MATERIALES y SUGERENCIAS.
+    // Aquí se habilita la toma de la FOTO FINAL (DESPUÉS).
 }
 
-// --- BLOQUE 5: GUARDADO Y FIREBASE ---
-
-async function guardarTrabajo() {
-    const subCat = document.getElementById('select-subcategoria').value;
-    const nombreFinal = prepararNombreArchivo(subCat);
+// --- BLOQUE 5: GUARDADO INTEGRADO ---
+async function guardarEnFirebase() {
+    const cat = document.getElementById('select-cat').value;
+    const sub = document.getElementById('select-sub').value;
+    const idCliente = document.getElementById('input-id-cliente').value;
     
-    console.log(`Guardando en Firebase como: ${nombreFinal}`);
-    
-    // 1. Subir foto a Storage
-    // 2. Guardar metadata en Firestore (ID descriptivo, link foto, materiales)
-    // 3. Cerrar modal y refrescar Dashboard
-}
+    // Generamos el nombre según tu regla: ID_CAT_SUB_FECHA.jpg
+    const nombreFinal = `${idCliente}_${generarIdConsonantes(cat)}_${generarIdConsonantes(sub)}_${Date.now()}.jpg`;
 
-// --- EVENT LISTENERS (LOS ESCUCHADORES) ---
-document.getElementById('btn-foto').addEventListener('click', abrirCamara);
-document.getElementById('btn-guardar-modal').addEventListener('click', guardarTrabajo);
+    // 1. Subir fotoProcesada a Firebase Storage
+    // 2. Guardar JSON en Firestore con la lógica de Juan y John
+    console.log("Guardando reparación:", nombreFinal);
+}
