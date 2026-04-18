@@ -1,95 +1,86 @@
-/**
- * JADI REPAIZ - MOTOR MAESTRO UNIFICADO
- * Conecta: nueva_orden.html, reparar.html y trabajos.html
- */
+// ==========================================
+// MODAL-TRABAJOS.JS - EL CEREBRO DE JADI REPAIZ
+// ==========================================
 
-const db = firebase.database();
-const storage = firebase.storage();
-let ordenActual = {};
-let modoModal = 'crear';
+// --- BLOQUE 1: VARIABLES GLOBALES Y CONFIGURACIÓN ---
+let usuarioActual = { rol: 'cliente', id: 'CLN123' }; // Esto vendrá de tu Auth
+let fotoCapturada = null;
+let modoModal = 'solicitar'; // 'solicitar', 'editar', 'nueva-orden', 'diagnostico'
 
-// 1. DICCIONARIO DE CATEGORÍAS PARA IDs INTELIGENTES
-const MAPA_CATEGORIAS = {
-    "Zapatos": { code: "ZP", subs: { "Casual Hombre": "CH", "Casual Mujer": "CM", "Tacon": "TC" } },
-    "Botas": { code: "BT", subs: { "Botas Hombre": "BH", "Botas Mujer": "BM" } },
-    "Deportivos": { code: "DP", subs: { "Running": "RN", "Futbol": "FT" } },
-    "Maletas": { code: "ML", subs: { "Mochila": "MC", "Viaje": "VJ" } }
-};
+// --- BLOQUE 2: EL CEREBRO DE LOS IDs (IA READY) ---
 
-// 2. FUNCIÓN PARA ABRIR EL MODAL (Desde cualquier módulo)
-async function abrirModalOrden(modo = 'crear', data = null) {
-    const session = JSON.parse(localStorage.getItem('session_jadi'));
-    const container = document.getElementById('modal-trabajo');
-
-    if (!container) {
-        console.error("Error: No existe el contenedor #modal-trabajo en el HTML");
-        return;
-    }
-
-    modoModal = modo;
-
-    if (modo === 'crear') {
-        // Si es nueva orden en local, generamos un ID basado en tiempo o conteo
-        const ticketId = "TK-" + Math.floor(Math.random() * 9000 + 1000);
-        
-        ordenActual = {
-            id: ticketId,
-            fecha: new Date().toLocaleDateString(),
-            status: 'Ingresado',
-            cliente: { 
-                uid: session ? session.uid : 'local', 
-                nombre: '', 
-                telefono: '' 
-            },
-            trabajos: [{ categoria: 'Zapatos', subcategoria: 'Casual Hombre', detalle: '', precio: 0 }],
-            totales: { cobrado: 0, abono: 0, saldo: 0 }
-        };
-    } else {
-        ordenActual = data;
-    }
-
-    renderizarModal(session ? session.rolCodigo : 'zapatero');
+// Función que extrae consonantes para el ID del archivo
+function generarCodigoArticulo(nombreSubcategoria) {
+    // Quita vocales, espacios y toma las primeras 3-4 consonantes
+    return nombreSubcategoria
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Quita tildes
+        .replace(/[aeiou\s]/gi, '')
+        .toUpperCase()
+        .substring(0, 4);
 }
 
-// 3. RENDERIZADO DE LA INTERFAZ DEL MODAL
-function renderizarModal(rol) {
-    const container = document.getElementById('modal-trabajo');
-    const t = ordenActual.totales;
+// Generador de nombre de archivo inteligente
+function prepararNombreArchivo(subcategoria, indice = 0) {
+    const cod = generarCodigoArticulo(subcategoria);
+    const sufijo = (modoModal === 'finalizar') ? 'DESPUES' : 'ANTES';
+    return `${usuarioActual.id}_${cod}_${indice}_${sufijo}.jpg`;
+}
 
-    container.innerHTML = `
-        <div class="modal-content-jadi" style="background:#111; color:white; padding:20px; border-radius:15px; border:1px solid var(--gold); max-width:500px; margin:auto;">
-            <h2 style="color:var(--gold); text-align:center;">ORDEN: ${ordenActual.id}</h2>
-            
-            <label>Nombre del Cliente:</label>
-            <input type="text" id="m-nombre" value="${ordenActual.cliente.nombre}" placeholder="Ej. Juan Pérez">
-            
-            <label>Teléfono:</label>
-            <input type="text" id="m-telefono" value="${ordenActual.cliente.telefono}" placeholder="0999999999">
+// --- BLOQUE 3: SECCIÓN CÁMARA (UNIVERSAL) ---
 
-            <hr style="border:0.5px solid #333; margin:20px 0;">
+function abrirCamara() {
+    console.log("Iniciando cámara...");
+    // Aquí disparamos el input type="file" capture="camera"
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.capture = 'camera';
+    
+    input.onchange = (e) => {
+        const file = e.target.files[0];
+        // Aquí meteríamos la compresión antes de subir
+        fotoCapturada = file;
+        mostrarPrevisualizacion(file);
+    };
+    input.click();
+}
 
-            <div id="items-reparacion">
-                ${ordenActual.trabajos.map((item, index) => `
-                    <div class="item-box" style="background:#1a1a1a; padding:10px; border-radius:8px; margin-bottom:10px;">
-                        <p style="color:var(--gold); font-weight:bold; margin:0;">Artículo #${index + 1}</p>
-                        <select id="cat-${index}" onchange="actualizarSubcat(${index})">
-                            ${Object.keys(MAPA_CATEGORIAS).map(cat => `<option value="${cat}" ${item.categoria === cat ? 'selected' : ''}>${cat}</option>`).join('')}
-                        </select>
-                        <textarea id="det-${index}" placeholder="Descripción del daño..." style="margin-top:10px;">${item.detalle}</textarea>
-                        
-                        <button onclick="capturarFoto(${index}, 'ANT')" style="background:#333; font-size:12px;">
-                            <i class="fas fa-camera"></i> Foto Antes
-                        </button>
-                    </div>
-                `).join('')}
-            </div>
+// --- BLOQUE 4: LÓGICA DE SECCIONES (JUAN Y JOHN) ---
 
-            <div id="controles-zapatero" style="display:${rol === 'zapatero' ? 'block' : 'none'}">
-                <label>Total a Cobrar $:</label>
-                <input type="number" id="m-total" value="${t.cobrado}" oninput="recalcularSaldo()">
-                <label>Abono $:</label>
-                <input type="number" id="m-abono" value="${t.abono}" oninput="recalcularSaldo()">
-                <h3 id="m-saldo" style="text-align:right; color:var(--gold);">Saldo: $${(t.cobrado - t.abono).toFixed(2)}</h3>
-            </div>
+// SECCIÓN A: SOLICITAR ORDEN (CLIENTE)
+function vistaSolicitarCliente() {
+    console.log("Cargando interfaz para Juanito...");
+    // Ocultar precios, mostrar descripción y botón cámara "Antes"
+}
 
-            <button onclick="guardarTodo()" style="background:var(--gold); color:black;
+// SECCIÓN B: NUEVA ORDEN LOCAL (ZAPATERO)
+function vistaNuevaOrdenZapatero() {
+    console.log("Cargando interfaz para John (Venta Local)...");
+    // Mostrar selector de cliente y campos de cobro inmediato
+}
+
+// SECCIÓN C: EDITAR Y DIAGNÓSTICO (COMPARTIDO)
+function vistaEditarTrabajo(datosOrden) {
+    if (usuarioActual.rol === 'zapatero') {
+        // Habilitar campos de Materiales, Precio y Foto "Después"
+    } else {
+        // Solo permitir editar descripción si la orden está 'pendiente'
+    }
+}
+
+// --- BLOQUE 5: GUARDADO Y FIREBASE ---
+
+async function guardarTrabajo() {
+    const subCat = document.getElementById('select-subcategoria').value;
+    const nombreFinal = prepararNombreArchivo(subCat);
+    
+    console.log(`Guardando en Firebase como: ${nombreFinal}`);
+    
+    // 1. Subir foto a Storage
+    // 2. Guardar metadata en Firestore (ID descriptivo, link foto, materiales)
+    // 3. Cerrar modal y refrescar Dashboard
+}
+
+// --- EVENT LISTENERS (LOS ESCUCHADORES) ---
+document.getElementById('btn-foto').addEventListener('click', abrirCamara);
+document.getElementById('btn-guardar-modal').addEventListener('click', guardarTrabajo);
