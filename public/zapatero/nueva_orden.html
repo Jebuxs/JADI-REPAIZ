@@ -2,17 +2,48 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>JADI - Nueva Orden</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+    
     <script src="../js/estilo_visual.js"></script>
     <script src="../js/modal_trabajos.js"></script>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <style>
+        /* Estilos base rápidos para el contenedor del modal */
+        #modal-trabajo {
+            display: none; 
+            position: fixed; 
+            top: 0; left: 0; 
+            width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.9); 
+            z-index: 1000; 
+            justify-content: center; 
+            align-items: center;
+            overflow-y: auto;
+        }
+        .card-jadi {
+            max-width: 400px;
+            margin: 50px auto;
+            text-align: center;
+            padding: 30px;
+            border-radius: 15px;
+        }
+    </style>
 </head>
 <body>
 
     <div class="card-jadi">
         <h2><i class="fas fa-plus-circle"></i> Registro de Ingreso</h2>
-        <p>Utiliza este módulo para recibir trabajos nuevos.</p>
+        <p>Módulo exclusivo para el Zapatero. Registra trabajos que llegan directamente al local.</p>
         
-        <button id="btn-accion-modal">INICIAR NUEVA ORDEN</button>
+        <button id="btn-accion-modal" onclick="abrirModalOrden('crear')">
+            INICIAR NUEVA ORDEN
+        </button>
         
         <br><br>
         <a href="dashboard.html" style="color: gray; font-size: 12px; text-decoration: none;">
@@ -20,9 +51,15 @@
         </a>
     </div>
 
+    <div id="modal-trabajo"></div>
+
     <script>
-        // Aplicamos el estilo al cargar
-        window.onload = () => { JadiEstilo.aplicar('elegante'); };
+        // Aplicamos el estilo "Elegante" de JadiEstilo al cargar la página
+        window.onload = () => { 
+            if (typeof JadiEstilo !== 'undefined') {
+                JadiEstilo.aplicar('elegante'); 
+            }
+        };
     </script>
 </body>
 </html>
