@@ -1,81 +1,92 @@
 // ========================================================
-// ARCHIVO: modal_trabajos.js
-// DESCRIPCIÓN: Gestión de solicitudes, órdenes y fotos.
+// ARCHIVO: modal_trabajos.js - J.A.D.I REPAIZ
 // ========================================================
 
-// --- BLOQUE 1: VARIABLES GLOBALES ---
-let fotoProcesada = null; // Aquí guardaremos la imagen comprimida
-let datosUsuario = { rol: '', id: '' }; // Se llena al iniciar sesión
+let fotoProcesada = null;
+let modoActual = ""; 
 
-// --- BLOQUE 2: INTELIGENCIA DE NOMENCLATURA (IA READY) ---
-// Esta función es la que genera los IDs que hablamos
+// --- INTELIGENCIA DE IDs (IA READY) ---
 const generarIdConsonantes = (texto) => {
     if (!texto) return "OBJ";
     return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
                 .replace(/[aeiou\s]/gi, '').toUpperCase().substring(0, 4);
 };
 
-// --- BLOQUE 3: GESTIÓN DE CÁMARA Y COMPRESIÓN ---
-async function procesarFoto(archivo) {
-    // Aquí usamos un Canvas para achicar la imagen antes de subirla
-    const reader = new FileReader();
-    reader.readAsDataURL(archivo);
-    reader.onload = (event) => {
-        const img = new Image();
-        img.src = event.target.result;
-        img.onload = () => {
-            const canvas = document.createElement('canvas');
-            const MAX_WIDTH = 800; // Tamaño ideal para web/móvil
-            const scaleSize = MAX_WIDTH / img.width;
-            canvas.width = MAX_WIDTH;
-            canvas.height = img.height * scaleSize;
+// --- FUNCIÓN MAESTRA: ABRIR MODAL ---
+function abrirModalOrden(modo, datos = null) {
+    modoActual = modo;
+    const container = document.getElementById('modal-trabajo') || document.getElementById('modal-trabajos-container');
+    if (!container) return;
 
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    // Inyectamos el HTML dinámicamente
+    container.innerHTML = `
+        <div style="background:#111; width:90%; max-width:450px; border-radius:20px; border:1px solid #333; padding:20px; position:relative; color:white; font-family:sans-serif;">
+            <div onclick="cerrarModal()" style="position:absolute; top:15px; right:15px; color:#666; font-size:20px; cursor:pointer;">&times;</div>
             
-            // Convertimos a blob para subir a Firebase
-            canvas.toBlob((blob) => {
-                fotoProcesada = blob;
-                console.log("Imagen comprimida lista");
-                document.getElementById('preview-foto').src = URL.createObjectURL(blob);
-            }, 'image/jpeg', 0.7); // Calidad al 70%
-        };
+            <h3 style="color:#fbc02d; margin-top:0;">${modo === 'crear' ? 'Nueva Orden Local' : 'Gestión de Trabajo'}</h3>
+            
+            <div style="margin-bottom:15px;">
+                <label style="font-size:11px; color:#666;">CATEGORÍA</label>
+                <select id="m-cat" style="background:#1a1a1a; color:white; border:1px solid #333; padding:10px; width:100%; border-radius:8px;">
+                    <option value="Zapatillas">Zapatillas</option>
+                    <option value="Zapatos">Zapatos</option>
+                    <option value="Mochilas">Mochilas</option>
+                </select>
+            </div>
+
+            <div id="seccion-camara" style="text-align:center; margin-bottom:15px;">
+                <div id="drop-zona" onclick="activarCamara()" style="border:2px dashed #333; border-radius:12px; padding:20px; cursor:pointer;">
+                    <i class="fas fa-camera" style="font-size:30px; color:#fbc02d;"></i>
+                    <p style="font-size:12px; color:#888; margin-top:10px;">${modo === 'editar' ? 'Foto de Entrega (Después)' : 'Foto de Ingreso (Antes)'}</p>
+                    <img id="preview-foto" style="width:100%; border-radius:10px; display:none; margin-top:10px;">
+                </div>
+            </div>
+
+            <div id="campos-zapatero" style="${modo === 'crear' || modo === 'editar' ? 'display:block' : 'display:none'}">
+                <input type="number" id="m-precio" placeholder="Precio Real $" style="background:#1a1a1a; color:white; border:1px solid #333; padding:10px; width:45%; border-radius:8px; margin-right:5%;">
+                <input type="text" id="m-material" placeholder="Materiales (Suela, etc.)" style="background:#1a1a1a; color:white; border:1px solid #333; padding:10px; width:48%; border-radius:8px;">
+            </div>
+
+            <textarea id="m-detalle" placeholder="Observaciones técnicas..." rows="3" style="background:#1a1a1a; color:white; border:1px solid #333; padding:10px; width:100%; border-radius:8px; margin-top:15px; box-sizing:border-box;"></textarea>
+
+            <button onclick="procesarGuardado()" style="background:#fbc02d; color:black; border:none; width:100%; padding:15px; border-radius:10px; margin-top:20px; font-weight:bold; cursor:pointer;">
+                GUARDAR CAMBIOS EN JADI
+            </button>
+        </div>
+    `;
+    container.style.display = 'flex';
+}
+
+function cerrarModal() {
+    document.getElementById('modal-trabajo').style.display = 'none';
+    if(document.getElementById('modal-trabajos-container')) document.getElementById('modal-trabajos-container').style.display = 'none';
+}
+
+// --- LÓGICA DE CÁMARA ---
+function activarCamara() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.capture = 'camera';
+    input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const preview = document.getElementById('preview-foto');
+            preview.src = URL.createObjectURL(file);
+            preview.style.display = 'block';
+            fotoProcesada = file; // Aquí aplicarías la compresión luego
+        }
     };
+    input.click();
 }
 
-// --- BLOQUE 4: SECCIONES DEL MODAL (ENUNCIADOS) ---
-
-// [SECCIÓN: SOLICITAR REPARACIÓN - CLIENTE]
-function vistaSolicitarCliente() {
-    // Lógica para mostrar solo: Categoría, Descripción, Foto Daño.
-}
-
-// [SECCIÓN: EDITAR SOLICITUD - CLIENTE]
-function vistaEditarCliente(idPedido) {
-    // Permite al cliente añadir otro objeto o corregir descripción.
-}
-
-// [SECCIÓN: NUEVA ORDEN LOCAL - ZAPATERO]
-function vistaNuevaOrdenZapatero() {
-    // Lo que vimos en tu captura: Ingreso directo de clientes al local.
-}
-
-// [SECCIÓN: GESTIÓN DE REPARACIÓN - ZAPATERO]
-function vistaGestionZapatero(idOrden) {
-    // Aquí el zapatero edita con PRECIOS, MATERIALES y SUGERENCIAS.
-    // Aquí se habilita la toma de la FOTO FINAL (DESPUÉS).
-}
-
-// --- BLOQUE 5: GUARDADO INTEGRADO ---
-async function guardarEnFirebase() {
-    const cat = document.getElementById('select-cat').value;
-    const sub = document.getElementById('select-sub').value;
-    const idCliente = document.getElementById('input-id-cliente').value;
+// --- GUARDADO ---
+async function procesarGuardado() {
+    const cat = document.getElementById('m-cat').value;
+    const desc = document.getElementById('m-detalle').value;
+    const cod = generarIdConsonantes(cat);
     
-    // Generamos el nombre según tu regla: ID_CAT_SUB_FECHA.jpg
-    const nombreFinal = `${idCliente}_${generarIdConsonantes(cat)}_${generarIdConsonantes(sub)}_${Date.now()}.jpg`;
-
-    // 1. Subir fotoProcesada a Firebase Storage
-    // 2. Guardar JSON en Firestore con la lógica de Juan y John
-    console.log("Guardando reparación:", nombreFinal);
+    // Aquí conectas con tu Firebase Database
+    alert(`Guardando item: ${cod} - Imagen preparada`);
+    cerrarModal();
 }
