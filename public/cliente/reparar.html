@@ -3,27 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Reparaciones - J.A.D.I</title>
+    <title>J.A.D.I - Mis Reparaciones</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <style>
-        :root { --gold: #fbc02d; --dark: #000; --card: #111; --success: #00cc66; --danger: #ff4444; }
+        :root { --gold: #fbc02d; --dark: #000; --card: #111; --success: #00cc66; }
         body { background: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 15px; padding-bottom: 80px; }
         
         header { display: flex; align-items: center; gap: 15px; padding: 10px 0; border-bottom: 1px solid #222; margin-bottom: 20px; }
         .back-btn { color: var(--gold); text-decoration: none; font-size: 1.2rem; }
 
-        .repa-box { background: var(--card); border-radius: 15px; padding: 20px; border: 1px dotted #444; margin-bottom: 20px; position: relative; cursor: pointer; transition: 0.3s; }
-        .repa-box:active { transform: scale(0.98); }
+        .repa-box { background: var(--card); border-radius: 15px; padding: 20px; border: 1px dotted #444; margin-bottom: 20px; position: relative; cursor: pointer; }
         
-        .item-row-main { display: flex; gap: 10px; margin-bottom: 10px; }
-        .col-cant { flex: 0.5; }
-        .col-tipo { flex: 1.5; }
-        
-        input, select, textarea { background: #1a1a1a; border: 1px solid #333; color: white; padding: 12px; border-radius: 8px; width: 100%; box-sizing: border-box; outline: none; font-size: 0.9rem; }
-        input:focus, select:focus, textarea:focus { border-color: var(--gold); }
+        input, select, textarea { background: #1a1a1a; border: 1px solid #333; color: white; padding: 12px; border-radius: 8px; width: 100%; box-sizing: border-box; outline: none; }
+        input:focus { border-color: var(--gold); }
 
         .btn-add-circle { 
             position: absolute; bottom: -25px; right: 20px; background: var(--gold); 
@@ -33,9 +29,9 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.5); z-index: 10;
         }
 
-        .btn-send { background: var(--gold); color: black; border: none; width: 100%; padding: 15px; border-radius: 10px; cursor: pointer; margin-top: 40px; font-weight: bold; font-size: 1rem; text-transform: uppercase; }
+        .btn-send { background: var(--gold); color: black; border: none; width: 100%; padding: 15px; border-radius: 10px; cursor: pointer; margin-top: 40px; font-weight: bold; text-transform: uppercase; }
         
-        .invoice-item { background: #0a0a0a; padding: 12px; border-radius: 8px; margin-bottom: 8px; font-size: 0.85rem; display: flex; justify-content: space-between; border-left: 3px solid var(--gold); border: 1px solid #222; }
+        .invoice-item { background: #0a0a0a; padding: 12px; border-radius: 8px; margin-bottom: 8px; font-size: 0.85rem; display: flex; justify-content: space-between; border: 1px solid #222; border-left: 3px solid var(--gold); }
 
         .tabs { display: flex; gap: 10px; margin-bottom: 25px; }
         .tab { flex: 1; padding: 12px; text-align: center; border-radius: 8px; background: #111; color: #666; cursor: pointer; font-size: 0.8rem; font-weight: bold; }
@@ -43,9 +39,10 @@
 
         .hidden { display: none; }
 
+        /* Contenedor Crítico para el modal_trabajos.js */
         #modal-trabajos-container {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.95); display: none; justify-content: center; 
+            background: rgba(0,0,0,0.9); display: none; justify-content: center; 
             align-items: center; z-index: 9999; backdrop-filter: blur(8px);
         }
     </style>
@@ -64,24 +61,25 @@
 
 <div id="sec-nueva" class="content-sec">
     <div class="repa-box" style="cursor: default;">
-        <h3 style="color: var(--gold); margin-top:0; font-size: 0.9rem; margin-bottom: 15px;"><i class="fas fa-plus-circle"></i> Agregar Ítem de Reparación</h3>
+        <h3 style="color: var(--gold); margin-top:0; font-size: 0.9rem; margin-bottom: 15px;">
+            <i class="fas fa-plus-circle"></i> Agregar Ítem de Reparación
+        </h3>
         
-        <div class="item-row-main">
-            <div class="col-cant">
+        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+            <div style="flex: 0.5;">
                 <input type="number" id="cant" value="1" min="1">
             </div>
-            <div class="col-tipo">
+            <div style="flex: 1.5;">
                 <select id="tipo">
                     <option value="Zapatillas">Zapatillas</option>
                     <option value="Zapatos">Zapatos</option>
                     <option value="Mochila">Mochila</option>
                     <option value="Chompa">Chompa</option>
-                    <option value="Otro">Otro</option>
                 </select>
             </div>
         </div>
         
-        <textarea id="detalle" placeholder="¿Qué necesita el calzado? (Ej: Cambio de suelas, costura...)" rows="3"></textarea>
+        <textarea id="detalle" placeholder="Describe el daño (Ej: Cambio de suelas...)" rows="3"></textarea>
         
         <div class="btn-add-circle" onclick="agregarAlCarrito()"><i class="fas fa-plus"></i></div>
     </div>
@@ -97,10 +95,12 @@
 <div id="modal-trabajos-container"></div>
 
 <script>
+    // --- CONFIGURACIÓN FIREBASE ---
     const firebaseConfig = { databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com" };
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
+    // --- SESIÓN ---
     const session = JSON.parse(localStorage.getItem('session_jadi'));
     if(!session) window.location.href = "index.html";
 
@@ -123,45 +123,43 @@
         const cant = document.getElementById('cant').value;
         const tipo = document.getElementById('tipo').value;
         const desc = document.getElementById('detalle').value;
+        
         if(!desc) return alert("Escribe el detalle del trabajo");
 
+        // Guardamos el item y abrimos el modal para la foto técnica
         const item = { 
             cant: parseInt(cant), 
+            tipo: tipo,
             detalle: `${tipo.toUpperCase()}: ${desc}`, 
             precio: 0 
         };
+        
         carritoReparaciones.push(item);
 
+        // Actualizamos UI
         document.getElementById('lista-previa').innerHTML += `
             <div class="invoice-item">
                 <span><b>${cant}</b> | ${tipo} - <small>${desc}</small></span>
-                <i class="fas fa-check-circle" style="color:var(--gold)"></i>
+                <i class="fas fa-camera" style="color:var(--gold); cursor:pointer" onclick="abrirModalOrden('solicitar')"></i>
             </div>`;
+        
         document.getElementById('detalle').value = "";
         document.getElementById('btn-finalizar').classList.remove('hidden');
     }
 
-    // --- ENVIAR SOLICITUD SIN CEROS A LA IZQUIERDA ---
     async function enviarSolicitud() {
         if(carritoReparaciones.length === 0) return;
         
         try {
             const snapshot = await db.ref(`usuarios/${session.uid}/mis_ordenes`).once('value');
-            // Usamos parseInt para asegurar que el número sea entero y sin ceros
-            const numOrden = parseInt(snapshot.numChildren() || 0) + 1;
-            
-            // Generamos el ID limpio
+            const numOrden = (snapshot.numChildren() || 0) + 1;
             const ordenId = `${session.uid}-${numOrden}`;
             
             const nuevaOrden = {
                 id: ordenId,
                 fecha: new Date().toLocaleDateString(),
                 status: 'Pendiente',
-                cliente: {
-                    uid: session.uid,
-                    nombre: session.nombre,
-                    telefono: session.telefono || "Sin registrar"
-                },
+                cliente: { uid: session.uid, nombre: session.nombre },
                 trabajos: carritoReparaciones,
                 totales: { cobrado: 0, abono: 0, saldo: 0 }
             };
@@ -172,7 +170,7 @@
 
             await db.ref().update(updates);
             
-            alert(`¡Pedido ${ordenId} enviado!`);
+            alert(`Pedido ${ordenId} enviado con éxito`);
             carritoReparaciones = [];
             document.getElementById('lista-previa').innerHTML = "";
             document.getElementById('btn-finalizar').classList.add('hidden');
@@ -180,7 +178,6 @@
 
         } catch (error) {
             console.error(error);
-            alert("Error al conectar con la red J.A.D.I");
         }
     }
 
@@ -190,41 +187,21 @@
             container.innerHTML = "";
             
             if(!snap.exists()) {
-                container.innerHTML = "<p style='text-align:center; color:#444; margin-top:50px;'>No tienes órdenes registradas.</p>";
+                container.innerHTML = "<p style='text-align:center; color:#444; margin-top:50px;'>No hay órdenes.</p>";
                 return;
             }
 
             snap.forEach(child => {
                 const s = child.val();
-                const idReal = s.id;
-                
-                let borderCol = "var(--gold)";
-                if(s.status === 'En Proceso') borderCol = "#2196F3";
-                if(s.status === 'Terminado') borderCol = "var(--success)";
-
                 container.innerHTML += `
-                    <div class="repa-box" style="border-style:solid; border-left:6px solid ${borderCol};" onclick="verOrdenPremium('${idReal}')">
-                        <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <b style="font-size:0.8rem;">FOLIO: ${idReal}</b>
-                            <span style="font-size:9px; background:#222; padding:4px 8px; border-radius:5px; color:${borderCol}; border: 1px solid ${borderCol}">${s.status}</span>
+                    <div class="repa-box" style="border-left:6px solid var(--gold);" onclick="abrirModalOrden('editar', ${JSON.stringify(s)})">
+                        <div style="display:flex; justify-content:space-between;">
+                            <b>FOLIO: ${s.id}</b>
+                            <span style="font-size:10px; color:var(--gold)">${s.status}</span>
                         </div>
-                        <p style="font-size:12px; color:#aaa; margin: 12px 0;">${s.trabajos[0].detalle.substring(0, 40)}...</p>
-                        <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <span style="font-size:10px; color:#555;"><i class="far fa-calendar-alt"></i> ${s.fecha}</span>
-                            <b style="color:var(--gold);">$${(s.totales.cobrado || 0).toFixed(2)}</b>
-                        </div>
+                        <p style="font-size:12px; color:#aaa;">${s.trabajos[0].detalle}</p>
                     </div>`;
             });
-        });
-    }
-
-    function verOrdenPremium(id) {
-        db.ref(`ordenes/${id}`).once('value', snap => {
-            if(snap.exists()) {
-                if (typeof abrirModalOrden === 'function') {
-                    abrirModalOrden('editar', snap.val());
-                }
-            }
         });
     }
 </script>
