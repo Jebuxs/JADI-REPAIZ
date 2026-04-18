@@ -6,7 +6,6 @@
     <title>J.A.D.I - Mis Reparaciones</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <style>
@@ -39,7 +38,7 @@
 
         .hidden { display: none; }
 
-        /* Contenedor Crítico para el modal_trabajos.js */
+        /* Contenedor del Modal: Aseguramos que sea fijo y esté encima de todo */
         #modal-trabajos-container {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.9); display: none; justify-content: center; 
@@ -95,12 +94,11 @@
 <div id="modal-trabajos-container"></div>
 
 <script>
-    // --- CONFIGURACIÓN FIREBASE ---
+    // --- LÓGICA DE LA PÁGINA ---
     const firebaseConfig = { databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com" };
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // --- SESIÓN ---
     const session = JSON.parse(localStorage.getItem('session_jadi'));
     if(!session) window.location.href = "index.html";
 
@@ -126,17 +124,9 @@
         
         if(!desc) return alert("Escribe el detalle del trabajo");
 
-        // Guardamos el item y abrimos el modal para la foto técnica
-        const item = { 
-            cant: parseInt(cant), 
-            tipo: tipo,
-            detalle: `${tipo.toUpperCase()}: ${desc}`, 
-            precio: 0 
-        };
-        
+        const item = { cant: parseInt(cant), tipo: tipo, detalle: `${tipo.toUpperCase()}: ${desc}`, precio: 0 };
         carritoReparaciones.push(item);
 
-        // Actualizamos UI
         document.getElementById('lista-previa').innerHTML += `
             <div class="invoice-item">
                 <span><b>${cant}</b> | ${tipo} - <small>${desc}</small></span>
@@ -147,63 +137,7 @@
         document.getElementById('btn-finalizar').classList.remove('hidden');
     }
 
-    async function enviarSolicitud() {
-        if(carritoReparaciones.length === 0) return;
-        
-        try {
-            const snapshot = await db.ref(`usuarios/${session.uid}/mis_ordenes`).once('value');
-            const numOrden = (snapshot.numChildren() || 0) + 1;
-            const ordenId = `${session.uid}-${numOrden}`;
-            
-            const nuevaOrden = {
-                id: ordenId,
-                fecha: new Date().toLocaleDateString(),
-                status: 'Pendiente',
-                cliente: { uid: session.uid, nombre: session.nombre },
-                trabajos: carritoReparaciones,
-                totales: { cobrado: 0, abono: 0, saldo: 0 }
-            };
-
-            const updates = {};
-            updates['/ordenes/' + ordenId] = nuevaOrden;
-            updates[`/usuarios/${session.uid}/mis_ordenes/${ordenId}`] = true;
-
-            await db.ref().update(updates);
-            
-            alert(`Pedido ${ordenId} enviado con éxito`);
-            carritoReparaciones = [];
-            document.getElementById('lista-previa').innerHTML = "";
-            document.getElementById('btn-finalizar').classList.add('hidden');
-            switchTab('seguimiento');
-
-        } catch (error) {
-            console.error(error);
-        }
-    }
-
-    function cargarSeguimiento() {
-        db.ref('ordenes').orderByChild('cliente/uid').equalTo(session.uid).on('value', snap => {
-            const container = document.getElementById('lista-seguimiento');
-            container.innerHTML = "";
-            
-            if(!snap.exists()) {
-                container.innerHTML = "<p style='text-align:center; color:#444; margin-top:50px;'>No hay órdenes.</p>";
-                return;
-            }
-
-            snap.forEach(child => {
-                const s = child.val();
-                container.innerHTML += `
-                    <div class="repa-box" style="border-left:6px solid var(--gold);" onclick="abrirModalOrden('editar', ${JSON.stringify(s)})">
-                        <div style="display:flex; justify-content:space-between;">
-                            <b>FOLIO: ${s.id}</b>
-                            <span style="font-size:10px; color:var(--gold)">${s.status}</span>
-                        </div>
-                        <p style="font-size:12px; color:#aaa;">${s.trabajos[0].detalle}</p>
-                    </div>`;
-            });
-        });
-    }
+    // --- CARGA DE LÓGICA EXTERNA ---
 </script>
 
 <script src="../js/modal_trabajos.js"></script>
