@@ -2,33 +2,30 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>J.A.D.I - Mis Reparaciones</title>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
     <style>
-        :root { --gold: #fbc02d; --dark: #000; --card: #111; }
-        body { background: var(--dark); color: white; font-family: sans-serif; margin: 0; padding: 15px; }
+        body { background: #000; color: white; font-family: sans-serif; }
         
-        /* Contenedor del Modal */
+        /* Modal: Fondo negro con opacidad y contenido centrado */
         #modal-trabajos-container {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9); display: none; justify-content: center; 
-            align-items: center; z-index: 9999; backdrop-filter: blur(8px);
+            position: fixed; 
+            top: 0; left: 0; 
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95);
+            display: none; /* Oculto por defecto */
+            justify-content: center; 
+            align-items: center; 
+            z-index: 99999; /* Asegura que esté al frente */
         }
     </style>
 </head>
 <body>
 
-<div id="modal-trabajos-container"></div>
+    <h1>Gestión de Reparaciones</h1>
+    <button onclick="abrirModalOrden('solicitar')">Probar Modal</button>
 
-<script>
-    // Tu lógica de Firebase y carrito sigue aquí...
-</script>
+    <div id="modal-trabajos-container"></div>
 
-<script src="../js/modal_trabajos.js"></script>
-
+    <script src="../js/modal_trabajos.js"></script>
 </body>
 </html>
