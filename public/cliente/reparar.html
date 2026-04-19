@@ -2,29 +2,59 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>J.A.D.I - Mis Reparaciones</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
     <style>
-        body { background: #000; color: white; font-family: sans-serif; }
+        :root { --gold: #fbc02d; --dark: #000; --card: #111; }
+        body { background: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 15px; }
         
-        /* Modal: Fondo negro con opacidad y contenido centrado */
+        /* Navegación de Áreas */
+        .area-nav { display: flex; gap: 10px; margin-bottom: 20px; }
+        .area-btn { flex: 1; padding: 12px; background: #222; border: none; color: white; border-radius: 8px; cursor: pointer; }
+        .area-btn.active { background: var(--gold); color: black; font-weight: bold; }
+
+        /* Contenedor del Modal (Overlay) */
         #modal-trabajos-container {
-            position: fixed; 
-            top: 0; left: 0; 
-            width: 100%; height: 100%;
-            background: rgba(0,0,0,0.95);
-            display: none; /* Oculto por defecto */
-            justify-content: center; 
-            align-items: center; 
-            z-index: 99999; /* Asegura que esté al frente */
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95); display: none; justify-content: center; 
+            align-items: center; z-index: 9999; backdrop-filter: blur(10px);
         }
     </style>
 </head>
 <body>
 
-    <h1>Gestión de Reparaciones</h1>
-    <button onclick="abrirModalOrden('solicitar')">Probar Modal</button>
+    <header>
+        <h2 style="color:var(--gold);">Gestión de Reparaciones</h2>
+    </header>
+
+    <div class="area-nav">
+        <button class="area-btn active" onclick="renderArea('I')">Reparar</button>
+        <button class="area-btn" onclick="renderArea('II')">Seguimiento</button>
+    </div>
+
+    <div id="main-content">
+        </div>
 
     <div id="modal-trabajos-container"></div>
+
+    <script>
+        // Función para cambiar de área sin perder datos
+        function renderArea(area) {
+            const btns = document.querySelectorAll('.area-btn');
+            btns.forEach(b => b.classList.toggle('active', b.innerText === (area === 'I' ? 'Reparar' : 'Seguimiento')));
+            
+            // Aquí llamarías a las funciones de tu JS para pintar la UI
+            if(area === 'I') {
+                JADI_MODAL.renderAreaI();
+            } else {
+                JADI_MODAL.renderAreaII();
+            }
+        }
+    </script>
 
     <script src="../js/modal_trabajos.js"></script>
 </body>
