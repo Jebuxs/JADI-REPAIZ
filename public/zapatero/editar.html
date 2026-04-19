@@ -2,52 +2,84 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>J.A.D.I - Editar Orden (Zapatero)</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <style>
-        :root { --gold: #fbc02d; --dark: #000; }
-        body { background: var(--dark); color: white; font-family: sans-serif; padding: 20px; }
-        .admin-panel { border: 1px solid var(--gold); padding: 15px; border-radius: 10px; margin-top: 20px; }
+        :root { --gold: #fbc02d; --dark: #000; --card: #111; }
+        body { background: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; }
+        
+        .admin-panel { 
+            background: #1a1a1a; border: 1px solid var(--gold); 
+            padding: 20px; border-radius: 15px; margin-top: 20px; 
+        }
+        
+        input, select { 
+            background: #000; border: 1px solid #444; color: white; 
+            padding: 10px; border-radius: 5px; width: 100%; box-sizing: border-box; margin-top: 5px;
+        }
+        
         .input-group { margin-bottom: 15px; }
+        
+        #modal-trabajos-container {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); display: none; justify-content: center; 
+            align-items: center; z-index: 9999;
+        }
     </style>
 </head>
 <body>
 
     <header>
-        <h2 style="color:var(--gold);">Editar Orden (Vista Zapatero)</h2>
+        <h2 style="color:var(--gold);">Editar Orden (Panel Zapatero)</h2>
     </header>
 
     <div id="main-content">
         <div class="admin-panel">
-            <h3>Gestión Técnica (Solo Zapatero)</h3>
+            <h3 style="color:var(--gold);">Gestión Técnica</h3>
+            
             <div class="input-group">
-                <label>Precio del Trabajo:</label>
-                <input type="number" id="m-precio" placeholder="$0.00">
+                <label>Precio del Trabajo ($):</label>
+                <input type="number" id="m-precio" placeholder="0.00">
             </div>
+            
             <div class="input-group">
-                <label>Status de la Orden:</label>
+                <label>Status:</label>
                 <select id="m-status">
+                    <option value="solicitado">Solicitado</option>
                     <option value="pendiente">Pendiente</option>
                     <option value="aceptado">Aceptado</option>
                     <option value="en_proceso">En Proceso</option>
                     <option value="finalizado">Finalizado</option>
                 </select>
             </div>
+            
+            <button onclick="guardarCambiosZapatero()" style="background:var(--gold); color:black; border:none; padding:12px; width:100%; border-radius:5px; font-weight:bold; cursor:pointer;">
+                GUARDAR CAMBIOS
+            </button>
         </div>
     </div>
 
     <div id="modal-trabajos-container"></div>
 
     <script>
-        // Al cargar, el zapatero puede ver más campos que el cliente
-        // El JS debe detectar el rol y mostrar el div .admin-panel
+        // Lógica de carga al iniciar
         window.onload = () => {
-            // Lógica para cargar los datos de la orden desde Firebase al editar
-            console.log("Cargando orden en modo Zapatero...");
+            console.log("Sistema J.A.D.I: Vista de edición de zapatero cargada.");
+            // Aquí puedes llamar a una función de tu modal_trabajos.js que cargue los datos de la orden
+            // JADI_MODAL.cargarDatosOrden(ordenId);
         };
+
+        function guardarCambiosZapatero() {
+            const precio = document.getElementById('m-precio').value;
+            const status = document.getElementById('m-status').value;
+            
+            alert("Guardando cambios en Firebase: Precio " + precio + " y Status " + status);
+            // Lógica para actualizar Firebase aquí...
+        }
     </script>
     
     <script src="../js/modal_trabajos.js"></script>
