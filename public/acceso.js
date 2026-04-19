@@ -1,11 +1,11 @@
-// El cerebro: un objeto que contiene toda la lógica
-const SOPORTE = {
+// El "cerebro" o motor lógico
+const ACCESO = {
     
-    saludarDonante: function() {
+    donar: function() {
         alert("Hola Juan");
     },
 
-    saludarProbar: function() {
+    probar: function() {
         alert("bienvenido");
     }
 
