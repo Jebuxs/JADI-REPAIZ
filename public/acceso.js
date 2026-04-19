@@ -2,7 +2,7 @@
 const ACCESO = {
     
     donar: function() {
-        alert("Hola Juan");
+        alert("andate a dormir chucha tu madre");
     },
 
     probar: function() {
