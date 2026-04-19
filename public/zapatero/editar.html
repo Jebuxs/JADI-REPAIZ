@@ -2,26 +2,54 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>JADI - Editar Orden</title>
-    <script src="../js/estilo_visual.js"></script>
-    <script src="../js/modal_trabajos.js"></script>
+    <title>J.A.D.I - Editar Orden (Zapatero)</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        :root { --gold: #fbc02d; --dark: #000; }
+        body { background: var(--dark); color: white; font-family: sans-serif; padding: 20px; }
+        .admin-panel { border: 1px solid var(--gold); padding: 15px; border-radius: 10px; margin-top: 20px; }
+        .input-group { margin-bottom: 15px; }
+    </style>
 </head>
 <body>
 
-    <div class="card-jadi">
-        <h2><i class="fas fa-edit"></i> Modificar Trabajo</h2>
-        <p>Utiliza este módulo para corregir o actualizar datos.</p>
-        
-        <button id="btn-accion-modal">EDITAR ORDEN EXISTENTE</button>
+    <header>
+        <h2 style="color:var(--gold);">Editar Orden (Vista Zapatero)</h2>
+    </header>
 
-        <br><br>
-        <a href="dashboard.html" style="color: gray; font-size: 12px; text-decoration: none;">
-            <i class="fas fa-arrow-left"></i> Volver al Panel
-        </a>
+    <div id="main-content">
+        <div class="admin-panel">
+            <h3>Gestión Técnica (Solo Zapatero)</h3>
+            <div class="input-group">
+                <label>Precio del Trabajo:</label>
+                <input type="number" id="m-precio" placeholder="$0.00">
+            </div>
+            <div class="input-group">
+                <label>Status de la Orden:</label>
+                <select id="m-status">
+                    <option value="pendiente">Pendiente</option>
+                    <option value="aceptado">Aceptado</option>
+                    <option value="en_proceso">En Proceso</option>
+                    <option value="finalizado">Finalizado</option>
+                </select>
+            </div>
+        </div>
     </div>
 
+    <div id="modal-trabajos-container"></div>
+
     <script>
-        window.onload = () => { JadiEstilo.aplicar('elegante'); };
+        // Al cargar, el zapatero puede ver más campos que el cliente
+        // El JS debe detectar el rol y mostrar el div .admin-panel
+        window.onload = () => {
+            // Lógica para cargar los datos de la orden desde Firebase al editar
+            console.log("Cargando orden en modo Zapatero...");
+        };
     </script>
+    
+    <script src="../js/modal_trabajos.js"></script>
 </body>
 </html>
