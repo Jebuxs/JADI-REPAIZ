@@ -13,9 +13,13 @@
         body { background: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 15px; }
         
         .area-nav { display: flex; gap: 10px; margin-bottom: 20px; }
-        .area-btn { flex: 1; padding: 12px; background: #222; border: none; color: white; border-radius: 8px; cursor: pointer; }
+        .area-btn { flex: 1; padding: 12px; background: #222; border: 1px solid #444; color: white; border-radius: 8px; cursor: pointer; }
         .area-btn.active { background: var(--gold); color: black; font-weight: bold; }
         
+        /* Contenedor donde se inyectará todo */
+        #main-content { min-height: 300px; }
+        
+        /* El modal que cubre todo */
         #modal-trabajos-container {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.95); display: none; justify-content: center; 
@@ -30,31 +34,26 @@
     </header>
 
     <div class="area-nav">
-        <button class="area-btn active" onclick="renderArea('I')">Reparar</button>
-        <button class="area-btn" onclick="renderArea('II')">Seguimiento</button>
+        <button id="btn-reparar" class="area-btn active" onclick="cambiarVista('reparar')">Reparar</button>
+        <button id="btn-seguimiento" class="area-btn" onclick="cambiarVista('seguimiento')">Seguimiento</button>
     </div>
 
-    <div id="main-content">
-        </div>
+    <div id="main-content"></div>
 
     <div id="modal-trabajos-container"></div>
 
     <script>
-        // Función para cambiar de área
-        function renderArea(area) {
-            const btns = document.querySelectorAll('.area-btn');
-            btns.forEach(b => b.classList.toggle('active', b.innerText === (area === 'I' ? 'Reparar' : 'Seguimiento')));
+        // Función de navegación que llama al motor en modal_trabajos.js
+        function cambiarVista(area) {
+            document.querySelectorAll('.area-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('btn-' + area).classList.add('active');
             
-            // Llamada al motor de lógica que está en modal_trabajos.js
-            if(area === 'I') {
-                JADI_MODAL.renderAreaI();
-            } else {
-                JADI_MODAL.renderAreaII();
-            }
+            // Llama al motor lógico
+            JADI_MODAL.renderArea(area);
         }
 
-        // Inicializar al cargar
-        window.onload = () => renderArea('I');
+        // Cargar vista inicial
+        window.onload = () => JADI_MODAL.renderArea('reparar');
     </script>
 
     <script src="../js/modal_trabajos.js"></script>
