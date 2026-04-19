@@ -1,64 +1,66 @@
-/**
- * Módulo JADI REPAIZ: Gestión de Modal de Reparaciones
- * Corregido para evitar errores de null y asegurar la conexión.
- */
+// --- GESTOR DE ESTADO JADI-REPAIZ ---
+const JADI_MODAL = {
+    carrito: [],
+    modo: 'crear', // 'crear' o 'editar'
+    ordenId: null,
 
-function abrirModalOrden(modo, datos = null) {
-    console.log("Abriendo modal en modo:", modo);
+    // Inicializar listeners globales
+    init: function() {
+        console.log("JADI Modal Inicializado");
+    },
 
-    const container = document.getElementById('modal-trabajos-container');
-    
-    // 1. Verificación de seguridad: ¿Existe el contenedor?
-    if (!container) {
-        console.error("ERROR: No existe el contenedor 'modal-trabajos-container' en el HTML.");
-        return;
-    }
-
-    // 2. Construcción del contenido del modal
-    container.style.display = 'flex'; // Mostramos el modal
-    container.innerHTML = `
-        <div style="background: #1a1a1a; padding: 20px; border-radius: 15px; width: 90%; max-width: 400px; color: white; border: 1px solid var(--gold);">
-            <h3>${modo === 'editar' ? 'Editar Orden' : 'Nueva Orden Técnica'}</h3>
-            
-            <label>Categoría:</label>
-            <input type="text" id="m-cat" placeholder="Ej: Zapatillas">
-            
-            <label style="margin-top:10px; display:block;">Detalle Técnico:</label>
-            <textarea id="m-detalle" rows="3" placeholder="Describe el daño..."></textarea>
-            
-            <div style="display: flex; gap: 10px; margin-top: 20px;">
-                <button onclick="procesarGuardado()" style="flex:1; background:var(--gold); border:none; padding:10px; border-radius:5px; cursor:pointer;">Guardar</button>
-                <button onclick="cerrarModal()" style="flex:1; background:#333; color:white; border:none; padding:10px; border-radius:5px; cursor:pointer;">Cerrar</button>
+    // Renderizado dinámico del área de trabajo
+    renderAreaI: function() {
+        const container = document.getElementById('modal-trabajos-container');
+        container.innerHTML = `
+            <div class="card-jadi">
+                <h3>CREAR SOLICITUD DE REPARACIÓN</h3>
+                <input type="number" id="m-cant" value="1" min="1">
+                <input type="text" id="m-objeto" placeholder="Ej: Zapatillas">
+                <input type="file" id="m-foto" accept="image/*">
+                <textarea id="m-detalle" placeholder="Detalle del daño..."></textarea>
+                <button onclick="JADI_MODAL.agregarAlListado()">+</button>
+                <div id="m-listado"></div>
+                <button id="btn-accion" onclick="JADI_MODAL.guardar()">SOLICITAR</button>
+                <button onclick="JADI_MODAL.cerrar()">CANCELAR</button>
             </div>
-        </div>
-    `;
-}
+        `;
+    },
 
-function cerrarModal() {
-    const container = document.getElementById('modal-trabajos-container');
-    if (container) container.style.display = 'none';
-}
+    agregarAlListado: function() {
+        const item = {
+            cant: document.getElementById('m-cant').value,
+            objeto: document.getElementById('m-objeto').value,
+            detalle: document.getElementById('m-detalle').value
+        };
+        this.carrito.push(item);
+        this.actualizarUIListado();
+    },
 
-function procesarGuardado() {
-    // 3. Blindaje contra errores: Verificamos que los elementos existan antes de leer .value
-    const inputCat = document.getElementById('m-cat');
-    const inputDetalle = document.getElementById('m-detalle');
+    actualizarUIListado: function() {
+        const lista = document.getElementById('m-listado');
+        lista.innerHTML = this.carrito.map((i, index) => `
+            <div class="link-item" onclick="JADI_MODAL.cargarParaEdicion(${index})">
+                ${i.cant} - ${i.objeto}
+            </div>
+        `).join('');
+    },
 
-    if (!inputCat || !inputDetalle) {
-        console.error("No se encontraron los inputs en el modal. Revisa los IDs.");
-        return;
+    guardar: async function() {
+        const session = JSON.parse(localStorage.getItem('session_jadi'));
+        const nuevaOrden = {
+            cliente: session.uid,
+            trabajos: this.carrito,
+            status: 'solicitado',
+            fecha: Date.now()
+        };
+
+        // Firebase Update (Versátil: Crea o Actualiza)
+        await firebase.database().ref('ordenes/' + (this.ordenId || Date.now())).update(nuevaOrden);
+        this.cerrar();
+    },
+
+    cerrar: function() {
+        document.getElementById('modal-trabajos-container').style.display = 'none';
     }
-
-    const categoria = inputCat.value;
-    const detalle = inputDetalle.value;
-
-    if (!categoria || !detalle) {
-        alert("Por favor, rellena todos los campos.");
-        return;
-    }
-
-    console.log("Guardando:", { categoria, detalle });
-    alert("Datos guardados correctamente en la base.");
-    
-    cerrarModal();
-}
+};
