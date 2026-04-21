@@ -110,7 +110,7 @@
 </div>
 
 <script>
-    // CONFIGURACIÓN (Tu Firebase)
+    // 1. CONFIGURACIÓN FIREBASE
     const firebaseConfig = {
         apiKey: "AIzaSyAKPxG1osuR9hsj-PsmwJrzK-3W_XM1UyU",
         authDomain: "jadi-repaiz.firebaseapp.com",
@@ -131,7 +131,7 @@
         'ADM': 'admin/dashboard.html' 
     };
 
-    // --- ACCESO MAESTRO (CTRL + ALT + J) ---
+    // 2. ATAJO DE TECLADO (ACCESO MAESTRO)
     document.addEventListener('keydown', function(e) {
         if (e.ctrlKey && e.altKey && e.key.toLowerCase() === 'j') {
             alert("¡MODO CONSTRUCTOR ACTIVADO!");
@@ -142,7 +142,7 @@
         }
     });
 
-    // --- FUNCIONES DE INTERFAZ ---
+    // 3. FUNCIONES DE UI
     function mostrarVista(id) {
         document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
         document.getElementById(id).classList.add('active');
@@ -166,7 +166,7 @@
         window.location.href = paginasMaster[userObj.rolCodigo] || 'index.html';
     }
 
-    // --- LOGIN ---
+    // 4. LÓGICA DE NEGOCIO (INTEGRADA CON CORE V3)
     async function login() {
         const input = document.getElementById('login-input').value.trim();
         const pass = document.getElementById('login-pass').value;
@@ -174,7 +174,6 @@
 
         toggleLoader(true);
         try {
-            // Buscamos en la ruta organizada del país actual
             const snap = await db.ref(JADI_CORE.path('usuarios')).once('value');
             let uFound = null;
             snap.forEach(c => {
@@ -186,7 +185,6 @@
         } catch(e) { alert("Error de conexión"); } finally { toggleLoader(false); }
     }
 
-    // --- REGISTRO MANUAL (Lógica de celular existente) ---
     async function validarYCrearEcosistema() {
         const n = document.getElementById('reg-name').value;
         const em = document.getElementById('reg-email').value;
@@ -198,41 +196,34 @@
 
         toggleLoader(true);
         try {
-            // Validamos si el número ya existe en este país
             const snapExistente = await db.ref(JADI_CORE.path('usuarios')).orderByChild('telefono').equalTo(t).once('value');
             let finalUID;
 
             if(snapExistente.exists()){
-                // Caso: Usuario ya registrado por zapatero (Pendiente)
                 snapExistente.forEach(child => { finalUID = child.key; });
-                await JADI_CORE.registrarUsuario(finalUID, { 
-                    nombre: n, email: em, pass: p, rolCodigo: r, 
-                    empresaNombre: document.getElementById('reg-empresa-nombre').value || "JADI REPAIZ",
-                    estado: 'activo'
-                });
             } else {
-                // Caso: Usuario 100% Nuevo (Asignamos ID con contador)
+                // USAMOS EL CONTADOR DEL CORE V3
                 const num = await JADI_CORE.obtenerContadorGlobal(r);
                 finalUID = r + num.toString().padStart(9,'0');
-                const nuevoObj = { 
-                    nombre: n, email: em, telefono: t, rolCodigo: r, uid: finalUID, pass: p, 
-                    empresaNombre: document.getElementById('reg-empresa-nombre').value || "JADI REPAIZ",
-                    estado: 'activo'
-                };
-                await JADI_CORE.registrarUsuario(finalUID, nuevoObj);
             }
+
+            // REGISTRO USANDO EL CORE
+            await JADI_CORE.registrarUsuario(finalUID, { 
+                nombre: n, email: em, telefono: t, pass: p, rolCodigo: r, 
+                empresaNombre: document.getElementById('reg-empresa-nombre').value || "JADI REPAIZ",
+                estado: 'activo'
+            });
+
             const res = await db.ref(JADI_CORE.path('usuarios') + '/' + finalUID).once('value');
             dirigirAUsuario(res.val());
         } catch(e) { alert(e.message); } finally { toggleLoader(false); }
     }
 
-    // --- LÓGICA GOOGLE ---
     async function registroConGoogle() {
         toggleLoader(true);
         try {
             const res = await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
             tempGoogleUser = res.user;
-            // Buscamos si el correo ya existe en el país actual
             const snap = await db.ref(JADI_CORE.path('usuarios')).orderByChild('email').equalTo(tempGoogleUser.email).once('value');
             if(snap.exists()) {
                 let u; snap.forEach(c => u = c.val());
@@ -249,22 +240,23 @@
         if(!r || !t) return alert("Faltan datos");
         toggleLoader(true);
         try {
-            // Verificamos si el teléfono que puso ya existe
             const snapTel = await db.ref(JADI_CORE.path('usuarios')).orderByChild('telefono').equalTo(t).once('value');
             let finalUID;
             if(snapTel.exists()){
                 snapTel.forEach(c => finalUID = c.key);
-                await JADI_CORE.registrarUsuario(finalUID, { email: tempGoogleUser.email, pass: "G_AUTH", estado: 'activo' });
             } else {
+                // USAMOS EL CONTADOR DEL CORE V3
                 const num = await JADI_CORE.obtenerContadorGlobal(r);
                 finalUID = r + num.toString().padStart(9,'0');
-                await JADI_CORE.registrarUsuario(finalUID, {
-                    nombre: tempGoogleUser.displayName, email: tempGoogleUser.email, telefono: t, 
-                    rolCodigo: r, uid: finalUID, pass: "G_AUTH",
-                    empresaNombre: document.getElementById('google-empresa-nombre').value || "Personal",
-                    estado: 'activo'
-                });
             }
+
+            await JADI_CORE.registrarUsuario(finalUID, {
+                nombre: tempGoogleUser.displayName, email: tempGoogleUser.email, telefono: t, 
+                rolCodigo: r, uid: finalUID, pass: "G_AUTH",
+                empresaNombre: document.getElementById('google-empresa-nombre').value || "Personal",
+                estado: 'activo'
+            });
+
             const res = await db.ref(JADI_CORE.path('usuarios') + '/' + finalUID).once('value');
             dirigirAUsuario(res.val());
         } catch(e) { alert(e.message); } finally { toggleLoader(false); }
