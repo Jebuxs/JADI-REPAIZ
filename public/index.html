@@ -79,17 +79,17 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     
     <script>
-        // Aquí debes pegar tu objeto de configuración de Firebase
+        // Configuración Maestra del Proyecto
         const firebaseConfig = {
-            apiKey: "TU_API_KEY",
-            authDomain: "TU_PROYECTO.firebaseapp.com",
-            databaseURL: "https://TU_PROYECTO.firebaseio.com",
-            projectId: "TU_PROYECTO",
-            storageBucket: "TU_PROYECTO.appspot.com",
-            messagingSenderId: "TU_ID",
-            appId: "TU_APP_ID"
+            apiKey: "AIzaSyAKPxG1osuR9hsj-PsmwJrzK-3W_XM1UyU",
+            authDomain: "jadi-repaiz.firebaseapp.com",
+            databaseURL: "https://jadi-repaiz-default-rtdb.firebaseio.com",
+            projectId: "jadi-repaiz",
+            storageBucket: "jadi-repaiz.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "1:123456789:web:abcdef"
         };
-        // Inicializar Firebase
+        
         if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
         }
@@ -98,12 +98,28 @@
     <script src="js/core.js"></script>
 
     <script>
+        /**
+         * Manejo de Intenciones de Usuario
+         * Guarda qué le interesó al cliente antes de mandarlo al login
+         */
         function enviarALogin(servicio) {
-            // Guardamos el servicio en el almacenamiento del navegador (sessionStorage)
-            // Esto permite que el Login o Dashboard sepan qué banner presionó el usuario
-            sessionStorage.setItem('servicio_interes', servicio);
+            console.log("Intención capturada: " + servicio);
+            
+            // Guardamos la intención en la sesión para que el Dashboard la use después
+            sessionStorage.setItem('intencion_servicio', servicio);
+            
+            // Redirección profesional
             window.location.href = 'login.html';
         }
+
+        // Verificación de Salud del Core al cargar
+        window.onload = () => {
+            if (typeof JADI_CORE !== 'undefined') {
+                console.log("JADI CORE V3: Operativo en " + JADI_CORE.paisActual);
+            } else {
+                console.error("Error: No se detectó el archivo js/core.js");
+            }
+        };
     </script>
 
 </body>
