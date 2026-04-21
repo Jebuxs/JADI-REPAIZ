@@ -1,74 +1,44 @@
-// MODAL UNIVERSAL JADI-REPAIZ - MOTOR LOGICO
-const JADI_MODAL = {
-    carrito: [],
-    modo: 'crear',
-    ordenActual: null,
+/**
+ * JADI CORE - Sistema Central de Identidad y Relaciones
+ */
 
-    // 1. GESTION DE AREAS (SIN PERDER DATOS)
-    renderArea: function(area) {
-        const container = document.getElementById('modal-trabajos-container');
-        container.style.display = 'flex';
-        
-        if (area === 'reparar') {
-            container.innerHTML = this.templateAreaI();
+const JADI_CORE = {
+    // 1. FORMATEO: Convierte internos (9 dígitos) a visuales (ej: CLN25)
+    formatearID: function(prefijo, numeroInterno) {
+        return `${prefijo}${parseInt(numeroInterno)}`;
+    },
+
+    // 2. IDENTIDAD: Gestiona el Portero (Login/Registro)
+    gestionarUsuario: async function(telefono, rol) {
+        const snapshot = await firebase.database().ref('usuarios')
+            .orderByChild('telefono').equalTo(telefono).once('value');
+
+        if (snapshot.exists()) {
+            const id = Object.keys(snapshot.val())[0];
+            return { existe: true, id: id, data: snapshot.val()[id] };
         } else {
-            container.innerHTML = this.templateAreaII();
+            // Crea usuario nuevo con estatus pendiente
+            const nuevoID = `${rol.toUpperCase()}-${Date.now()}`;
+            const datos = { telefono, rol, estado: 'pendiente' };
+            await firebase.database().ref('usuarios/' + nuevoID).set(datos);
+            return { existe: false, id: nuevoID, data: datos };
         }
     },
 
-    // 2. TEMPLATES (AREA I - CREAR/EDITAR)
-    templateAreaI: function() {
-        return `
-            <div class="card-jadi" style="background:#111; padding:20px; border-radius:15px; border:1px solid #fbc02d; color:white; width:90%; max-width:400px;">
-                <h3>${this.modo === 'crear' ? 'CREAR SOLICITUD' : 'EDITAR SOLICITUD'}</h3>
-                <input type="number" id="m-cant" value="1" style="width:100%; margin:5px 0;">
-                <input type="text" id="m-objeto" placeholder="Objeto (ej. Mochila)" style="width:100%; margin:5px 0;">
-                <textarea id="m-detalle" placeholder="Detalle del daño" style="width:100%; margin:5px 0;"></textarea>
-                <button onclick="JADI_MODAL.agregarItem()" style="background:#fbc02d; width:100%;">+</button>
-                <div id="m-lista-reparacion"></div>
-                <button onclick="JADI_MODAL.guardarEnDB()" style="background:green; width:100%;">GUARDAR SOLICITUD</button>
-                <button onclick="JADI_MODAL.cerrar()" style="background:#333; width:100%;">CANCELAR</button>
-            </div>
-        `;
+    // 3. RELACIONES: Genera el ID transaccional (Origen_Destino_N)
+    generarIDTransaccion: async function(origenID, destinoID) {
+        const ruta = `transacciones_contadores/${origenID}_${destinoID}`;
+        const ref = firebase.database().ref(ruta);
+        
+        const snapshot = await ref.once('value');
+        let contador = snapshot.exists() ? snapshot.val() + 1 : 1;
+        
+        await ref.set(contador);
+        return `${origenID}_${destinoID}_${contador}`;
     },
 
-    // 3. LOGICA DE DATOS
-    agregarItem: function() {
-        const item = {
-            cant: document.getElementById('m-cant').value,
-            objeto: document.getElementById('m-objeto').value,
-            detalle: document.getElementById('m-detalle').value
-        };
-        this.carrito.push(item);
-        this.renderArea('reparar'); // Recarga para ver el nuevo item
-    },
-
-    // 4. PERSISTENCIA EN FIREBASE (ESPECIFICACION II)
-    guardarEnDB: async function() {
-        const session = JSON.parse(localStorage.getItem('session_jadi'));
-        const idOrden = this.ordenActual || Date.now();
-
-        const ordenData = {
-            cliente: { nombre: "Usuario" }, // Traer de session
-            trabajos: this.carrito,
-            status: 'solicitado',
-            fecha: new Date().toISOString()
-        };
-
-        try {
-            // Guardado en dos rutas (Ordenes generales y usuario)
-            await firebase.database().ref().update({
-                ['/ordenes/' + idOrden]: ordenData,
-                ['/usuarios/' + session.uid + '/mis_ordenes/' + idOrden]: true
-            });
-            alert("Solicitud guardada con éxito");
-            this.cerrar();
-        } catch (e) {
-            console.error("Error:", e);
-        }
-    },
-
-    cerrar: function() {
-        document.getElementById('modal-trabajos-container').style.display = 'none';
+    // 4. CARTERO: Función genérica de Firebase
+    guardarEnDB: function(ruta, datos) {
+        return firebase.database().ref(ruta).set(datos);
     }
 };
