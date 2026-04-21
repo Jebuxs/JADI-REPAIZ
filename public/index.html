@@ -40,7 +40,7 @@
 
     <nav>
         <div class="logo">JADI REPAIZ</div>
-        <a href="login.html" class="btn-entrar">ACCESO MASTER</a>
+        <a href="login.html" class="btn-entrar" id="btnAccesoMaster">ACCESO MASTER</a>
     </nav>
 
     <section class="hero">
@@ -59,12 +59,12 @@
     </div>
 
     <div class="ads-container">
-        <div class="ad-banner" onclick="location.href='login.html'">
+        <div class="ad-banner" onclick="enviarALogin('limpieza_premium')">
             <img src="https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&q=60&w=500">
             <span class="ad-label">VIP</span>
             <div class="ad-title">LIMPIEZA PREMIUM</div>
         </div>
-        <div class="ad-banner" onclick="location.href='login.html'">
+        <div class="ad-banner" onclick="enviarALogin('restauracion_suelas')">
             <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&q=60&w=500">
             <span class="ad-label">PROMO</span>
             <div class="ad-title">RESTAURACIÓN DE SUELAS</div>
@@ -74,6 +74,37 @@
     <footer>
         &copy; 2026 JADI REPAIZ. All rights reserved.
     </footer>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    
+    <script>
+        // Aquí debes pegar tu objeto de configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "TU_API_KEY",
+            authDomain: "TU_PROYECTO.firebaseapp.com",
+            databaseURL: "https://TU_PROYECTO.firebaseio.com",
+            projectId: "TU_PROYECTO",
+            storageBucket: "TU_PROYECTO.appspot.com",
+            messagingSenderId: "TU_ID",
+            appId: "TU_APP_ID"
+        };
+        // Inicializar Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+    </script>
+
+    <script src="js/core.js"></script>
+
+    <script>
+        function enviarALogin(servicio) {
+            // Guardamos el servicio en el almacenamiento del navegador (sessionStorage)
+            // Esto permite que el Login o Dashboard sepan qué banner presionó el usuario
+            sessionStorage.setItem('servicio_interes', servicio);
+            window.location.href = 'login.html';
+        }
+    </script>
 
 </body>
 </html>
