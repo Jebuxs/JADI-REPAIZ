@@ -1,144 +1,120 @@
 /**
- * NAVEGACIÓN Y LÓGICA DE NUEVA ORDEN - JADI REPAIZ
- * Este archivo gestiona la creación de órdenes multi-ítem.
+ * CEREBRO: nueva_orden.js
+ * Ubicación: public/js/nueva_orden.js
  */
 
-// 1. VARIABLES DE ESTADO LOCAL
 let itemsOrden = [];
-const IVA_VALOR = 0.15; // 15% Ecuador 2026
+const IVA_TASA = 0.15;
 
-// 2. INICIALIZACIÓN
-window.onload = async () => {
-    const sesion = JSON.parse(localStorage.getItem('session_jadi'));
-    if (!sesion) {
-        window.location.href = '../login.html';
-        return;
+function generarVistaPreviaID() {
+    const tel = document.getElementById('c-whatsapp').value;
+    const display = document.getElementById('display-order-id');
+    if(tel.length >= 4) {
+        display.innerText = "ORD-" + tel.slice(-4);
+    } else {
+        display.innerText = "---";
     }
-    console.log("Sesión activa:", sesion.id);
-};
+}
 
-// 3. LÓGICA DE ÍTEMS (LA CARNE PARA LA IA)
 function añadirItem() {
     const obj = document.getElementById('i-objeto').value;
-    const cant = parseInt(document.getElementById('i-cantidad').value) || 0;
+    const cant = parseInt(document.getElementById('i-cantidad').value) || 1;
     const det = document.getElementById('i-detalle').value;
     const pre = parseFloat(document.getElementById('i-precio').value) || 0;
 
-    if (!obj || cant <= 0 || pre <= 0) {
-        alert("¡Maestro! Asegúrate de poner el objeto, la cantidad y el precio.");
+    if (!obj || pre <= 0) {
+        alert("Por favor, ingresa el nombre del objeto y el precio.");
         return;
     }
 
-    // Estructura de ítem optimizada para análisis de datos
-    const nuevoItem = {
-        id_item: Date.now(), // Para poder borrarlo si es necesario
+    const item = {
+        id: Date.now(),
+        objeto: obj,
         cantidad: cant,
-        objeto: obj.trim(),
-        detalle: det.trim(),
-        precio_unitario: pre,
+        detalle: det,
+        precioUnitario: pre,
         subtotal: cant * pre
     };
 
-    itemsOrden.push(nuevoItem);
-    actualizarInterfaz();
-    limpiarCamposItem();
+    itemsOrden.push(item);
+    renderizarLista();
+    limpiarCampos();
 }
 
-function eliminarItem(idItem) {
-    itemsOrden = itemsOrden.filter(item => item.id_item !== idItem);
-    actualizarInterfaz();
+function eliminarItem(id) {
+    itemsOrden = itemsOrden.filter(i => i.id !== id);
+    renderizarLista();
 }
 
-// 4. CÁLCULOS FINANCIEROS (PRECISIÓN TOTAL)
-function actualizarInterfaz() {
-    const container = document.getElementById('lista-items');
-    container.innerHTML = "";
-
-    let subtotalGeneral = 0;
+function renderizarLista() {
+    const lista = document.getElementById('lista-items');
+    lista.innerHTML = "";
+    let subtotal = 0;
 
     itemsOrden.forEach(item => {
-        subtotalGeneral += item.subtotal;
-        container.innerHTML += `
-            <div class="item-reparacion" style="background:#1a1a1a; padding:15px; border-radius:10px; border-left:4px solid var(--gold); margin-bottom:10px; position:relative;">
-                <b style="color:var(--gold);">${item.cantidad}x</b> <b>${item.objeto}</b>
-                <p style="font-size:0.8rem; margin:5px 0; color:#aaa;">${item.detalle}</p>
-                <div style="font-weight:bold;">$${item.subtotal.toFixed(2)}</div>
-                <i class="fas fa-trash" style="position:absolute; top:15px; right:15px; color:#ff5252; cursor:pointer;" onclick="eliminarItem(${item.id_item})"></i>
+        subtotal += item.subtotal;
+        lista.innerHTML += `
+            <div class="item-row">
+                <b>${item.cantidad}x ${item.objeto}</b>
+                <p>${item.detalle}</p>
+                <div class="price">$${item.subtotal.toFixed(2)}</div>
+                <div class="remove" onclick="eliminarItem(${item.id})">✖</div>
             </div>
         `;
     });
 
-    const descuento = parseFloat(document.getElementById('i-descuento').value) || 0;
-    const iva = subtotalGeneral * IVA_VALOR;
-    const total = (subtotalGeneral + iva) - descuento;
+    actualizarTotales(subtotal);
+}
 
-    // Inyectar en el HTML
-    document.getElementById('res-sub').innerText = subtotalGeneral.toFixed(2);
+function actualizarTotales(subManual = null) {
+    let subtotal = subManual !== null ? subManual : itemsOrden.reduce((acc, i) => acc + i.subtotal, 0);
+    let desc = parseFloat(document.getElementById('i-descuento').value) || 0;
+    let iva = subtotal * IVA_TASA;
+    let total = (subtotal + iva) - desc;
+
+    document.getElementById('res-sub').innerText = subtotal.toFixed(2);
     document.getElementById('res-iva').innerText = iva.toFixed(2);
     document.getElementById('res-total').innerText = total.toFixed(2);
 }
 
-// 5. GUARDADO MAESTRO (CONEXIÓN CON EL CORE)
-async function guardarOrdenMaestra() {
-    if (itemsOrden.length === 0) {
-        alert("Añade al menos un objeto para reparar.");
-        return;
-    }
+function limpiarCampos() {
+    document.getElementById('i-objeto').value = "";
+    document.getElementById('i-detalle').value = "";
+    document.getElementById('i-precio').value = "";
+    document.getElementById('i-cantidad').value = "1";
+}
 
+async function guardarOrdenFinal() {
     const tel = document.getElementById('c-whatsapp').value;
-    if (!tel || tel.length < 8) {
-        alert("Necesitamos un número de WhatsApp válido.");
-        return;
-    }
+    if (itemsOrden.length === 0) return alert("La orden está vacía.");
+    if (tel.length < 8) return alert("Ingresa un número de WhatsApp válido.");
 
     try {
-        const zapatero = JSON.parse(localStorage.getItem('session_jadi'));
+        const sesion = JSON.parse(localStorage.getItem('session_jadi')) || { id: "ZPT-001" };
         
-        // Usamos el CORE de modal_trabajos.js
-        const cliente = await JADI_CORE.gestionarUsuario(tel, 'CLN');
-        const transID = await JADI_CORE.generarIDTransaccion(zapatero.id, cliente.id);
+        // Llamada al CORE (public/js/core.js)
+        const clienteID = "CLN-" + tel; 
+        const transID = await JADI_CORE.generarIDTransaccion(sesion.id, clienteID);
 
-        // EL PAQUETE DE DATOS (EL ORO PARA LA IA)
-        const payload = {
-            orden_n: transID,
-            meta: {
-                fecha_iso: new Date().toISOString(),
-                timestamp: firebase.database.ServerValue.TIMESTAMP,
-                version: "1.0-AI-Ready"
-            },
-            cliente: {
-                uid: cliente.id,
-                whatsapp: tel
-            },
-            zapatero_uid: zapatero.id,
-            inventario: itemsOrden, // La lista detallada
-            finanzas: {
+        const data = {
+            id_orden: transID,
+            fecha: new Date().toISOString(),
+            zapatero_id: sesion.id,
+            cliente_whatsapp: tel,
+            items: itemsOrden,
+            financiero: {
                 subtotal: parseFloat(document.getElementById('res-sub').innerText),
                 iva: parseFloat(document.getElementById('res-iva').innerText),
                 descuento: parseFloat(document.getElementById('i-descuento').value) || 0,
                 total: parseFloat(document.getElementById('res-total').innerText)
             },
-            estado_global: "recibido"
+            estado: "recibido"
         };
 
-        await JADI_CORE.guardarEnDB(`transacciones/${transID}`, payload);
-        
-        alert("¡Orden Guardada! Ticket: " + transID);
-        location.reload(); // Limpiamos todo para la siguiente
+        await JADI_CORE.guardar('transacciones/' + transID, data);
+        alert("✅ Orden Guardada: " + transID);
+        location.reload();
 
     } catch (e) {
-        console.error("Error en Nueva Orden:", e);
-        alert("Hubo un problema al guardar. Revisa la consola.");
-    }
-}
-
-function limpiarCamposItem() {
-    document.getElementById('i-objeto').value = "";
-    document.getElementById('i-detalle').value = "";
-    document.getElementById('i-precio').value = "";
-    document.getElementById('i-cantidad').value = 1;
-    document.getElementById('i-objeto').focus();
-}
-
-// Escuchar cambios en el descuento para actualizar el total al instante
-document.getElementById('i-descuento').addEventListener('input', actualizarInterfaz);
+        console.error(e);
+        alert("Error al guardar: " + e.message);
