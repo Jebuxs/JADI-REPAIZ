@@ -79,5 +79,7 @@ const JADI_CORE = {
         if (!uid) return "";
         const prefijo = uid.substring(0, 3);
         const numero = parseInt(uid.substring(3));
+        return isNaN(numero) ? uid : prefijo + numero;
+    },
         // public/js/core.js
 
