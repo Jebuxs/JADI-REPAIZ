@@ -80,17 +80,4 @@ const JADI_CORE = {
         const prefijo = uid.substring(0, 3);
         const numero = parseInt(uid.substring(3));
         // public/js/core.js
-const JADI_CORE = {
-    generarIDTransaccion: async function(origenID, destinoID) {
-        const ruta = `transacciones_contadores/${origenID}_${destinoID}`;
-        const ref = firebase.database().ref(ruta);
-        const snapshot = await ref.once('value');
-        let contador = snapshot.exists() ? snapshot.val() + 1 : 1;
-        await ref.set(contador);
-        return `${origenID}_${destinoID}_${contador}`;
-    },
-    guardar: (ruta, datos) => firebase.database().ref(ruta).set(datos)
-};
-        return isNaN(numero) ? uid : prefijo + numero;
-    }
-};
+
