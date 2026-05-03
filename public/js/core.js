@@ -82,4 +82,10 @@ const JADI_CORE = {
         return isNaN(numero) ? uid : prefijo + numero;
     },
         // public/js/core.js
+    // 8. FUNCIÓN DE GUARDADO DIRECTO (Para otros módulos)
+    guardar: function(coleccion, datos) {
+        const ruta = this.path(coleccion);
+        return firebase.database().ref(ruta).set(datos);
+    }
+};
 
