@@ -4,183 +4,86 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>JADI REPAIZ - Nueva Orden</title>
-    
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <script src="../js/modal_trabajos.js"></script>
-
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
     <style>
         :root { --gold: #fbc02d; --dark: #000; --card: #111; }
-        body { background: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 15px; padding-bottom: 80px; }
+        body { background: var(--dark); color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; }
+        .container { max-width: 600px; margin: auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--gold); padding-bottom: 10px; margin-bottom: 20px; }
+        .order-id-box { text-align: left; }
+        .order-id-box span { font-size: 0.8rem; color: var(--gold); text-transform: uppercase; }
+        .order-id-box h2 { margin: 0; font-size: 1.4rem; }
         
-        .header-orden { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--gold); padding-bottom: 10px; margin-bottom: 20px; }
-        .id-label { font-size: 0.8rem; color: var(--gold); }
-        .id-numero { font-size: 1.2rem; font-weight: bold; }
-
-        .form-group { background: var(--card); padding: 15px; border-radius: 12px; border: 1px solid #333; margin-bottom: 20px; }
+        .section { background: var(--card); padding: 15px; border-radius: 10px; border: 1px solid #222; margin-bottom: 15px; }
         label { display: block; font-size: 0.75rem; color: #888; margin-bottom: 5px; text-transform: uppercase; }
-        input, select, textarea { width: 100%; padding: 12px; background: #000; border: 1px solid #444; border-radius: 8px; color: white; box-sizing: border-box; margin-bottom: 15px; }
-
-        .item-reparacion { background: #1a1a1a; padding: 15px; border-radius: 10px; border-left: 4px solid var(--gold); margin-bottom: 10px; position: relative; }
-        .btn-add { background: var(--gold); color: black; border: none; padding: 15px; width: 100%; border-radius: 10px; font-weight: bold; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 10px; }
+        input, textarea, select { width: 100%; padding: 12px; background: #080808; border: 1px solid #333; border-radius: 6px; color: white; box-sizing: border-box; margin-bottom: 10px; }
         
-        .resumen-financiero { margin-top: 20px; padding: 15px; border-top: 1px solid #333; }
-        .fila-total { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.9rem; }
-        .total-final { font-size: 1.5rem; color: var(--gold); font-weight: bold; margin-top: 10px; border-top: 1px solid var(--gold); padding-top: 10px; }
+        .btn-add { background: var(--gold); color: black; border: none; padding: 12px; width: 100%; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 5px; }
+        
+        .item-row { background: #1a1a1a; padding: 10px; border-radius: 6px; margin-bottom: 8px; border-left: 3px solid var(--gold); position: relative; }
+        .item-row b { font-size: 0.9rem; }
+        .item-row p { margin: 3px 0; font-size: 0.8rem; color: #bbb; }
+        .item-row .price { color: var(--gold); font-weight: bold; }
+        .item-row .remove { position: absolute; right: 10px; top: 10px; color: #ff5252; cursor: pointer; }
+
+        .summary { border-top: 1px solid #333; padding-top: 15px; }
+        .summary-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.9rem; }
+        .total-row { font-size: 1.3rem; font-weight: bold; color: var(--gold); border-top: 1px solid var(--gold); padding-top: 10px; margin-top: 10px; }
+        
+        .btn-save { background: #4CAF50; color: white; border: none; padding: 15px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 20px; font-size: 1rem; }
     </style>
 </head>
 <body>
-
-    <div class="header-orden">
-        <div>
-            <span class="id-label">NÚMERO DE ORDEN:</span><br>
-            <span id="orden-id" class="id-numero">GENERANDO...</span>
-        </div>
-        <i class="fas fa-file-invoice" style="font-size: 2rem; color: var(--gold);"></i>
-    </div>
-
-    <div class="form-group">
-        <label><i class="fab fa-whatsapp"></i> WhatsApp del Cliente</label>
-        <input type="tel" id="c-whatsapp" placeholder="Ej: 0995123456" onchange="actualizarID()">
-    </div>
-
-    <div class="form-group">
-        <label>Información del Objeto</label>
-        <div style="display: flex; gap: 10px;">
-            <input type="number" id="i-cantidad" placeholder="Cant." style="flex: 1;" value="1">
-            <input type="text" id="i-objeto" placeholder="Objeto (Ej: Zapato Nike)" style="flex: 3;">
-        </div>
-        
-        <label>Detalle de Reparación</label>
-        <textarea id="i-detalle" rows="2" placeholder="¿Qué se le va a hacer?"></textarea>
-        
-        <label>Precio Unitario ($)</label>
-        <input type="number" id="i-precio" placeholder="0.00">
-
-        <button class="btn-add" onclick="añadirItem()">
-            <i class="fas fa-plus-circle"></i> AÑADIR ÍTEM
-        </button>
-    </div>
-
-    <div id="lista-items">
+    <div class="container">
+        <div class="header">
+            <div class="order-id-box">
+                <span>Orden No.</span>
+                <h2 id="display-order-id">---</h2>
+            </div>
+            <div style="font-size: 1.5rem;">👟</div>
         </div>
 
-    <div class="resumen-financiero">
-        <div class="fila-total"><span>Subtotal:</span> <span id="res-sub">0.00</span></div>
-        <div class="fila-total"><span>IVA (15%):</span> <span id="res-iva">0.00</span></div>
-        <div class="fila-total"><span>Descuento ($):</span> <input type="number" id="i-descuento" value="0" style="width: 80px; margin: 0; padding: 5px;" oninput="calcularTotales()"></div>
-        <div class="fila-total total-final"><span>TOTAL:</span> <span id="res-total">0.00</span></div>
+        <!-- CLIENTE -->
+        <div class="section">
+            <label>WhatsApp del Cliente</label>
+            <input type="tel" id="c-whatsapp" placeholder="Ej: 0987654321" oninput="generarVistaPreviaID()">
+        </div>
+
+        <!-- FORMULARIO ITEM -->
+        <div class="section">
+            <label>Detalle del Objeto</label>
+            <div style="display: flex; gap: 10px;">
+                <input type="number" id="i-cantidad" value="1" style="flex: 1;">
+                <input type="text" id="i-objeto" placeholder="¿Qué zapato es?" style="flex: 4;">
+            </div>
+            <textarea id="i-detalle" placeholder="¿Qué trabajo se va a realizar?" rows="2"></textarea>
+            <label>Precio Unitario ($)</label>
+            <input type="number" id="i-precio" placeholder="0.00">
+            <button class="btn-add" onclick="añadirItem()">+ AÑADIR A LA ORDEN</button>
+        </div>
+
+        <!-- LISTADO -->
+        <div id="lista-items"></div>
+
+        <!-- TOTALES -->
+        <div class="section summary">
+            <div class="summary-row"><span>Subtotal:</span> <span id="res-sub">0.00</span></div>
+            <div class="summary-row"><span>IVA (15%):</span> <span id="res-iva">0.00</span></div>
+            <div class="summary-row">
+                <span>Descuento ($):</span> 
+                <input type="number" id="i-descuento" value="0" style="width: 70px; margin: 0; padding: 5px; height: 30px;" oninput="actualizarTotales()">
+            </div>
+            <div class="summary-row total-row"><span>TOTAL:</span> <span id="res-total">0.00</span></div>
+        </div>
+
+        <button class="btn-save" onclick="guardarOrdenFinal()">GUARDAR ORDEN COMPLETA</button>
     </div>
 
-    <button class="btn-add" style="background: #4CAF50; margin-top: 20px;" onclick="guardarOrdenMaestra()">
-        <i class="fas fa-save"></i> GUARDAR ORDEN COMPLETA
-    </button>
-
-    <script>
-        let itemsOrden = [];
-        let zapateroActual = JSON.parse(localStorage.getItem('session_jadi'));
-
-        // 1. Generar ID Visual previo
-        async function actualizarID() {
-            const tel = document.getElementById('c-whatsapp').value;
-            if(tel.length > 7) {
-                // Simulamos el ID relacional que genera el Core
-                document.getElementById('orden-id').innerText = "PRE-ORDEN-" + tel.slice(-4);
-            }
-        }
-
-        // 2. Añadir item al arreglo (Estructura para la IA)
-        function añadirItem() {
-            const objeto = document.getElementById('i-objeto').value;
-            const cant = document.getElementById('i-cantidad').value;
-            const det = document.getElementById('i-detalle').value;
-            const pre = document.getElementById('i-precio').value;
-
-            if(!objeto || !pre) return alert("Llena los datos del objeto");
-
-            const nuevoItem = {
-                cantidad: parseInt(cant),
-                objeto: objeto,
-                detalle: det,
-                precioUnitario: parseFloat(pre),
-                subtotal: parseInt(cant) * parseFloat(pre)
-            };
-
-            itemsOrden.push(nuevoItem);
-            renderizarItems();
-            calcularTotales();
-            limpiarCamposItem();
-        }
-
-        function renderizarItems() {
-            const container = document.getElementById('lista-items');
-            container.innerHTML = "";
-            itemsOrden.forEach((item, index) => {
-                container.innerHTML += `
-                    <div class="item-reparacion">
-                        <b>${item.cantidad}x ${item.objeto}</b>
-                        <p style="font-size:0.8rem; margin:5px 0;">${item.detalle}</p>
-                        <div style="color:var(--gold); font-weight:bold;">$${item.subtotal.toFixed(2)}</div>
-                        <i class="fas fa-trash" style="position:absolute; top:15px; right:15px; color:#ff5252;" onclick="eliminarItem(${index})"></i>
-                    </div>
-                `;
-            });
-        }
-
-        function calcularTotales() {
-            let subtotal = itemsOrden.reduce((acc, item) => acc + item.subtotal, 0);
-            let iva = subtotal * 0.15;
-            let desc = parseFloat(document.getElementById('i-descuento').value) || 0;
-            let total = (subtotal + iva) - desc;
-
-            document.getElementById('res-sub').innerText = subtotal.toFixed(2);
-            document.getElementById('res-iva').innerText = iva.toFixed(2);
-            document.getElementById('res-total').innerText = total.toFixed(2);
-        }
-
-        function eliminarItem(index) {
-            itemsOrden.splice(index, 1);
-            renderizarItems();
-            calcularTotales();
-        }
-
-        function limpiarCamposItem() {
-            document.getElementById('i-objeto').value = "";
-            document.getElementById('i-detalle').value = "";
-            document.getElementById('i-precio').value = "";
-            document.getElementById('i-cantidad').value = 1;
-        }
-
-        async function guardarOrdenMaestra() {
-            if(itemsOrden.length === 0) return alert("Añade al menos un objeto");
-            const tel = document.getElementById('c-whatsapp').value;
-            if(!tel) return alert("Falta el WhatsApp del cliente");
-
-            // Aquí llamamos a tu JADI_CORE en modal_trabajos.js
-            const cliente = await JADI_CORE.gestionarUsuario(tel, 'CLN');
-            const transID = await JADI_CORE.generarIDTransaccion(zapateroActual.id, cliente.id);
-
-            const payload = {
-                idOrden: transID,
-                clienteID: cliente.id,
-                whatsapp: tel,
-                items: itemsOrden, // ESTO ES LO QUE LA IA ANALIZARÁ
-                financiero: {
-                    subtotal: parseFloat(document.getElementById('res-sub').innerText),
-                    iva: parseFloat(document.getElementById('res-iva').innerText),
-                    descuento: parseFloat(document.getElementById('i-descuento').value),
-                    total: parseFloat(document.getElementById('res-total').innerText)
-                },
-                estado: "recibido",
-                fecha: new Date().toISOString()
-            };
-
-            await JADI_CORE.guardarEnDB('transacciones/' + transID, payload);
-            alert("Orden Guardada con Éxito!");
-            location.reload();
-        }
-    </script>
+    <!-- Firebase SDK (Version 8) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    
+    <!-- NUESTROS CEREBROS -->
+    <script src="../js/core.js"></script>
+    <script src="../js/nueva_orden.js"></script>
 </body>
 </html>
